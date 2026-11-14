@@ -881,7 +881,25 @@
     return { text: out.join(" "), parts: parts, missing: missing };
   }
 
+  // Op het Gesprek-tabblad start de vertaalbox een nieuwe beurt van de gesprekspartner.
+  function startChatFromTop() {
+    var vt = document.getElementById("vtxt");
+    var raw = vt.value.trim();
+    if (!raw) { S.note = T("Typ eerst iets."); render(); return; }
+    var r = translateText(raw);
+    var text = (r && r.text && !(r.missing && r.missing.length)) ? r.text : raw;
+    var t = makeTurn(text);
+    S.convo.push(t);
+    S.chatStartTurn = t;
+    S.note = "";
+    vt.value = "";
+    document.getElementById("transOut").hidden = true;
+    render();
+    window.scrollTo(0, 0);
+  }
+
   function showTranslation() {
+    if (S.tab === "gesprek") { startChatFromTop(); return; }
     var box = document.getElementById("transOut");
     var r = translateText(document.getElementById("vtxt").value);
     box.hidden = false;
@@ -1230,7 +1248,7 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "60";
+  var APP_VERSION = "61";
   var WH_LOG = [];
   function whLog(msg) {
     var d = new Date();
@@ -1728,10 +1746,12 @@
 
   function viewGesprek() {
     var w = el("div");
+    var built = [];
+    var startRep = null;
     var row = el("div", "chips");
     if (S.listening) row.appendChild(btn("⏹ " + T("Stop"), "primary", stopMic));
     else row.appendChild(btn("🎤 " + T("Opnemen"), "primary", startMic));
-    if (S.convo.length) row.appendChild(btn(T("Wis gesprek"), "small", function () { S.convo = []; S.note = ""; render(); }));
+    if (S.convo.length) row.appendChild(btn(T("Wis gesprek"), "small", function () { S.convo = []; S.chatStartTurn = null; S.note = ""; render(); }));
     w.appendChild(row);
     if (S.note) w.appendChild(el("div", "bad", S.note));
     if (isIOS()) {
@@ -1844,9 +1864,19 @@
         l.appendChild(speakBtn(o.es));
         rep.appendChild(l);
       });
-      turn.appendChild(rep);
-      w.appendChild(turn);
+      // De start van de chat (vanuit de vertaalbox) krijgt de antwoorden pas na de opneemfunctie
+      if (startRep === null && S.chatStartTurn && t === S.chatStartTurn) startRep = rep; else turn.appendChild(rep);
+      built.push(turn);
     });
+    if (startRep) {
+      var out = el("div");
+      out.appendChild(built[0]);
+      out.appendChild(w);
+      out.appendChild(startRep);
+      built.slice(1).forEach(function (x) { out.appendChild(x); });
+      return out;
+    }
+    built.forEach(function (x) { w.appendChild(x); });
     return w;
   }
 
