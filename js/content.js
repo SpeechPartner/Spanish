@@ -5,10 +5,10 @@ function p(es, nl, en, de, fr) { return { es: es, m: m(nl, en, de, fr) }; }
 // ---------- Zinnen per categorie ----------
 var PHRASES = {
   "Gesprek openen": [
+    p("Le puedo hacer unas preguntas.", "Mag ik u wat vragen.", "May I ask you a few questions?", "Darf ich Ihnen ein paar Fragen stellen?", "Puis-je vous poser quelques questions ?"),
     p("¿Qué tal?", "Hoe gaat het?", "How's it going?", "Wie geht's?", "Ça va ?"),
-    p("¿Qué tal el fin de semana?", "Hoe was je weekend?", "How was your weekend?", "Wie war dein Wochenende?", "Comment s'est passé ton week-end ?"),
-    p("¿Qué has hecho hoy?", "Wat heb je vandaag gedaan?", "What have you done today?", "Was hast du heute gemacht?", "Qu'est-ce que tu as fait aujourd'hui ?"),
-    p("¡Qué bien verte!", "Wat leuk je te zien!", "Great to see you!", "Schön, dich zu sehen!", "Quel plaisir de te voir !")
+    p("Cuénteme cómo fue su fin de semana.", "Vertelt u eens hoe uw weekend was.", "Tell me how your weekend was.", "Erzählen Sie, wie Ihr Wochenende war.", "Dites-moi comment s'est passé votre week-end."),
+    p("Me alegro de verle.", "Leuk u te zien.", "Nice to see you.", "Schön, Sie zu sehen.", "Ravi de vous voir.")
   ],
   "Doorvragen": [
     p("¿Y tú?", "En jij?", "And you?", "Und du?", "Et toi ?"),
@@ -47,6 +47,17 @@ var PHRASES = {
 };
 
 // Vastlopen: reddingszinnen
+// Vervolgsuggesties bij een zin: tik op de zin, dan verschijnen deze. Kies je er een, dan gaat het gesprek
+// in het tabblad Gesprek verder, met jouw zin als start.
+var FOLLOWUPS = {
+    "Le puedo hacer unas preguntas.": [
+      p("¿Cómo se llama usted?", "Hoe heet u?", "What is your name?", "Wie heißen Sie?", "Comment vous appelez-vous ?"),
+      p("Dígame, ¿de dónde es?", "Vertelt u eens: waar komt u vandaan?", "Tell me, where are you from?", "Sagen Sie mir, woher kommen Sie?", "Dites-moi, d'où venez-vous ?"),
+      p("Cuénteme algo sobre usted.", "Vertel iets over uzelf.", "Tell me something about yourself.", "Erzählen Sie etwas über sich.", "Parlez-moi un peu de vous."),
+      p("Me gustaría saber si tiene tiempo.", "Ik zou graag willen weten of u tijd hebt.", "I'd like to know if you have time.", "Ich würde gern wissen, ob Sie Zeit haben.", "J'aimerais savoir si vous avez le temps.")
+    ]
+};
+
 var STUCK = [
   p("¿Cómo se dice... en español?", "Hoe zeg je ... in het Spaans?", "How do you say ... in Spanish?", "Wie sagt man ... auf Spanisch?", "Comment dit-on ... en espagnol ?"),
   p("No me sale la palabra.", "Het woord komt niet bij me op.", "The word won't come to me.", "Mir fällt das Wort nicht ein.", "Le mot ne me vient pas."),

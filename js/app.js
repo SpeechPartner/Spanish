@@ -182,12 +182,43 @@
     var tx = el("div", "txt");
     tx.appendChild(el("div", "es", it.es));
     tx.appendChild(el("div", "nl", L(it.m)));
+    var fu = typeof FOLLOWUPS !== "undefined" ? FOLLOWUPS[it.es] : null;
+    if (fu) {
+      // Tik op de zin: de vervolgsuggesties verschijnen
+      tx.style.cursor = "pointer";
+      tx.setAttribute("role", "button");
+      tx.setAttribute("aria-expanded", S.openFollow === it.es ? "true" : "false");
+      tx.onclick = function () { S.openFollow = S.openFollow === it.es ? null : it.es; render(); };
+    }
     line.appendChild(tx);
     line.appendChild(speakBtn(it.es));
     card.appendChild(line);
     card.appendChild(explainBox(it.es));
     if (extra) card.appendChild(extra);
+    if (fu && S.openFollow === it.es) {
+      var sug = el("div", "replies");
+      sug.appendChild(el("div", "sec-title", T("Kies een vervolg: je gaat dan verder in Gesprek")));
+      fu.forEach(function (f) {
+        var fb = el("button", "btn small followup");
+        fb.type = "button";
+        fb.appendChild(el("div", "es", f.es));
+        fb.appendChild(el("div", "nl", L(f.m)));
+        fb.onclick = function () { startChatWith(f.es); };
+        sug.appendChild(fb);
+      });
+      card.appendChild(sug);
+    }
     return card;
+  }
+
+  // Een gekozen zin wordt jouw eerste beurt in het Gesprek-tabblad; het gesprek gaat daar verder.
+  function startChatWith(text) {
+    var t = { me: true, es: text };
+    S.convo.push(t);
+    S.chatStartTurn = t;
+    S.openFollow = null;
+    S.note = "";
+    go("gesprek");
   }
 
   // ---------- Navigatie en weergave van de vaste onderbalk ----------
@@ -888,7 +919,26 @@
       else { out.push("?"); parts.push(w + " = ?"); missing.push(w); }
       i++;
     }
+    fixSpanishArticles(out);
     return { text: out.join(" "), parts: parts, missing: missing };
+  }
+
+  // Het lidwoord volgt het geslacht van het Spaanse woord erna (el película -> la película).
+  // Een vuistregel: woorden op -a, -ción, -dad zijn vrouwelijk, behalve een paar uitzonderingen.
+  function fixSpanishArticles(arr) {
+    var masc = /(ma|pa|eta|ista)$/, exc = ["agua", "hambre", "alma", "arma", "aula", "águila", "hacha", "área", "día", "ancla"];
+    function fem(w) {
+      if (!w) return false;
+      if (exc.indexOf(w) >= 0) return false;
+      if (/^[aá]/.test(w) && exc.indexOf(w) >= 0) return false;
+      return /(a|ción|sión|dad|tad|umbre|itud)$/.test(w) && !masc.test(w);
+    }
+    for (var i = 0; i < arr.length - 1; i++) {
+      var nx = arr[i + 1], head = nx.split(" ")[0];
+      if (arr[i] === "el" && fem(head)) arr[i] = "la";
+      else if (arr[i] === "un" && fem(head)) arr[i] = "una";
+      else if (arr[i] === "los" && /as$/.test(head)) arr[i] = "las";
+    }
   }
 
   // Op het Gesprek-tabblad start de vertaalbox een nieuwe beurt van de gesprekspartner.
@@ -1263,7 +1313,7 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "63";
+  var APP_VERSION = "66";
   var WH_LOG = [];
   function whLog(msg) {
     var d = new Date();

@@ -66,7 +66,7 @@ var GRAM = (function () {
       pret: ["dije", "dijiste", "dijo", "dijimos", "dijisteis", "dijeron"] },
     { es: "ver", nl: "zien", pres: ["veo", "ves", "ve", "vemos", "veis", "ven"],
       pret: ["vi", "viste", "vio", "vimos", "visteis", "vieron"] },
-    { es: "poder", nl: "kunnen", pres: ["puedo", "puedes", "puede", "podemos", "podéis", "pueden"],
+    { es: "poder", nl: "kunnen", nlAlt: ["mogen"], pres: ["puedo", "puedes", "puede", "podemos", "podéis", "pueden"],
       pret: ["pude", "pudiste", "pudo", "pudimos", "pudisteis", "pudieron"] },
     { es: "querer", nl: "willen", pres: ["quiero", "quieres", "quiere", "queremos", "queréis", "quieren"],
       pret: ["quise", "quisiste", "quiso", "quisimos", "quisisteis", "quisieron"] },
@@ -90,7 +90,7 @@ var GRAM = (function () {
     { es: "cocinar", nl: "koken" }, { es: "escuchar", nl: "luisteren" }, { es: "mirar", nl: "kijken" },
     { es: "correr", nl: "rennen" }, { es: "pasar", nl: "gebeuren" }, { es: "escribir", nl: "schrijven" },
     { es: "ayudar", nl: "helpen" },
-    { es: "esperar", nl: "hopen" },
+    { es: "esperar", nl: "hopen", nlAlt: ["wachten"] },
     { es: "preguntar", nl: "vragen" },
     { es: "contestar", nl: "antwoorden" },
     { es: "terminar", nl: "eindigen" },
@@ -98,7 +98,7 @@ var GRAM = (function () {
     { es: "encontrar", nl: "vinden", pres: ["encuentro", "encuentras", "encuentra", "encontramos", "encontráis", "encuentran"] },
     { es: "olvidar", nl: "vergeten" },
     { es: "perder", nl: "verliezen", pres: ["pierdo", "pierdes", "pierde", "perdemos", "perdéis", "pierden"] },
-    { es: "salir", nl: "uitgaan", pres: ["salgo", "sales", "sale", "salimos", "salís", "salen"] },
+    { es: "salir", nl: "uitgaan", nlAlt: ["vertrekken"], pres: ["salgo", "sales", "sale", "salimos", "salís", "salen"] },
     { es: "abrir", nl: "openen" },
     { es: "cerrar", nl: "sluiten", pres: ["cierro", "cierras", "cierra", "cerramos", "cerráis", "cierran"] },
     { es: "seguir", nl: "volgen", pres: ["sigo", "sigues", "sigue", "seguimos", "seguís", "siguen"] },
@@ -130,7 +130,19 @@ var GRAM = (function () {
     { es: "bailar", nl: "dansen" },
     { es: "cantar", nl: "zingen" },
     { es: "entrar", nl: "binnenkomen" },
-    { es: "tomar", nl: "nemen" }
+    { es: "tomar", nl: "nemen" },
+    { es: "llover", nl: "regenen", impers: true, pres: ["llueve", "llueve", "llueve", "llueven", "llueven", "llueven"], pret: ["llovió", "llovió", "llovió", "llovieron", "llovieron", "llovieron"] },
+    { es: "nevar", nl: "sneeuwen", impers: true, pres: ["nieva", "nieva", "nieva", "nievan", "nievan", "nievan"], pret: ["nevó", "nevó", "nevó", "nevaron", "nevaron", "nevaron"] },
+    { es: "durar", nl: "duren" },
+    { es: "subir", nl: "instappen" },
+    { es: "bajar", nl: "uitstappen" },
+    { es: "cambiar", nl: "veranderen", nlAlt: ["wisselen"] },
+    { es: "doblar", nl: "afslaan" },
+    { es: "cruzar", nl: "oversteken" },
+    { es: "reservar", nl: "reserveren" },
+    { es: "deber", nl: "moeten", pres: ["debo", "debes", "debe", "debemos", "debéis", "deben"] },
+    { es: "contar", nl: "vertellen", pres: ["cuento", "cuentas", "cuenta", "contamos", "contáis", "cuentan"] },
+    { es: "volver", nl: "terugkomen", pres: ["vuelvo", "vuelves", "vuelve", "volvemos", "volvéis", "vuelven"], pret: ["volví", "volviste", "volvió", "volvimos", "volvisteis", "volvieron"] }
   ];
 
   // Vormen die te algemeen zijn (zoals het voornaamwoord "se") tellen niet als werkwoord
@@ -203,7 +215,19 @@ var GRAM = (function () {
     "zingen": { pres: ["zing", "zingt", "zingt", "zingen", "zingen", "zingen"], pret: ["zong", "zong", "zong", "zongen", "zongen", "zongen"] },
     "binnenkomen": { pres: ["kom binnen", "komt binnen", "komt binnen", "komen binnen", "komen binnen", "komen binnen"], pret: ["kwam binnen", "kwam binnen", "kwam binnen", "kwamen binnen", "kwamen binnen", "kwamen binnen"] },
     "nemen": { pres: ["neem", "neemt", "neemt", "nemen", "nemen", "nemen"], pret: ["nam", "nam", "nam", "namen", "namen", "namen"] },
-    aankomen: { pret: ["kwam aan", "kwam aan", "kwam aan", "kwamen aan", "kwamen aan", "kwamen aan"], pres: ["kom aan", "komt aan", "komt aan", "komen aan", "komen aan", "komen aan"] }
+    aankomen: { pret: ["kwam aan", "kwam aan", "kwam aan", "kwamen aan", "kwamen aan", "kwamen aan"], pres: ["kom aan", "komt aan", "komt aan", "komen aan", "komen aan", "komen aan"] },
+    vertrekken: { pret: ["vertrok", "vertrok", "vertrok", "vertrokken", "vertrokken", "vertrokken"] },
+    mogen: { pres: ["mag", "mag", "mag", "mogen", "mogen", "mogen"], pret: ["mocht", "mocht", "mocht", "mochten", "mochten", "mochten"] },
+    moeten: { pres: ["moet", "moet", "moet", "moeten", "moeten", "moeten"], pret: ["moest", "moest", "moest", "moesten", "moesten", "moesten"] },
+    instappen: { pres: ["stap in", "stapt in", "stapt in", "stappen in", "stappen in", "stappen in"], pret: ["stapte in", "stapte in", "stapte in", "stapten in", "stapten in", "stapten in"] },
+    uitstappen: { pres: ["stap uit", "stapt uit", "stapt uit", "stappen uit", "stappen uit", "stappen uit"], pret: ["stapte uit", "stapte uit", "stapte uit", "stapten uit", "stapten uit", "stapten uit"] },
+    afslaan: { pres: ["sla af", "slaat af", "slaat af", "slaan af", "slaan af", "slaan af"], pret: ["sloeg af", "sloeg af", "sloeg af", "sloegen af", "sloegen af", "sloegen af"] },
+    oversteken: { pres: ["steek over", "steekt over", "steekt over", "steken over", "steken over", "steken over"], pret: ["stak over", "stak over", "stak over", "staken over", "staken over", "staken over"] },
+    reserveren: { pres: ["reserveer", "reserveert", "reserveert", "reserveren", "reserveren", "reserveren"], pret: ["reserveerde", "reserveerde", "reserveerde", "reserveerden", "reserveerden", "reserveerden"] },
+    terugkomen: { pres: ["kom terug", "komt terug", "komt terug", "komen terug", "komen terug", "komen terug"], pret: ["kwam terug", "kwam terug", "kwam terug", "kwamen terug", "kwamen terug", "kwamen terug"] },
+    leren: { pres: ["leer", "leert", "leert", "leren", "leren", "leren"], pret: ["leerde", "leerde", "leerde", "leerden", "leerden", "leerden"] },
+    duren: { pres: ["duur", "duurt", "duurt", "duren", "duren", "duren"], pret: ["duurde", "duurde", "duurde", "duurden", "duurden", "duurden"] },
+    betalen: { pres: ["betaal", "betaalt", "betaalt", "betalen", "betalen", "betalen"], pret: ["betaalde", "betaalde", "betaalde", "betaalden", "betaalden", "betaalden"] }
   };
 
   // Nederlandse persoonsvorm. Regelmatige zwakke werkwoorden worden uit de infinitief afgeleid.
@@ -211,6 +235,8 @@ var GRAM = (function () {
     var ov = NL_IRR[inf];
     if (ov && ov[tense]) return ov[tense][p];
     var stem = inf.slice(0, -2);
+    // Dubbele medeklinker in de stam wordt één letter in de tegenwoordige tijd (vertrekken -> vertrek, bellen -> bel)
+    if (/([bcdfgklmnprstvz])\1$/.test(stem)) stem = stem.slice(0, -1);
     var voiceless = /[fkpstch]$/.test(stem);
     if (tense === "pres") {
       if (p === 0) return stem;
@@ -220,6 +246,27 @@ var GRAM = (function () {
     if (p >= 3) return stem + (voiceless ? "ten" : "den");
     return stem + (voiceless ? "te" : "de");
   }
+
+  // Nederlandse vormen van alle werkwoorden in de lijst (ik, hij/zij, verleden) met de Spaanse tegenhanger,
+  // zodat bijvoorbeeld "vertrekt" in de woordenlijst staat. Alleen enkelvoudige woorden.
+  var NL_FORMS = [];
+  ES_VERBS.forEach(function (v) {
+    var esR = regular(v.es);
+    var esPres = v.pres || esR.pres, esPret = v.pret || esR.pret;
+    [v.nl].concat(v.nlAlt || []).forEach(function (inf) {
+      if (inf.indexOf(" ") >= 0) return;
+      NL_FORMS.push({ nl: inf, es: v.es });
+      if (v.impers) {
+        NL_FORMS.push({ nl: nlVerb(inf, "pres", 2), es: esPres[2] });
+        NL_FORMS.push({ nl: nlVerb(inf, "pret", 2), es: esPret[2] });
+        return;
+      }
+      NL_FORMS.push({ nl: nlVerb(inf, "pres", 0), es: esPres[0] });
+      NL_FORMS.push({ nl: nlVerb(inf, "pres", 2), es: esPres[2] });
+      NL_FORMS.push({ nl: nlVerb(inf, "pret", 2), es: esPret[2] });
+      NL_FORMS.push({ nl: nlVerb(inf, "pret", 5), es: esPret[5] });
+    });
+  });
 
   // ---- Vaste woordgroepen en gedrag per zinsdeel
   var NOUN_BEFORE = ["mucho", "poco", "mi", "mis", "tu", "tus", "su", "sus", "un", "una", "el", "la", "los", "las", "muy", "buen", "buena", "nuestro", "nuestra"];
@@ -486,7 +533,19 @@ var GRAM = (function () {
       fr: { inf: "courir", aux: "avoir", pp: "couru", pres: ["cours", "cours", "court", "courons", "courez", "courent"] } },
     "pasar": { en: { base: "happen", past: "happened", s3: "happens" }, de: { inf: "passieren", aux: "sein", pp: "passiert" }, fr: null },
     "escribir": { en: { base: "write", past: "wrote", s3: "writes" }, de: { inf: "schreiben", aux: "haben", pp: "geschrieben" },
-      fr: { inf: "écrire", aux: "avoir", pp: "écrit", pres: ["écris", "écris", "écrit", "écrivons", "écrivez", "écrivent"] } }
+      fr: { inf: "écrire", aux: "avoir", pp: "écrit", pres: ["écris", "écris", "écrit", "écrivons", "écrivez", "écrivent"] } },
+    "llover": { en: { base: "rain", past: "rained" }, de: { inf: "regnen", aux: "haben", pp: "geregnet" }, fr: { inf: "pleuvoir", aux: "avoir", pp: "plu", pres: ["pleut", "pleut", "pleut", "pleuvent", "pleuvent", "pleuvent"] } },
+    "nevar": { en: { base: "snow", past: "snowed" }, de: { inf: "schneien", aux: "haben", pp: "geschneit" }, fr: { inf: "neiger", aux: "avoir", pp: "neigé", pres: ["neige", "neige", "neige", "neigent", "neigent", "neigent"] } },
+    "durar": { en: { base: "last", past: "lasted" }, de: { inf: "dauern", aux: "haben", pp: "gedauert" }, fr: { inf: "durer", aux: "avoir", pp: "duré", pres: ["dure", "dures", "dure", "durons", "durez", "durent"] } },
+    "subir": { en: { base: "get on", past: "got on" }, de: { inf: "einsteigen", aux: "sein", pp: "eingestiegen" }, fr: { inf: "monter", aux: "être", pp: "monté", pres: ["monte", "montes", "monte", "montons", "montez", "montent"] } },
+    "bajar": { en: { base: "get off", past: "got off" }, de: { inf: "aussteigen", aux: "sein", pp: "ausgestiegen" }, fr: { inf: "descendre", aux: "être", pp: "descendu", pres: ["descends", "descends", "descend", "descendons", "descendez", "descendent"] } },
+    "cambiar": { en: { base: "change", past: "changed" }, de: { inf: "ändern", aux: "haben", pp: "geändert" }, fr: { inf: "changer", aux: "avoir", pp: "changé", pres: ["change", "changes", "change", "changeons", "changez", "changent"] } },
+    "doblar": { en: { base: "turn", past: "turned" }, de: { inf: "abbiegen", aux: "sein", pp: "abgebogen" }, fr: { inf: "tourner", aux: "avoir", pp: "tourné", pres: ["tourne", "tournes", "tourne", "tournons", "tournez", "tournent"] } },
+    "cruzar": { en: { base: "cross", past: "crossed" }, de: { inf: "überqueren", aux: "haben", pp: "überquert" }, fr: { inf: "traverser", aux: "avoir", pp: "traversé", pres: ["traverse", "traverses", "traverse", "traversons", "traversez", "traversent"] } },
+    "reservar": { en: { base: "reserve", past: "reserved" }, de: { inf: "reservieren", aux: "haben", pp: "reserviert" }, fr: { inf: "réserver", aux: "avoir", pp: "réservé", pres: ["réserve", "réserves", "réserve", "réservons", "réservez", "réservent"] } },
+    "deber": { en: { base: "have to", past: "had to", s3: "has to" }, de: { inf: "müssen", aux: "haben", pp: "gemusst", pres: ["muss", "musst", "muss", "müssen", "müsst", "müssen"] }, fr: { inf: "devoir", aux: "avoir", pp: "dû", pres: ["dois", "dois", "doit", "devons", "devez", "doivent"] } },
+    "contar": { en: { base: "tell", past: "told" }, de: { inf: "erzählen", aux: "haben", pp: "erzählt" }, fr: { inf: "raconter", aux: "avoir", pp: "raconté", pres: ["raconte", "racontes", "raconte", "racontons", "racontez", "racontent"] } },
+    "volver": { en: { base: "come back", past: "came back" }, de: { inf: "zurückkommen", aux: "sein", pp: "zurückgekommen" }, fr: { inf: "revenir", aux: "être", pp: "revenu", pres: ["reviens", "reviens", "revient", "revenons", "revenez", "reviennent"] } }
   };
   var SEIN_PRES = ["bin", "bist", "ist", "sind", "seid", "sind"];
   var HABEN_PRES = ["habe", "hast", "hat", "haben", "habt", "haben"];
@@ -934,5 +993,5 @@ var GRAM = (function () {
     return e && e[lang] ? e[lang][0] : null;
   }
 
-  return { translate: translate, np: np, gen: gen };
+  return { translate: translate, np: np, gen: gen, nlForms: NL_FORMS };
 })();

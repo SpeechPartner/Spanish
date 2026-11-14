@@ -1,0 +1,272 @@
+/* Speelse proefweergave (neo-brutalistisch) met de nationale kleuren van de gekozen taal.
+   Alleen uiterlijk. Alleen in de testkopie (body.speels). Het café-thema blijft ongewijzigd. */
+
+/* Nationale kleuren per taal
+   p = hoofdknop · s = accent (actieve tab, geluidsknop) · sInk = tekst op s
+   hi = tint voor de uitgelichte kaart · t2 = tint voor de afwisselende kaarten · paper = achtergrond
+   nl: rood-wit-blauw · en: blauw-rood-wit · de: zwart-rood-goud · fr: blauw-wit-rood */
+body.speels:not(.cafe)[data-lang="nl"] { --p:#AE1C28; --s:#21468B; --sInk:#ffffff; --hi:#fde3e6; --t2:#dfe8fb; --paper:#fff8f8; --bar:#000; --head:#AE1C28; }
+body.speels:not(.cafe)[data-lang="en"] { --p:#C8102E; --s:#012169; --sInk:#ffffff; --hi:#dfe6f7; --t2:#f9dde1; --paper:#f5f7fc; --bar:#000; --head:#012169; }
+body.speels:not(.cafe)[data-lang="de"] { --p:#DD0000; --s:#FFCE00; --sInk:#000000; --hi:#ffe9a8; --t2:#fff4cc; --paper:#fffbef; --bar:#000; --head:#000000; }
+body.speels:not(.cafe)[data-lang="fr"] { --p:#ED2939; --s:#002395; --sInk:#ffffff; --hi:#dfe5f7; --t2:#fbdde0; --paper:#f5f7fd; --bar:#000; --head:#002395; }
+
+body.speels:not(.cafe) {
+  --ink-k: #1c1410;
+  --hard: 4px 4px 0 var(--ink-k);
+  --font-pop: "Arial Black", "Helvetica Neue", "Arial", system-ui, sans-serif;
+  background-color: var(--paper);
+  background-image: radial-gradient(var(--dots, rgba(28,20,16,.16)) 1.2px, transparent 1.3px);
+  background-size: 18px 18px;
+  font-family: var(--font-pop); color: var(--ink-k); font-weight: 700;
+}
+body.speels:not(.cafe) h1 { font-family: var(--font-pop); font-weight: 900; font-size: 20px; color: var(--head-ink, #fff); letter-spacing: -.3px; }
+
+body.speels:not(.cafe) h2 { color: var(--head); font-weight: 900; }
+body.speels:not(.cafe) .es { font-size: 19px; font-weight: 900; }
+body.speels:not(.cafe) .card.big .es, body.speels:not(.cafe) .big-es { font-size: 26px; }
+body.speels:not(.cafe) .nl, body.speels:not(.cafe) .hint, body.speels:not(.cafe) .stat, body.speels:not(.cafe) .explain { color: var(--ink-soft, #5b4636); font-weight: 700; }
+body.speels:not(.cafe) .nl { font-size: 15px; }
+
+/* Koptekst in de landskleur met dikke onderrand */
+body.speels:not(.cafe) header.top { background: var(--head) !important; color: var(--head-ink, #fff); border-bottom: 4px solid var(--ink-k) !important; box-shadow: none !important; }
+body.speels:not(.cafe) header.top::after { height: 10px; bottom: -4px; }
+body.speels:not(.cafe) .iconbtn { background: var(--card); border: 3px solid var(--ink-k); border-radius: 12px; box-shadow: var(--hard); }
+body.speels:not(.cafe) .logo svg { filter: drop-shadow(3px 3px 0 var(--ink-k)); }
+body.speels:not(.cafe) .logolang { background: var(--s); color: var(--sInk); border: 3px solid var(--ink-k); }
+
+/* Kaarten: dikke rand, harde schaduw, afwisselend van kleur */
+body.speels:not(.cafe) .card {
+  background: var(--card); border: 3px solid var(--ink-k) !important; border-radius: 14px;
+  box-shadow: var(--hard); padding: 14px 16px; margin: 6px 4px 18px;
+  animation: pop-in .3s cubic-bezier(.2,1.5,.4,1) both;
+}
+body.speels:not(.cafe) .card:nth-of-type(3n+2) { background: var(--t2); }
+body.speels:not(.cafe) .card:nth-of-type(3n+3) { background: var(--card); }
+body.speels:not(.cafe) .card.panel { background: var(--hi); }
+body.speels:not(.cafe) .card.big { transform: rotate(-.6deg); }
+@keyframes pop-in { from { transform: translateY(12px) scale(.96); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* Knoppen: dikke rand, harde schaduw, indrukken bij tikken */
+body.speels:not(.cafe) .btn {
+  background: var(--card); color: var(--ink-k); border: 3px solid var(--ink-k); border-radius: 12px;
+  box-shadow: var(--hard); font-weight: 900;
+  transition: transform .06s ease, box-shadow .06s ease;
+}
+body.speels:not(.cafe) .btn:active { transform: translate(4px, 4px); box-shadow: 0 0 0 var(--ink-k); }
+body.speels:not(.cafe) .btn.primary { background: var(--p); color: #fff; }
+body.speels:not(.cafe) .btn.active { background: var(--s); color: var(--sInk); }
+body.speels:not(.cafe) .speak { border: 3px solid var(--ink-k); border-radius: 12px; box-shadow: var(--hard); background: var(--s); color: var(--sInk); width: 46px; height: 46px; }
+body.speels:not(.cafe) .speak:active { transform: translate(3px, 3px); box-shadow: none; }
+body.speels:not(.cafe) .chips .btn { border-radius: 999px; }
+body.speels:not(.cafe) .btn.mic.rec { background: var(--p); color: #fff; }
+
+/* Invoervelden en meldingen */
+body.speels:not(.cafe) .transbar input, body.speels:not(.cafe) textarea.big-input, body.speels:not(.cafe) .teach-input {
+  background: var(--card); border: 3px solid var(--ink-k); border-radius: 12px; box-shadow: inset 3px 3px 0 rgba(28,20,16,.12);
+  color: var(--ink-k); font-weight: 700;
+}
+body.speels:not(.cafe) .transout, body.speels:not(.cafe) .settings.open, body.speels:not(.cafe) .langmenu { border: 3px solid var(--ink-k); border-radius: 14px; box-shadow: var(--hard); background: var(--card); }
+body.speels:not(.cafe) .note { background: var(--t2); color: var(--ink-k); border: 3px solid var(--ink-k); border-radius: 12px; font-weight: 700; }
+
+/* Onderste navigatie: losse blokjes op een achtergrond in de landskleur */
+body.speels:not(.cafe) nav.bottomnav { background: var(--paper) !important; border-top: 4px solid var(--ink-k) !important; box-shadow: none !important; }
+body.speels:not(.cafe) nav.bottomnav .btn { border-radius: 12px; font-size: 14px; }
+body.speels:not(.cafe) nav.bottomnav .btn.active { transform: translateY(-3px); }
+
+/* ---------- App-gedrag: onderste balk verdwijnt en komt terug met een veeg omhoog ---------- */
+body.speels nav.bottomnav { transition: transform .32s cubic-bezier(.2,.9,.3,1); }
+body.speels.nav-away nav.bottomnav { transform: translateY(calc(100% + 30px)); }
+body.speels.nav-away { padding-bottom: 28px; }
+#navHandle {
+  position: fixed; left: 50%; bottom: 8px; transform: translateX(-50%); z-index: 7;
+  width: 84px; height: 26px; border-radius: 999px; border: 3px solid var(--ink-k); background: var(--card);
+  box-shadow: 3px 3px 0 var(--ink-k); padding: 0; cursor: pointer;
+  opacity: 0; pointer-events: none; transition: opacity .25s ease;
+}
+#navHandle::before { content: ""; display: block; width: 36px; height: 5px; margin: 7px auto 0; border-radius: 3px; background: var(--ink-k); }
+body.speels.nav-away #navHandle { opacity: 1; pointer-events: auto; }
+
+/* ---------- Thema's: IJs, Jungle, Ruimte (naast Standaard en Café) ---------- */
+body.speels.th-ijs[data-lang] {
+  --card:#ffffff; --ink-k:#0d2b45; --ink-soft:#33607f; --paper:#e9f6ff; --dots:rgba(42,127,212,.28);
+  --head:#8fd3f4; --head-ink:#0d2b45; --p:#2a7fd4; --s:#bfe9ff; --sInk:#0d2b45; --hi:#d4f0ff; --t2:#e6f7ff;
+}
+body.speels.th-jungle[data-lang] {
+  --card:#ffffff; --ink-k:#173a1f; --ink-soft:#3f6b47; --paper:#eef7e3; --dots:rgba(23,58,31,.22);
+  --head:#2f7d32; --head-ink:#ffffff; --p:#e4572e; --s:#f6c744; --sInk:#173a1f; --hi:#d9f2c2; --t2:#e8f8d8;
+}
+body.speels.th-ruimte[data-lang] {
+  --card:#17153d; --ink-k:#f4f1ff; --ink-soft:#c9c3ff; --paper:#0b0b26; --dots:rgba(255,255,255,.35);
+  --head:#1a1748; --head-ink:#ffffff; --p:#ff5d8f; --s:#ffd23f; --sInk:#1c1410; --hi:#2b2766; --t2:#211f55;
+  --hard: 4px 4px 0 #05051a;
+}
+body.speels.th-ruimte[data-lang] .card.panel { color: #f4f1ff; }
+body.speels.th-ruimte[data-lang] .btn { color: #f4f1ff; }
+body.speels.th-ruimte[data-lang] .btn.primary, body.speels.th-ruimte[data-lang] .btn.active, body.speels.th-ruimte[data-lang] .speak { color: #1c1410; }
+body.speels.th-ruimte[data-lang] .nl, body.speels.th-ruimte[data-lang] .hint, body.speels.th-ruimte[data-lang] .stat, body.speels.th-ruimte[data-lang] .explain { color: #c9c3ff; }
+body.speels.th-ruimte[data-lang] .transbar input, body.speels.th-ruimte[data-lang] textarea.big-input { color: #f4f1ff; }
+body.speels.th-ruimte[data-lang] .transbar input::placeholder, body.speels.th-ruimte[data-lang] textarea.big-input::placeholder { color: #9d97d6; }
+body.speels.th-ijs[data-lang] header.top::after, body.speels.th-jungle[data-lang] header.top::after, body.speels.th-ruimte[data-lang] header.top::after, body.speels.th-nacht[data-lang] header.top::after { display: none; }
+body.speels .iconbtn { color: var(--ink-k); }
+
+/* ---------- Chatbellen: gesprekspartner links, jouw vervolgopties rechts ---------- */
+body.speels .turn { margin: 0 0 4px; }
+body.speels:not(.cafe) .bubble.partner { max-width: 90%; margin-right: auto; border-radius: 22px 22px 22px 6px; }
+body.speels:not(.cafe) .replies { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; margin: -8px 2px 14px 0; }
+body.speels:not(.cafe) .replies .sec-title { font-size: 13px; color: var(--ink-soft); margin: 4px 6px 0 0; align-self: flex-end; }
+body.speels:not(.cafe) .line-row.bubble.me {
+  max-width: 88%; margin: 0; padding: 10px 12px; width: auto;
+  background: var(--s); color: var(--sInk); border: 3px solid var(--ink-k); border-radius: 22px 22px 6px 22px;
+  box-shadow: var(--hard);
+}
+body.speels:not(.cafe) .line-row.bubble.me .nl, body.speels:not(.cafe) .line-row.bubble.me .es { color: var(--sInk); }
+body.speels:not(.cafe) .line-row.bubble.me .speak { background: var(--card); color: var(--ink-k); }
+
+/* ---------- Mascotte ---------- */
+body.speels h1::before { content: none; }
+#owl { flex-shrink: 0; width: 56px; height: 56px; display: grid; place-items: center; cursor: pointer; }
+#owl svg { overflow: visible; transform-origin: 50% 90%; }
+#owl .eyes-open, #owl .eyes-happy, #owl .eyes-oops { display: none; }
+#owl.mood-idle .eyes-open, #owl.mood-think .eyes-open { display: inline; }
+#owl.mood-happy .eyes-happy { display: inline; }
+#owl.mood-oops .eyes-oops { display: inline; }
+#owl.mood-idle svg { animation: owl-breathe 3.6s ease-in-out infinite; }
+#owl.mood-happy svg { animation: owl-hop .5s ease-in-out 3; }
+#owl.mood-oops svg { animation: owl-shake .45s ease-in-out 2; }
+#owl.mood-think svg { animation: owl-breathe 1s ease-in-out infinite; }
+#owl .eye-blink { transform-origin: center; animation: owl-blink 5s infinite; transform-box: fill-box; }
+@keyframes owl-breathe { 0%,100% { transform: scale(1); } 50% { transform: scale(1.04); } }
+@keyframes owl-hop { 0%,100% { transform: translateY(0); } 40% { transform: translateY(-7px); } }
+@keyframes owl-shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
+@keyframes owl-blink { 0%,94%,100% { transform: scaleY(1); } 97% { transform: scaleY(.1); } }
+@media (prefers-reduced-motion: reduce) { #owl svg, #owl .eye-blink { animation: none; } }
+
+/* ---------- Info-pagina: overzicht per tabblad ---------- */
+body.speels .guide-list { margin: 8px 0 0; padding-left: 20px; }
+body.speels .guide-list li { margin: 4px 0; line-height: 1.45; }
+body.speels .guide-list li::marker { color: var(--p); font-weight: 900; }
+body.speels .install-card { margin-top: 18px; }
+body.speels .install-card .btn { margin-top: 10px; }
+
+/* ---------- Donker (systeem) en Nachtlampje: subtiel, rustig voor de ogen, met een neonbuis ---------- */
+body.speels.th-donker[data-lang], body.speels.th-nacht[data-lang] {
+  --card:#171429; --ink-k:#e4def3; --ink-soft:#9d95bd; --paper:#0d0b17; --dots:rgba(160,140,220,.06);
+  --head:#110e1f; --head-ink:#e9e4f7; --p:#6e52b8; --s:#2f2857; --sInk:#e9e4f7; --hi:#1c1834; --t2:#1a1631;
+  --line:#2a2448; --hard: 0 2px 10px rgba(0,0,0,.45);
+  color-scheme: dark;
+}
+body.speels.th-donker[data-lang] .card, body.speels.th-nacht[data-lang] .card {
+  border: 1px solid var(--line) !important; border-radius: 16px; box-shadow: var(--hard);
+  background-color: var(--card);
+}
+body.speels.th-donker[data-lang] .card.big, body.speels.th-nacht[data-lang] .card.big { transform: none; }
+body.speels.th-donker[data-lang] .card.panel, body.speels.th-nacht[data-lang] .card.panel { background: var(--hi); }
+body.speels.th-donker[data-lang] header.top, body.speels.th-nacht[data-lang] header.top {
+  background: var(--head) !important; border-bottom: 1px solid var(--line) !important; box-shadow: none !important; background-image: none;
+}
+body.speels.th-donker[data-lang] header.top::after, body.speels.th-nacht[data-lang] header.top::after { display: none; }
+body.speels.th-donker[data-lang] .btn, body.speels.th-nacht[data-lang] .btn {
+  background: #1d1838; color: #d8d0f0; border: 1px solid #352d5c; border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.4); font-weight: 700;
+}
+body.speels.th-donker[data-lang] .btn:active, body.speels.th-nacht[data-lang] .btn:active { transform: none; box-shadow: none; opacity: .85; }
+body.speels.th-donker[data-lang] .btn.primary, body.speels.th-nacht[data-lang] .btn.primary { background: #5b43a0; color: #f5f2ff; border-color: #6d56b4; }
+body.speels.th-donker[data-lang] .btn.active, body.speels.th-nacht[data-lang] .btn.active { background: #2d2656; color: #f1ecff; border-color: #7f67d6; }
+body.speels.th-donker[data-lang] .speak, body.speels.th-nacht[data-lang] .speak { background: #2a2350; color: #e6dcff; border: 1px solid #4a3f7d; box-shadow: none; }
+body.speels.th-donker[data-lang] .dock-btn, body.speels.th-nacht[data-lang] .dock-btn { background: #1d1838; color: #cfc6ee; border: 1px solid #352d5c; box-shadow: 0 1px 6px rgba(0,0,0,.4); }
+body.speels.th-donker[data-lang] .dock-btn.active, body.speels.th-nacht[data-lang] .dock-btn.active { background: #2d2656; color: #f1ecff; border-color: #7f67d6; }
+body.speels.th-donker[data-lang] .iconbtn, body.speels.th-nacht[data-lang] .iconbtn { background: var(--card); border: 1px solid var(--line); box-shadow: none; color: #d8d0f0; }
+body.speels.th-donker[data-lang] nav.bottomnav, body.speels.th-nacht[data-lang] nav.bottomnav { background: var(--head) !important; border-top: 1px solid var(--line) !important; }
+body.speels.th-donker[data-lang] .transbar input, body.speels.th-donker[data-lang] textarea.big-input, body.speels.th-donker[data-lang] .teach-input,
+body.speels.th-nacht[data-lang] .transbar input, body.speels.th-nacht[data-lang] textarea.big-input, body.speels.th-nacht[data-lang] .teach-input {
+  background: #120f24; border: 1px solid #352d5c; box-shadow: none; color: #e4def3;
+}
+body.speels.th-donker[data-lang] .transbar input::placeholder, body.speels.th-donker[data-lang] textarea.big-input::placeholder,
+body.speels.th-nacht[data-lang] .transbar input::placeholder, body.speels.th-nacht[data-lang] textarea.big-input::placeholder { color: #7d75a0; }
+body.speels.th-donker[data-lang] .transout, body.speels.th-donker[data-lang] .settings.open, body.speels.th-donker[data-lang] .langmenu, body.speels.th-donker[data-lang] .note,
+body.speels.th-nacht[data-lang] .transout, body.speels.th-nacht[data-lang] .settings.open, body.speels.th-nacht[data-lang] .langmenu, body.speels.th-nacht[data-lang] .note {
+  background: var(--card); border: 1px solid var(--line); box-shadow: var(--hard); color: #d8d0f0;
+}
+body.speels.th-donker[data-lang] .line-row.bubble.me, body.speels.th-nacht[data-lang] .line-row.bubble.me {
+  background: #2b2456; color: #efe9ff; border: 1px solid #443a74; box-shadow: none;
+}
+body.speels.th-donker[data-lang] .line-row.bubble.me .speak, body.speels.th-nacht[data-lang] .line-row.bubble.me .speak { background: #1d1838; color: #e6dcff; }
+body.speels.th-donker[data-lang] h1, body.speels.th-donker[data-lang] h2, body.speels.th-donker[data-lang] h3,
+body.speels.th-donker[data-lang] .sec-title, body.speels.th-donker[data-lang] label,
+body.speels.th-nacht[data-lang] h1, body.speels.th-nacht[data-lang] h2, body.speels.th-nacht[data-lang] h3,
+body.speels.th-nacht[data-lang] .sec-title, body.speels.th-nacht[data-lang] label { color: #e4def3; }
+body.speels.th-donker[data-lang] .nl, body.speels.th-donker[data-lang] .hint, body.speels.th-donker[data-lang] .stat, body.speels.th-donker[data-lang] .explain, body.speels.th-donker[data-lang] .replies .sec-title,
+body.speels.th-nacht[data-lang] .nl, body.speels.th-nacht[data-lang] .hint, body.speels.th-nacht[data-lang] .stat, body.speels.th-nacht[data-lang] .explain, body.speels.th-nacht[data-lang] .replies .sec-title { color: #9d95bd; }
+body.speels.th-donker[data-lang] select, body.speels.th-nacht[data-lang] select { background: #1a1636; color: #e4def3; border: 1px solid #352d5c; }
+body.speels.th-donker[data-lang] select option, body.speels.th-nacht[data-lang] select option { background: #1a1636; color: #e4def3; }
+body.speels.th-donker[data-lang] .settings label, body.speels.th-donker[data-lang] .settings .nl, body.speels.th-donker[data-lang] .settings .note,
+body.speels.th-nacht[data-lang] .settings label, body.speels.th-nacht[data-lang] .settings .nl, body.speels.th-nacht[data-lang] .settings .note { color: #bdb5dc; }
+
+/* Nachtlampje: een neonbuis boven aan de app, met glazen uiteinden en een lichte flikker */
+body.speels.th-nacht[data-lang] header.top { position: sticky; }
+body.speels.th-nacht[data-lang] header.top::before {
+  content: ""; position: absolute; left: 14px; right: 14px; top: 4px; height: 8px; border-radius: 999px;
+  background: linear-gradient(180deg, #fff7fc 0%, #ffc4f1 32%, #ff6fd8 68%, #d02cae 100%);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.35), 0 0 2px rgba(255,210,245,.9), 0 0 6px rgba(255,90,215,.7),
+              0 0 16px rgba(255,60,205,.38), 0 0 34px rgba(190,40,180,.2);
+  pointer-events: none;
+}
+/* De glazen uiteinden en de houder van de buis */
+body.speels.th-nacht[data-lang] header.top::after {
+  display: block; content: ""; position: absolute; left: 4px; right: 4px; top: 2px; bottom: auto; height: 12px;
+  background: linear-gradient(90deg, #241d3c 0 10px, transparent 10px calc(100% - 10px), #241d3c calc(100% - 10px));
+  pointer-events: none; opacity: .9;
+}
+@media (prefers-reduced-motion: no-preference) {
+  body.speels.th-nacht[data-lang] header.top::before { animation: nachtFlikker 6s linear infinite; }
+}
+@keyframes nachtFlikker {
+  0%, 100% { opacity: 1; }
+  2% { opacity: .8; } 2.5% { opacity: 1; } 3.5% { opacity: .9; } 4% { opacity: 1; }
+  38% { opacity: 1; } 38.5% { opacity: .55; } 39% { opacity: 1; } 39.5% { opacity: .8; } 40% { opacity: 1; }
+  71% { opacity: .94; } 72% { opacity: 1; }
+}
+
+/* ---------- Vaste tabbladen: Zinnen links, Vastlopen boven, Gesprek rechts, Info rechtsonder ---------- */
+:root { --navh: 66px; --hh: 200px; }
+#dock { position: fixed; left: 0; top: 0; width: 0; height: 0; z-index: 8; }
+body.speels .dock-btn {
+  position: fixed; z-index: 8; margin: 0; padding: 0 10px;
+  border: 3px solid var(--ink-k); background: var(--card); color: var(--ink-k);
+  font-weight: 900; font-size: 13px; line-height: 1; cursor: pointer;
+  box-shadow: 3px 3px 0 var(--ink-k); transition: transform .06s ease, box-shadow .06s ease;
+}
+body.speels .dock-btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink-k); }
+body.speels .dock-btn.active { background: var(--s); color: var(--sInk); }
+
+/* Links en rechts: smalle verticale lipjes tegen de rand, halverwege de hoogte */
+body.speels .dock-l, body.speels .dock-r {
+  top: calc(50% - 60px); width: 34px; height: 120px; padding: 10px 0;
+  writing-mode: vertical-rl; text-align: center;
+}
+body.speels .dock-l { left: 0; border-left: none; border-radius: 0 14px 14px 0; transform: rotate(180deg); }
+body.speels .dock-l:active { transform: rotate(180deg) translate(2px, 2px); }
+body.speels .dock-r { right: 0; border-right: none; border-radius: 14px 0 0 14px; }
+
+/* Boven: lipje dat aan de onderrand van de koptekst hangt; verdwijnt als de instellingen open staan */
+body.speels .dock-t {
+  top: calc(var(--hh) - 6px); left: 50%; transform: translateX(-50%);
+  height: 30px; padding: 0 16px; border-top: none; border-radius: 0 0 14px 14px;
+}
+body.speels .dock-t:active { transform: translate(calc(-50% + 2px), 2px); }
+body:has(#settings.open) .dock-t { display: none; }
+
+/* Rechtsonder: boven de onderste balk; zakt naar beneden als de balk verborgen is */
+body.speels .dock-br {
+  right: 12px; bottom: calc(var(--navh) + 10px); height: 40px; padding: 0 16px; border-radius: 999px;
+  transition: bottom .32s cubic-bezier(.2,.9,.3,1), transform .06s ease, box-shadow .06s ease;
+}
+body.speels.nav-away .dock-br { bottom: 14px; }
+
+/* Ruimte rond de inhoud: de vaste tabbladen en de onderste balk gaan niet over antwoorden heen */
+body.speels main#view { padding: 36px 44px calc(var(--navh) + 36px); }
+
+/* Vervolgsuggesties bij een zin: twee regels per knop, Spaans en vertaling */
+body.speels .followup { display: flex; flex-direction: column; align-items: flex-start; text-align: left; white-space: normal; width: 100%; max-width: 100%; margin: 0 0 6px; padding: 10px 12px; }
+body.speels .followup .es { font-weight: 900; }
+body.speels .followup .nl { font-size: 13px; }
