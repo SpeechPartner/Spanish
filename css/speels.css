@@ -279,3 +279,15 @@ body.speels .carousel .dot.on { background: var(--p); }
 
 /* Gekozen hulpvragen (wisselkaart) */
 body.speels .line-row.pick { cursor: pointer; }
+
+/* Help-kaart in Info: uitklapbaar stappenplan */
+body.speels details.help > summary { cursor: pointer; list-style: none; }
+body.speels details.help > summary::-webkit-details-marker { display: none; }
+body.speels details.help > summary::after { content: " ▾"; }
+body.speels details.help[open] > summary::after { content: " ▴"; }
+body.speels details.help-sec { margin: 8px 0; border-top: 1px solid var(--line, rgba(128,128,128,.25)); padding-top: 8px; }
+body.speels details.help-sec > summary { cursor: pointer; font-weight: 600; }
+body.speels details.help-sec > summary::before { content: "▸ "; }
+body.speels details.help-sec[open] > summary::before { content: "▾ "; }
+body.speels ol.help-steps { margin: 6px 0 0 18px; padding: 0; }
+body.speels ol.help-steps li { margin: 4px 0; line-height: 1.45; }
