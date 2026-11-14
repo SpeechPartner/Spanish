@@ -163,15 +163,26 @@ body.speels.th-nacht[data-lang] .transbar input::placeholder, body.speels.th-nac
 body.speels.th-nacht[data-lang] header.top {
   background-color: var(--head) !important; border-bottom-color: #3a2a6e !important;
   background-image: linear-gradient(90deg, transparent 14px, #c084fc 14px, #c084fc calc(100% - 14px), transparent calc(100% - 14px));
-  background-size: 100% 3px; background-position: 0 calc(100% - 9px); background-repeat: no-repeat; overflow: hidden;
+  background-size: 100% 3px; background-position: 0 calc(100% - 9px); background-repeat: no-repeat;
 }
 body.speels.th-nacht[data-lang] header.top::before {
-  content: ""; position: absolute; left: 14px; right: 14px; top: 10px; height: 8px; border-radius: 999px;
-  background: linear-gradient(90deg, #7c3aed, #e879f9 50%, #7c3aed);
-  box-shadow: 0 0 6px #d8b4fe, 0 0 14px #a855f7, 0 0 28px rgba(168,85,247,.7);
+  content: ""; position: absolute; left: 6px; right: 6px; top: 14px; height: 12px; border-radius: 999px;
+  background: linear-gradient(90deg, #a21caf, #f0abfc 18%, #ffffff 50%, #f0abfc 82%, #a21caf);
+  box-shadow: 0 0 4px #fff, 0 0 10px #f0abfc, 0 0 22px #c026d3, 0 0 44px rgba(192,38,211,.9), 0 0 70px rgba(147,51,234,.6);
   pointer-events: none;
 }
-@media (prefers-reduced-motion: no-preference) {
-  body.speels.th-nacht[data-lang] header.top::before { animation: nachtGlow 4s ease-in-out infinite; }
+body.speels.th-nacht[data-lang] header.top {
+  background-image: linear-gradient(90deg, transparent 6px, #e879f9 6px, #e879f9 calc(100% - 6px), transparent calc(100% - 6px));
+  background-size: 100% 4px; background-position: 0 calc(100% - 8px); background-repeat: no-repeat;
+  box-shadow: inset 0 -12px 24px -14px rgba(192,38,211,.9) !important;
 }
-@keyframes nachtGlow { 0%, 100% { opacity: .8; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: no-preference) {
+  body.speels.th-nacht[data-lang] header.top::before { animation: nachtGlow 3s ease-in-out infinite; }
+}
+/* Koppen en labels leesbaar houden op de donkere achtergrond */
+body.speels.th-nacht[data-lang] h1, body.speels.th-nacht[data-lang] h2, body.speels.th-nacht[data-lang] h3,
+body.speels.th-nacht[data-lang] .sec-title, body.speels.th-nacht[data-lang] label { color: #f1ebff; }
+body.speels.th-nacht[data-lang] .settings label, body.speels.th-nacht[data-lang] .settings .nl, body.speels.th-nacht[data-lang] .settings .note { color: #d9d0ff; }
+body.speels.th-nacht[data-lang] select { background: var(--card); color: #f1ebff; border-color: #a78bfa; }
+body.speels.th-nacht[data-lang] select option { background: #1a1638; color: #f1ebff; }
+@keyframes nachtGlow { 0%, 100% { opacity: .65; } 50% { opacity: 1; } }
