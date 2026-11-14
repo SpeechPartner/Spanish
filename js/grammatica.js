@@ -88,7 +88,49 @@ var GRAM = (function () {
     { es: "trabajar", nl: "werken" }, { es: "llegar", nl: "aankomen" }, { es: "comprar", nl: "kopen" },
     { es: "decidir", nl: "beslissen" }, { es: "estudiar", nl: "studeren" }, { es: "vivir", nl: "wonen" },
     { es: "cocinar", nl: "koken" }, { es: "escuchar", nl: "luisteren" }, { es: "mirar", nl: "kijken" },
-    { es: "correr", nl: "rennen" }, { es: "pasar", nl: "gebeuren" }, { es: "escribir", nl: "schrijven" }
+    { es: "correr", nl: "rennen" }, { es: "pasar", nl: "gebeuren" }, { es: "escribir", nl: "schrijven" },
+    { es: "ayudar", nl: "helpen" },
+    { es: "esperar", nl: "hopen" },
+    { es: "preguntar", nl: "vragen" },
+    { es: "contestar", nl: "antwoorden" },
+    { es: "terminar", nl: "eindigen" },
+    { es: "buscar", nl: "zoeken" },
+    { es: "encontrar", nl: "vinden", pres: ["encuentro", "encuentras", "encuentra", "encontramos", "encontráis", "encuentran"] },
+    { es: "olvidar", nl: "vergeten" },
+    { es: "perder", nl: "verliezen", pres: ["pierdo", "pierdes", "pierde", "perdemos", "perdéis", "pierden"] },
+    { es: "salir", nl: "uitgaan", pres: ["salgo", "sales", "sale", "salimos", "salís", "salen"] },
+    { es: "abrir", nl: "openen" },
+    { es: "cerrar", nl: "sluiten", pres: ["cierro", "cierras", "cierra", "cerramos", "cerráis", "cierran"] },
+    { es: "seguir", nl: "volgen", pres: ["sigo", "sigues", "sigue", "seguimos", "seguís", "siguen"] },
+    { es: "pagar", nl: "betalen" },
+    { es: "costar", nl: "kosten", pres: ["cuesto", "cuestas", "cuesta", "costamos", "costáis", "cuestan"] },
+    { es: "usar", nl: "gebruiken" },
+    { es: "visitar", nl: "bezoeken" },
+    { es: "viajar", nl: "reizen" },
+    { es: "preparar", nl: "voorbereiden" },
+    { es: "limpiar", nl: "poetsen" },
+    { es: "pensar", nl: "denken", pres: ["pienso", "piensas", "piensa", "pensamos", "pensáis", "piensan"] },
+    { es: "sentir", nl: "voelen", pres: ["siento", "sientes", "siente", "sentimos", "sentís", "sienten"] },
+    { es: "creer", nl: "geloven", pret: ["creí", "creíste", "creyó", "creímos", "creísteis", "creyeron"] },
+    { es: "conocer", nl: "kennen", pres: ["conozco", "conoces", "conoce", "conocemos", "conocéis", "conocen"] },
+    { es: "ganar", nl: "winnen" },
+    { es: "poner", nl: "zetten", pres: ["pongo", "pones", "pone", "ponemos", "ponéis", "ponen"], pret: ["puse", "pusiste", "puso", "pusimos", "pusisteis", "pusieron"] },
+    { es: "traer", nl: "brengen", pres: ["traigo", "traes", "trae", "traemos", "traéis", "traen"], pret: ["traje", "trajiste", "trajo", "trajimos", "trajisteis", "trajeron"] },
+    { es: "conducir", nl: "rijden", pres: ["conduzco", "conduces", "conduce", "conducimos", "conducís", "conducen"], pret: ["conduje", "condujiste", "condujo", "condujimos", "condujisteis", "condujeron"] },
+    { es: "aprender", nl: "leren" },
+    { es: "comprender", nl: "begrijpen" },
+    { es: "llevar", nl: "dragen" },
+    { es: "romper", nl: "breken" },
+    { es: "llamar", nl: "bellen" },
+    { es: "pedir", nl: "bestellen", pres: ["pido", "pides", "pide", "pedimos", "pedís", "piden"], pret: ["pedí", "pediste", "pidió", "pedimos", "pedisteis", "pidieron"] },
+    { es: "dejar", nl: "laten" },
+    { es: "nadar", nl: "zwemmen" },
+    { es: "caminar", nl: "lopen" },
+    { es: "dibujar", nl: "tekenen" },
+    { es: "bailar", nl: "dansen" },
+    { es: "cantar", nl: "zingen" },
+    { es: "entrar", nl: "binnenkomen" },
+    { es: "tomar", nl: "nemen" }
   ];
 
   // Vormen die te algemeen zijn (zoals het voornaamwoord "se") tellen niet als werkwoord
@@ -137,6 +179,30 @@ var GRAM = (function () {
     kijken: { pret: ["keek", "keek", "keek", "keken", "keken", "keken"], pres: ["kijk", "kijkt", "kijkt", "kijken", "kijken", "kijken"] },
     schrijven: { pret: ["schreef", "schreef", "schreef", "schreven", "schreven", "schreven"], pres: ["schrijf", "schrijft", "schrijft", "schrijven", "schrijven", "schrijven"] },
     lezen: { pret: ["las", "las", "las", "lazen", "lazen", "lazen"], pres: ["lees", "leest", "leest", "lezen", "lezen", "lezen"] },
+    "helpen": { pres: ["help", "helpt", "helpt", "helpen", "helpen", "helpen"], pret: ["hielp", "hielp", "hielp", "hielpen", "hielpen", "hielpen"] },
+    "vragen": { pres: ["vraag", "vraagt", "vraagt", "vragen", "vragen", "vragen"], pret: ["vroeg", "vroeg", "vroeg", "vroegen", "vroegen", "vroegen"] },
+    "zoeken": { pres: ["zoek", "zoekt", "zoekt", "zoeken", "zoeken", "zoeken"], pret: ["zocht", "zocht", "zocht", "zochten", "zochten", "zochten"] },
+    "vinden": { pres: ["vind", "vindt", "vindt", "vinden", "vinden", "vinden"], pret: ["vond", "vond", "vond", "vonden", "vonden", "vonden"] },
+    "vergeten": { pres: ["vergeet", "vergeet", "vergeet", "vergeten", "vergeten", "vergeten"], pret: ["vergat", "vergat", "vergat", "vergaten", "vergaten", "vergaten"] },
+    "verliezen": { pres: ["verlies", "verliest", "verliest", "verliezen", "verliezen", "verliezen"], pret: ["verloor", "verloor", "verloor", "verloren", "verloren", "verloren"] },
+    "uitgaan": { pres: ["ga uit", "gaat uit", "gaat uit", "gaan uit", "gaan uit", "gaan uit"], pret: ["ging uit", "ging uit", "ging uit", "gingen uit", "gingen uit", "gingen uit"] },
+    "sluiten": { pres: ["sluit", "sluit", "sluit", "sluiten", "sluiten", "sluiten"], pret: ["sloot", "sloot", "sloot", "sloten", "sloten", "sloten"] },
+    "bezoeken": { pres: ["bezoek", "bezoekt", "bezoekt", "bezoeken", "bezoeken", "bezoeken"], pret: ["bezocht", "bezocht", "bezocht", "bezochten", "bezochten", "bezochten"] },
+    "reizen": { pres: ["reis", "reist", "reist", "reizen", "reizen", "reizen"], pret: ["reisde", "reisde", "reisde", "reisden", "reisden", "reisden"] },
+    "voorbereiden": { pres: ["bereid voor", "bereidt voor", "bereidt voor", "bereiden voor", "bereiden voor", "bereiden voor"], pret: ["bereidde voor", "bereidde voor", "bereidde voor", "bereidden voor", "bereidden voor", "bereidden voor"] },
+    "denken": { pres: ["denk", "denkt", "denkt", "denken", "denken", "denken"], pret: ["dacht", "dacht", "dacht", "dachten", "dachten", "dachten"] },
+    "kennen": { pres: ["ken", "kent", "kent", "kennen", "kennen", "kennen"], pret: ["kende", "kende", "kende", "kenden", "kenden", "kenden"] },
+    "winnen": { pres: ["win", "wint", "wint", "winnen", "winnen", "winnen"], pret: ["won", "won", "won", "wonnen", "wonnen", "wonnen"] },
+    "brengen": { pres: ["breng", "brengt", "brengt", "brengen", "brengen", "brengen"], pret: ["bracht", "bracht", "bracht", "brachten", "brachten", "brachten"] },
+    "rijden": { pres: ["rijd", "rijdt", "rijdt", "rijden", "rijden", "rijden"], pret: ["reed", "reed", "reed", "reden", "reden", "reden"] },
+    "dragen": { pres: ["draag", "draagt", "draagt", "dragen", "dragen", "dragen"], pret: ["droeg", "droeg", "droeg", "droegen", "droegen", "droegen"] },
+    "breken": { pres: ["breek", "breekt", "breekt", "breken", "breken", "breken"], pret: ["brak", "brak", "brak", "braken", "braken", "braken"] },
+    "laten": { pres: ["laat", "laat", "laat", "laten", "laten", "laten"], pret: ["liet", "liet", "liet", "lieten", "lieten", "lieten"] },
+    "zwemmen": { pres: ["zwem", "zwemt", "zwemt", "zwemmen", "zwemmen", "zwemmen"], pret: ["zwom", "zwom", "zwom", "zwommen", "zwommen", "zwommen"] },
+    "lopen": { pres: ["loop", "loopt", "loopt", "lopen", "lopen", "lopen"], pret: ["liep", "liep", "liep", "liepen", "liepen", "liepen"] },
+    "zingen": { pres: ["zing", "zingt", "zingt", "zingen", "zingen", "zingen"], pret: ["zong", "zong", "zong", "zongen", "zongen", "zongen"] },
+    "binnenkomen": { pres: ["kom binnen", "komt binnen", "komt binnen", "komen binnen", "komen binnen", "komen binnen"], pret: ["kwam binnen", "kwam binnen", "kwam binnen", "kwamen binnen", "kwamen binnen", "kwamen binnen"] },
+    "nemen": { pres: ["neem", "neemt", "neemt", "nemen", "nemen", "nemen"], pret: ["nam", "nam", "nam", "namen", "namen", "namen"] },
     aankomen: { pret: ["kwam aan", "kwam aan", "kwam aan", "kwamen aan", "kwamen aan", "kwamen aan"], pres: ["kom aan", "komt aan", "komt aan", "komen aan", "komen aan", "komen aan"] }
   };
 
@@ -148,7 +214,7 @@ var GRAM = (function () {
     var voiceless = /[fkpstch]$/.test(stem);
     if (tense === "pres") {
       if (p === 0) return stem;
-      if (p === 1 || p === 2) return /[dt]$/.test(stem) ? stem : stem + "t";
+      if (p === 1 || p === 2) return /t$/.test(stem) ? stem : stem + "t";
       return inf;
     }
     if (p >= 3) return stem + (voiceless ? "ten" : "den");
@@ -215,42 +281,94 @@ var GRAM = (function () {
     muy: { de: "sehr", fr: "très" }, mucho: { de: "viel", fr: "beaucoup" }, bien: { de: "gut", fr: "bien" }, mal: { de: "schlecht", fr: "mal" }
   };
   var ADJ_T = {
-    tranquilo: { de: "ruhig", fr: "tranquille" }, cansado: { de: "müde", fr: "fatigué" },
-    frio: { de: "kalt", fr: "froid" }, triste: { de: "traurig", fr: "triste" }
+    "bonito": { nl: "mooi", en: "pretty", de: "schön", fr: "joli" },
+    "bonita": { nl: "mooi", en: "pretty", de: "schön", fr: "jolie" },
+    "grande": { nl: "groot", en: "big", de: "groß", fr: "grand" },
+    "pequeño": { nl: "klein", en: "small", de: "klein", fr: "petit" },
+    "pequeña": { nl: "klein", en: "small", de: "klein", fr: "petite" },
+    "nuevo": { nl: "nieuw", en: "new", de: "neu", fr: "nouveau" },
+    "nueva": { nl: "nieuw", en: "new", de: "neu", fr: "nouvelle" },
+    "viejo": { nl: "oud", en: "old", de: "alt", fr: "vieux" },
+    "vieja": { nl: "oud", en: "old", de: "alt", fr: "vieille" },
+    "bueno": { nl: "goed", en: "good", de: "gut", fr: "bon" },
+    "buena": { nl: "goed", en: "good", de: "gut", fr: "bonne" },
+    "malo": { nl: "slecht", en: "bad", de: "schlecht", fr: "mauvais" },
+    "mala": { nl: "slecht", en: "bad", de: "schlecht", fr: "mauvaise" },
+    "caro": { nl: "duur", en: "expensive", de: "teuer", fr: "cher" },
+    "cara": { nl: "duur", en: "expensive", de: "teuer", fr: "chère" },
+    "barato": { nl: "goedkoop", en: "cheap", de: "billig", fr: "pas cher" },
+    "barata": { nl: "goedkoop", en: "cheap", de: "billig", fr: "pas cher" },
+    "rico": { nl: "lekker", en: "tasty", de: "lecker", fr: "délicieux" },
+    "rica": { nl: "lekker", en: "tasty", de: "lecker", fr: "délicieuse" },
+    "delicioso": { nl: "heerlijk", en: "delicious", de: "köstlich", fr: "délicieux" },
+    "deliciosa": { nl: "heerlijk", en: "delicious", de: "köstlich", fr: "délicieuse" },
+    "interesante": { nl: "interessant", en: "interesting", de: "interessant", fr: "intéressant" },
+    "aburrido": { nl: "saai", en: "boring", de: "langweilig", fr: "ennuyeux" },
+    "aburrida": { nl: "saai", en: "boring", de: "langweilig", fr: "ennuyeuse" },
+    "difícil": { nl: "moeilijk", en: "difficult", de: "schwierig", fr: "difficile" },
+    "fácil": { nl: "makkelijk", en: "easy", de: "einfach", fr: "facile" },
+    "contento": { nl: "blij", en: "happy", de: "glücklich", fr: "content" },
+    "contenta": { nl: "blij", en: "happy", de: "glücklich", fr: "contente" },
+    "feliz": { nl: "gelukkig", en: "happy", de: "glücklich", fr: "heureux" },
+    "nervioso": { nl: "nerveus", en: "nervous", de: "nervös", fr: "nerveux" },
+    "nerviosa": { nl: "nerveus", en: "nervous", de: "nervös", fr: "nerveuse" },
+    "ocupado": { nl: "bezig", en: "busy", de: "beschäftigt", fr: "occupé" },
+    "ocupada": { nl: "bezig", en: "busy", de: "beschäftigt", fr: "occupée" },
+    "lento": { nl: "langzaam", en: "slow", de: "langsam", fr: "lent" },
+    "lenta": { nl: "langzaam", en: "slow", de: "langsam", fr: "lente" },
+    "rápido": { nl: "snel", en: "fast", de: "schnell", fr: "rapide" },
+    "rápida": { nl: "snel", en: "fast", de: "schnell", fr: "rapide" },
+    "tranquilo": { nl: "rustig", en: "calm", de: "ruhig", fr: "tranquille" },
+    "tranquila": { nl: "rustig", en: "calm", de: "ruhig", fr: "tranquille" },
+    "triste": { nl: "verdrietig", en: "sad", de: "traurig", fr: "triste" },
+    "cansado": { nl: "moe", en: "tired", de: "müde", fr: "fatigué" },
+    "cansada": { nl: "moe", en: "tired", de: "müde", fr: "fatiguée" },
+    "enfermo": { nl: "ziek", en: "sick", de: "krank", fr: "malade" },
+    "enferma": { nl: "ziek", en: "sick", de: "krank", fr: "malade" },
+    "frío": { nl: "koud", en: "cold", de: "kalt", fr: "froid" },
+    "fría": { nl: "koud", en: "cold", de: "kalt", fr: "froide" },
+    "preocupado": { nl: "bezorgd", en: "worried", de: "besorgt", fr: "inquiet" },
+    "preocupada": { nl: "bezorgd", en: "worried", de: "besorgt", fr: "inquiète" },
+    "largo": { nl: "lang", en: "long", de: "lang", fr: "long" },
+    "larga": { nl: "lang", en: "long", de: "lang", fr: "longue" },
+    "corto": { nl: "kort", en: "short", de: "kurz", fr: "court" },
+    "corta": { nl: "kort", en: "short", de: "kurz", fr: "courte" },
+    "sano": { nl: "gezond", en: "healthy", de: "gesund", fr: "sain" },
+    "sana": { nl: "gezond", en: "healthy", de: "gesund", fr: "saine" }
   };
 
   // Zelfstandige naamwoorden met geslacht (m, f, n) voor Duits en Frans
   var LEX_RAW = {
-    "fin de semana": { de: ["n", "Wochenende"], fr: ["m", "week-end"] },
-    "semana": { de: ["f", "Woche"], fr: ["f", "semaine"] },
-    "trabajo": { de: ["f", "Arbeit"], fr: ["m", "travail"] },
-    "amigo": { de: ["m", "Freund"], fr: ["m", "ami"] },
-    "amiga": { de: ["f", "Freundin"], fr: ["f", "amie"] },
-    "cine": { de: ["n", "Kino"], fr: ["m", "cinéma"] },
-    "conejo": { de: ["n", "Kaninchen"], fr: ["m", "lapin"] },
-    "perro": { de: ["m", "Hund"], fr: ["m", "chien"] },
-    "gato": { de: ["f", "Katze"], fr: ["m", "chat"] },
-    "café": { de: ["m", "Kaffee"], fr: ["m", "café"] },
-    "hermano": { de: ["m", "Bruder"], fr: ["m", "frère"] },
-    "hermana": { de: ["f", "Schwester"], fr: ["f", "sœur"] },
-    "casa": { de: ["n", "Haus"], fr: ["f", "maison"] },
-    "hora": { de: ["f", "Uhr"], fr: ["f", "heure"] },
-    "tiempo": { de: ["f", "Zeit"], fr: ["m", "temps"] },
-    "día": { de: ["m", "Tag"], fr: ["m", "jour"] },
-    "noche": { de: ["f", "Nacht"], fr: ["f", "nuit"] },
-    "libro": { de: ["n", "Buch"], fr: ["m", "livre"] },
-    "coche": { de: ["n", "Auto"], fr: ["f", "voiture"] },
-    "mesa": { de: ["m", "Tisch"], fr: ["f", "table"] },
-    "ciudad": { de: ["f", "Stadt"], fr: ["f", "ville"] },
-    "madre": { de: ["f", "Mutter"], fr: ["f", "mère"] },
-    "padre": { de: ["m", "Vater"], fr: ["m", "père"] },
-    "familia": { de: ["f", "Familie"], fr: ["f", "famille"] },
-    "escuela": { de: ["f", "Schule"], fr: ["f", "école"] },
-    "música": { de: ["f", "Musik"], fr: ["f", "musique"] },
-    "película": { de: ["m", "Film"], fr: ["m", "film"] },
-    "viaje": { de: ["f", "Reise"], fr: ["m", "voyage"] },
-    "problema": { de: ["n", "Problem"], fr: ["m", "problème"] },
-    "dinero": { de: ["n", "Geld"], fr: ["m", "argent"] }
+    "fin de semana": { nl: ["n", "weekend"], de: ["n", "Wochenende"], fr: ["m", "week-end"] },
+    "semana": { nl: ["c", "week"], de: ["f", "Woche"], fr: ["f", "semaine"] },
+    "trabajo": { nl: ["n", "werk"], de: ["f", "Arbeit"], fr: ["m", "travail"] },
+    "amigo": { nl: ["c", "vriend"], de: ["m", "Freund"], fr: ["m", "ami"] },
+    "amiga": { nl: ["c", "vriendin"], de: ["f", "Freundin"], fr: ["f", "amie"] },
+    "cine": { nl: ["c", "bioscoop"], de: ["n", "Kino"], fr: ["m", "cinéma"] },
+    "conejo": { nl: ["n", "konijn"], de: ["n", "Kaninchen"], fr: ["m", "lapin"] },
+    "perro": { nl: ["c", "hond"], de: ["m", "Hund"], fr: ["m", "chien"] },
+    "gato": { nl: ["c", "kat"], de: ["f", "Katze"], fr: ["m", "chat"] },
+    "café": { nl: ["c", "koffie"], de: ["m", "Kaffee"], fr: ["m", "café"] },
+    "hermano": { nl: ["c", "broer"], de: ["m", "Bruder"], fr: ["m", "frère"] },
+    "hermana": { nl: ["c", "zus"], de: ["f", "Schwester"], fr: ["f", "sœur"] },
+    "casa": { nl: ["n", "huis"], de: ["n", "Haus"], fr: ["f", "maison"] },
+    "hora": { nl: ["n", "uur"], de: ["f", "Uhr"], fr: ["f", "heure"] },
+    "tiempo": { nl: ["c", "tijd"], de: ["f", "Zeit"], fr: ["m", "temps"] },
+    "día": { nl: ["c", "dag"], de: ["m", "Tag"], fr: ["m", "jour"] },
+    "noche": { nl: ["c", "nacht"], de: ["f", "Nacht"], fr: ["f", "nuit"] },
+    "libro": { nl: ["n", "boek"], de: ["n", "Buch"], fr: ["m", "livre"] },
+    "coche": { nl: ["c", "auto"], de: ["n", "Auto"], fr: ["f", "voiture"] },
+    "mesa": { nl: ["c", "tafel"], de: ["m", "Tisch"], fr: ["f", "table"] },
+    "ciudad": { nl: ["c", "stad"], de: ["f", "Stadt"], fr: ["f", "ville"] },
+    "madre": { nl: ["c", "moeder"], de: ["f", "Mutter"], fr: ["f", "mère"] },
+    "padre": { nl: ["c", "vader"], de: ["m", "Vater"], fr: ["m", "père"] },
+    "familia": { nl: ["c", "familie"], de: ["f", "Familie"], fr: ["f", "famille"] },
+    "escuela": { nl: ["c", "school"], de: ["f", "Schule"], fr: ["f", "école"] },
+    "música": { nl: ["c", "muziek"], de: ["f", "Musik"], fr: ["f", "musique"] },
+    "película": { nl: ["c", "film"], de: ["m", "Film"], fr: ["m", "film"] },
+    "viaje": { nl: ["c", "reis"], de: ["f", "Reise"], fr: ["m", "voyage"] },
+    "problema": { nl: ["n", "probleem"], de: ["n", "Problem"], fr: ["m", "problème"] },
+    "dinero": { nl: ["n", "geld"], de: ["n", "Geld"], fr: ["m", "argent"] }
   };
   var LEXF = {};
   Object.keys(LEX_RAW).forEach(function (k) { LEXF[fold(k)] = LEX_RAW[k]; });
@@ -264,6 +382,48 @@ var GRAM = (function () {
 
   // ---- Werkwoorden in de andere talen (Spaans lemma -> vorm per taal)
   var VERBS = {
+    "ayudar": { en: { base: "help", past: "helped" }, de: { inf: "helfen", aux: "haben", pp: "geholfen", prt: ["half", "halfst", "half", "halfen", "halft", "halfen"], pres: ["helfe", "hilfst", "hilft", "helfen", "helft", "helfen"] }, fr: { inf: "aider", aux: "avoir", pp: "aidé", pres: ["aide", "aides", "aide", "aidons", "aidez", "aident"] } },
+    "esperar": { en: { base: "hope", past: "hoped" }, de: { inf: "hoffen", aux: "haben", pp: "gehofft" }, fr: { inf: "espérer", aux: "avoir", pp: "espéré", pres: ["espère", "espères", "espère", "espérons", "espérez", "espèrent"] } },
+    "preguntar": { en: { base: "ask", past: "asked" }, de: { inf: "fragen", aux: "haben", pp: "gefragt" }, fr: { inf: "demander", aux: "avoir", pp: "demandé", pres: ["demande", "demandes", "demande", "demandons", "demandez", "demandent"] } },
+    "contestar": { en: { base: "answer", past: "answered" }, de: { inf: "antworten", aux: "haben", pp: "geantwortet" }, fr: { inf: "répondre", aux: "avoir", pp: "répondu", pres: ["réponds", "réponds", "répond", "répondons", "répondez", "répondent"] } },
+    "terminar": { en: { base: "finish", past: "finished" }, de: { inf: "beenden", aux: "haben", pp: "beendet" }, fr: { inf: "finir", aux: "avoir", pp: "fini", pres: ["finis", "finis", "finit", "finissons", "finissez", "finissent"] } },
+    "buscar": { en: { base: "look for", past: "looked for", s3: "looks for" }, de: { inf: "suchen", aux: "haben", pp: "gesucht" }, fr: { inf: "chercher", aux: "avoir", pp: "cherché", pres: ["cherche", "cherches", "cherche", "cherchons", "cherchez", "cherchent"] } },
+    "encontrar": { en: { base: "find", past: "found" }, de: { inf: "finden", aux: "haben", pp: "gefunden", prt: ["fand", "fandest", "fand", "fanden", "fandet", "fanden"], pres: ["finde", "findest", "findet", "finden", "findet", "finden"] }, fr: { inf: "trouver", aux: "avoir", pp: "trouvé", pres: ["trouve", "trouves", "trouve", "trouvons", "trouvez", "trouvent"] } },
+    "olvidar": { en: { base: "forget", past: "forgot" }, de: { inf: "vergessen", aux: "haben", pp: "vergessen", prt: ["vergaß", "vergaßest", "vergaß", "vergaßen", "vergaßt", "vergaßen"], pres: ["vergesse", "vergisst", "vergisst", "vergessen", "vergesst", "vergessen"] }, fr: { inf: "oublier", aux: "avoir", pp: "oublié", pres: ["oublie", "oublies", "oublie", "oublions", "oubliez", "oublient"] } },
+    "perder": { en: { base: "lose", past: "lost" }, de: { inf: "verlieren", aux: "haben", pp: "verloren", prt: ["verlor", "verlorst", "verlor", "verloren", "verlort", "verloren"], pres: ["verliere", "verlierst", "verliert", "verlieren", "verliert", "verlieren"] }, fr: { inf: "perdre", aux: "avoir", pp: "perdu", pres: ["perds", "perds", "perd", "perdons", "perdez", "perdent"] } },
+    "salir": { en: { base: "leave", past: "left" }, de: { inf: "ausgehen", aux: "sein", pp: "ausgegangen", pres: ["gehe aus", "gehst aus", "geht aus", "gehen aus", "geht aus", "gehen aus"] }, fr: { inf: "sortir", aux: "être", pp: "sorti", pres: ["sors", "sors", "sort", "sortons", "sortez", "sortent"] } },
+    "abrir": { en: { base: "open", past: "opened" }, de: { inf: "öffnen", aux: "haben", pp: "geöffnet" }, fr: { inf: "ouvrir", aux: "avoir", pp: "ouvert", pres: ["ouvre", "ouvres", "ouvre", "ouvrons", "ouvrez", "ouvrent"] } },
+    "cerrar": { en: { base: "close", past: "closed" }, de: { inf: "schließen", aux: "haben", pp: "geschlossen", prt: ["schloss", "schlossest", "schloss", "schlossen", "schlosst", "schlossen"], pres: ["schließe", "schließt", "schließt", "schließen", "schließt", "schließen"] }, fr: { inf: "fermer", aux: "avoir", pp: "fermé", pres: ["ferme", "fermes", "ferme", "fermons", "fermez", "ferment"] } },
+    "seguir": { en: { base: "follow", past: "followed" }, de: { inf: "folgen", aux: "haben", pp: "gefolgt" }, fr: { inf: "suivre", aux: "avoir", pp: "suivi", pres: ["suis", "suis", "suit", "suivons", "suivez", "suivent"] } },
+    "pagar": { en: { base: "pay", past: "paid" }, de: { inf: "bezahlen", aux: "haben", pp: "bezahlt" }, fr: { inf: "payer", aux: "avoir", pp: "payé", pres: ["paie", "paies", "paie", "payons", "payez", "paient"] } },
+    "costar": { en: { base: "cost", past: "cost" }, de: { inf: "kosten", aux: "haben", pp: "gekostet" }, fr: { inf: "coûter", aux: "avoir", pp: "coûté", pres: ["coûte", "coûtes", "coûte", "coûtons", "coûtez", "coûtent"] } },
+    "usar": { en: { base: "use", past: "used" }, de: { inf: "benutzen", aux: "haben", pp: "benutzt" }, fr: { inf: "utiliser", aux: "avoir", pp: "utilisé", pres: ["utilise", "utilises", "utilise", "utilisons", "utilisez", "utilisent"] } },
+    "visitar": { en: { base: "visit", past: "visited" }, de: { inf: "besuchen", aux: "haben", pp: "besucht" }, fr: { inf: "visiter", aux: "avoir", pp: "visité", pres: ["visite", "visites", "visite", "visitons", "visitez", "visitent"] } },
+    "viajar": { en: { base: "travel", past: "traveled" }, de: { inf: "reisen", aux: "sein", pp: "gereist" }, fr: { inf: "voyager", aux: "avoir", pp: "voyagé", pres: ["voyage", "voyages", "voyage", "voyageons", "voyagez", "voyagent"] } },
+    "preparar": { en: { base: "prepare", past: "prepared" }, de: { inf: "vorbereiten", aux: "haben", pp: "vorbereitet", pres: ["bereite vor", "bereitest vor", "bereitet vor", "bereiten vor", "bereitet vor", "bereiten vor"] }, fr: { inf: "préparer", aux: "avoir", pp: "préparé", pres: ["prépare", "prépares", "prépare", "préparons", "préparez", "préparent"] } },
+    "limpiar": { en: { base: "clean", past: "cleaned" }, de: { inf: "putzen", aux: "haben", pp: "geputzt" }, fr: { inf: "nettoyer", aux: "avoir", pp: "nettoyé", pres: ["nettoie", "nettoies", "nettoie", "nettoyons", "nettoyez", "nettoient"] } },
+    "pensar": { en: { base: "think", past: "thought" }, de: { inf: "denken", aux: "haben", pp: "gedacht", prt: ["dachte", "dachtest", "dachte", "dachten", "dachtet", "dachten"] }, fr: { inf: "penser", aux: "avoir", pp: "pensé", pres: ["pense", "penses", "pense", "pensons", "pensez", "pensent"] } },
+    "sentir": { en: { base: "feel", past: "felt" }, de: { inf: "fühlen", aux: "haben", pp: "gefühlt" }, fr: { inf: "sentir", aux: "avoir", pp: "senti", pres: ["sens", "sens", "sent", "sentons", "sentez", "sentent"] } },
+    "creer": { en: { base: "believe", past: "believed" }, de: { inf: "glauben", aux: "haben", pp: "geglaubt" }, fr: { inf: "croire", aux: "avoir", pp: "cru", pres: ["crois", "crois", "croit", "croyons", "croyez", "croient"] } },
+    "conocer": { en: { base: "know", past: "knew" }, de: { inf: "kennen", aux: "haben", pp: "gekannt", prt: ["kannte", "kanntest", "kannte", "kannten", "kanntet", "kannten"], pres: ["kenne", "kennst", "kennt", "kennen", "kennt", "kennen"] }, fr: { inf: "connaître", aux: "avoir", pp: "connu", pres: ["connais", "connais", "connaît", "connaissons", "connaissez", "connaissent"] } },
+    "ganar": { en: { base: "win", past: "won" }, de: { inf: "gewinnen", aux: "haben", pp: "gewonnen", prt: ["gewann", "gewannst", "gewann", "gewannen", "gewannt", "gewannen"], pres: ["gewinne", "gewinnst", "gewinnt", "gewinnen", "gewinnt", "gewinnen"] }, fr: { inf: "gagner", aux: "avoir", pp: "gagné", pres: ["gagne", "gagnes", "gagne", "gagnons", "gagnez", "gagnent"] } },
+    "poner": { en: { base: "put", past: "put" }, de: { inf: "legen", aux: "haben", pp: "gelegt" }, fr: { inf: "mettre", aux: "avoir", pp: "mis", pres: ["mets", "mets", "met", "mettons", "mettez", "mettent"] } },
+    "traer": { en: { base: "bring", past: "brought" }, de: { inf: "bringen", aux: "haben", pp: "gebracht", prt: ["brachte", "brachtest", "brachte", "brachten", "brachtet", "brachten"], pres: ["bringe", "bringst", "bringt", "bringen", "bringt", "bringen"] }, fr: { inf: "apporter", aux: "avoir", pp: "apporté", pres: ["apporte", "apportes", "apporte", "apportons", "apportez", "apportent"] } },
+    "conducir": { en: { base: "drive", past: "drove" }, de: { inf: "fahren", aux: "haben", pp: "gefahren", prt: ["fuhr", "fuhrst", "fuhr", "fuhren", "fuhrt", "fuhren"], pres: ["fahre", "fährst", "fährt", "fahren", "fahrt", "fahren"] }, fr: { inf: "conduire", aux: "avoir", pp: "conduit", pres: ["conduis", "conduis", "conduit", "conduisons", "conduisez", "conduisent"] } },
+    "aprender": { en: { base: "learn", past: "learned" }, de: { inf: "lernen", aux: "haben", pp: "gelernt" }, fr: { inf: "apprendre", aux: "avoir", pp: "appris", pres: ["apprends", "apprends", "apprend", "apprenons", "apprenez", "apprennent"] } },
+    "comprender": { en: { base: "understand", past: "understood" }, de: { inf: "verstehen", aux: "haben", pp: "verstanden", prt: ["verstand", "verstandest", "verstand", "verstanden", "verstandet", "verstanden"], pres: ["verstehe", "verstehst", "versteht", "verstehen", "versteht", "verstehen"] }, fr: { inf: "comprendre", aux: "avoir", pp: "compris", pres: ["comprends", "comprends", "comprend", "comprenons", "comprenez", "comprennent"] } },
+    "llevar": { en: { base: "carry", past: "carried" }, de: { inf: "tragen", aux: "haben", pp: "getragen", prt: ["trug", "trugst", "trug", "trugen", "trugt", "trugen"], pres: ["trage", "trägst", "trägt", "tragen", "tragt", "tragen"] }, fr: { inf: "porter", aux: "avoir", pp: "porté", pres: ["porte", "portes", "porte", "portons", "portez", "portent"] } },
+    "romper": { en: { base: "break", past: "broke" }, de: { inf: "brechen", aux: "haben", pp: "gebrochen", prt: ["brach", "brachst", "brach", "brachen", "bracht", "brachen"], pres: ["breche", "brichst", "bricht", "brechen", "brecht", "brechen"] }, fr: { inf: "casser", aux: "avoir", pp: "cassé", pres: ["casse", "casses", "casse", "cassons", "cassez", "cassent"] } },
+    "llamar": { en: { base: "call", past: "called" }, de: { inf: "anrufen", aux: "haben", pp: "angerufen", pres: ["rufe an", "rufst an", "ruft an", "rufen an", "ruft an", "rufen an"] }, fr: { inf: "appeler", aux: "avoir", pp: "appelé", pres: ["appelle", "appelles", "appelle", "appelons", "appelez", "appellent"] } },
+    "pedir": { en: { base: "order", past: "ordered" }, de: { inf: "bestellen", aux: "haben", pp: "bestellt" }, fr: { inf: "commander", aux: "avoir", pp: "commandé", pres: ["commande", "commandes", "commande", "commandons", "commandez", "commandent"] } },
+    "dejar": { en: { base: "let", past: "let" }, de: { inf: "lassen", aux: "haben", pp: "gelassen", prt: ["ließ", "ließest", "ließ", "ließen", "ließt", "ließen"], pres: ["lasse", "lässt", "lässt", "lassen", "lasst", "lassen"] }, fr: { inf: "laisser", aux: "avoir", pp: "laissé", pres: ["laisse", "laisses", "laisse", "laissons", "laissez", "laissent"] } },
+    "nadar": { en: { base: "swim", past: "swam" }, de: { inf: "schwimmen", aux: "sein", pp: "geschwommen", prt: ["schwamm", "schwammst", "schwamm", "schwammen", "schwammt", "schwammen"], pres: ["schwimme", "schwimmst", "schwimmt", "schwimmen", "schwimmt", "schwimmen"] }, fr: { inf: "nager", aux: "avoir", pp: "nagé", pres: ["nage", "nages", "nage", "nageons", "nagez", "nagent"] } },
+    "caminar": { en: { base: "walk", past: "walked" }, de: { inf: "laufen", aux: "sein", pp: "gelaufen", prt: ["lief", "liefst", "lief", "liefen", "lieft", "liefen"], pres: ["laufe", "läufst", "läuft", "laufen", "lauft", "laufen"] }, fr: { inf: "marcher", aux: "avoir", pp: "marché", pres: ["marche", "marches", "marche", "marchons", "marchez", "marchent"] } },
+    "dibujar": { en: { base: "draw", past: "drew" }, de: { inf: "zeichnen", aux: "haben", pp: "gezeichnet" }, fr: { inf: "dessiner", aux: "avoir", pp: "dessiné", pres: ["dessine", "dessines", "dessine", "dessinons", "dessinez", "dessinent"] } },
+    "bailar": { en: { base: "dance", past: "danced" }, de: { inf: "tanzen", aux: "haben", pp: "getanzt" }, fr: { inf: "danser", aux: "avoir", pp: "dansé", pres: ["danse", "danses", "danse", "dansons", "dansez", "dansent"] } },
+    "cantar": { en: { base: "sing", past: "sang" }, de: { inf: "singen", aux: "haben", pp: "gesungen", prt: ["sang", "sangst", "sang", "sangen", "sangt", "sangen"], pres: ["singe", "singst", "singt", "singen", "singt", "singen"] }, fr: { inf: "chanter", aux: "avoir", pp: "chanté", pres: ["chante", "chantes", "chante", "chantons", "chantez", "chantent"] } },
+    "entrar": { en: { base: "enter", past: "entered" }, de: { inf: "eintreten", aux: "sein", pp: "eingetreten", pres: ["trete ein", "trittst ein", "tritt ein", "treten ein", "tretet ein", "treten ein"] }, fr: { inf: "entrer", aux: "être", pp: "entré", pres: ["entre", "entres", "entre", "entrons", "entrez", "entrent"] } },
+    "tomar": { en: { base: "take", past: "took" }, de: { inf: "nehmen", aux: "haben", pp: "genommen", prt: ["nahm", "nahmst", "nahm", "nahmen", "nahmt", "nahmen"], pres: ["nehme", "nimmst", "nimmt", "nehmen", "nehmt", "nehmen"] }, fr: { inf: "prendre", aux: "avoir", pp: "pris", pres: ["prends", "prends", "prend", "prenons", "prenez", "prennent"] } },
     "ser": { en: { be: true }, de: { inf: "sein", aux: "sein", pp: "gewesen", prt: ["war", "warst", "war", "waren", "wart", "waren"], pres: ["bin", "bist", "ist", "sind", "seid", "sind"] },
       fr: { inf: "être", aux: "avoir", pp: "été", pres: ["suis", "es", "est", "sommes", "êtes", "sont"] } },
     "estar": { en: { be: true }, de: { inf: "sein", aux: "sein", pp: "gewesen", prt: ["war", "warst", "war", "waren", "wart", "waren"], pres: ["bin", "bist", "ist", "sind", "seid", "sind"] },
@@ -482,6 +642,11 @@ var GRAM = (function () {
         out.push((pr ? pr + " " : "") + dayName(lang, toks[i + 1].f)); i += 2; continue;
       }
       if (lang === "nl" && (t.w === "tu" || t.w === "tus")) { out.push("je"); i++; continue; }
+      // Nederlands lidwoord: de of het volgt het geslacht uit de woordenlijst (el libro = het boek)
+      if (lang === "nl" && (t.f === "el" || t.f === "la" || t.f === "los" || t.f === "las") && i + 1 < toks.length) {
+        var nlG = (t.f === "el" || t.f === "la") ? gen(toks[i + 1].f, "nl") : null;
+        out.push(nlG === "n" ? "het" : "de"); i++; continue;
+      }
       if (lang === "en" && t.f === "mucho") {
         var nx0 = i + 1 < toks.length ? wordFn(toks[i + 1].w) : null;
         out.push(nx0 ? "a lot of" : "a lot"); i++; continue;
@@ -704,9 +869,31 @@ var GRAM = (function () {
     return { text: cap(out), parts: [] };
   }
 
+  // Weer: "hace frío" / "hace mucho calor" is één uitdrukking ("het is erg koud"), geen werkwoord met een bijvoeglijk naamwoord
+  var WX = {
+    frío: { nl: "koud", en: "cold", de: "kalt", fr: "froid" },
+    calor: { nl: "warm", en: "hot", de: "warm", fr: "chaud" }
+  };
+  var WX_INT = {
+    mucho: { nl: "erg", en: "very", de: "sehr", fr: "très" },
+    muy: { nl: "erg", en: "very", de: "sehr", fr: "très" },
+    bastante: { nl: "nogal", en: "quite", de: "ziemlich", fr: "assez" }
+  };
+  function weather(text, lang) {
+    var m = /^\s*hace (?:(mucho|muy|bastante) )?(frío|calor)\s*[.!?¡]*\s*$/i.exec(text);
+    if (!m) return null;
+    var w = WX[m[2].toLowerCase()][lang];
+    var it = m[1] ? WX_INT[m[1].toLowerCase()][lang] : null;
+    var core = (it ? it + " " : "") + w;
+    var out = { nl: "Het is " + core + ".", en: "It is " + core + ".", de: "Es ist " + core + ".", fr: "Il fait " + core + "." }[lang];
+    return out ? { text: out, parts: null, missing: [] } : null;
+  }
+
   function translate(text, wordFn, lang) {
     lang = lang || "nl";
     try {
+      var wx = weather(text, lang);
+      if (wx) return wx;
       var gu = gustar(lang, text, wordFn);
       if (gu) return gu;
       var P = parse(text);

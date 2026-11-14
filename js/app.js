@@ -1136,9 +1136,10 @@
     var np = function (l, det, role) { return known ? GRAM.np(l, det, x, role, null) : null; };
     var capDE = function (s) { return s.charAt(0).toUpperCase() + s.slice(1); };
     var nlN = topicGloss("nl", x), enBare = topicGloss("en", x), enN = "the " + enBare;
-    // Het Nederlandse geslacht staat niet in de tabel (het Duitse is daarvoor geen betrouwbare vervanging),
-    // dus de Nederlandse zinnen verwijzen met "dat" in plaats van met een lidwoord dat fout kan zijn.
-    var nlNoun = "dat";
+    // Nederlands geslacht uit de woordtabel: de/het. Staat het woord er niet in, dan "dat" zonder lidwoord.
+    var gN = (typeof GRAM !== "undefined") ? GRAM.gen(x, "nl") : null;
+    var nlNoun = gN === "n" ? "het " + nlN : gN === "c" ? "de " + nlN : "dat";
+    var nlPron = gN === "n" ? "dat" : gN === "c" ? "die" : "dat";
     var pDE = { m: "er", f: "sie", n: "es" }[g], pFR = gfr === "f" ? "elle" : "il";
     var deAcc = np("de", dSpec, "acc"), frAcc = np("fr", dSpec, "acc");
     var deNom = np("de", "el", "nom");
@@ -1150,7 +1151,7 @@
             fr: "Super ! " + (frAcc ? "J'aime " + frAcc : "Je l'aime bien") + "." } },
         questions: [
           { es: "¿Cómo se llama " + art + " " + x + "?",
-            m: { nl: "Hoe heet " + nlNoun + "?", en: "What is its name?",
+            m: { nl: "Hoe heet " + nlPron + "?", en: "What is its name?",
               de: "Wie heißt " + (known ? pDE : "es") + "?", fr: "Comment s'appelle-t-" + (known ? pFR : "il") + " ?" } },
           { es: "¿Cómo es " + art + " " + x + "?",
             m: { nl: "Hoe is " + nlNoun + "?", en: "What is " + enN + " like?",
@@ -1191,7 +1192,7 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "46";
+  var APP_VERSION = "52";
   var WH_LOG = [];
   function whLog(msg) {
     var d = new Date();
