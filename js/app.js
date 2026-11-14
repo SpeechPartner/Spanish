@@ -30,8 +30,11 @@
 
   // ---------- Toestand ----------
   // Eerste keer openen: start op Info (uitleg). Daarna altijd op de hoofdpagina (Zinnen).
-  var firstVisit = !store.get("bezocht", false);
-  store.set("bezocht", true);
+  // Het startscherm van de telefoon (losse app) heeft een eigen 'eerste keer', los van de browser (Safari).
+  var inApp = (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true;
+  var visitKey = inApp ? "bezocht_app" : "bezocht_web";
+  var firstVisit = !store.get(visitKey, false);
+  store.set(visitKey, true);
   var S = {
     tab: firstVisit ? "info" : "zinnen", cat: "Gesprek openen", stuck: 0, build: null,
     rKind: "vraag", rOpen: null, rSub: null, rAns: {},
@@ -194,10 +197,23 @@
     render();
     window.scrollTo(0, 0);
   }
+  // Vier vaste tabbladen staan op een eigen plek: Zinnen links, Vastlopen boven, Gesprek rechts,
+  // Info rechtsonder (boven de onderste balk). De rest blijft in de onderste balk.
+  var DOCK_POS = { zinnen: "dock-l", vastlopen: "dock-t", gesprek: "dock-r", info: "dock-br" };
   function renderNav() {
     var nav = document.getElementById("nav");
+    var dock = document.getElementById("dock");
     nav.innerHTML = "";
+    if (dock) dock.innerHTML = "";
     TABS.forEach(function (t) {
+      if (DOCK_POS[t[0]]) {
+        if (dock) {
+          var d = btn(T(t[1]), "dock-btn " + DOCK_POS[t[0]] + (S.tab === t[0] ? " active" : ""), function () { go(t[0]); });
+          d.setAttribute("aria-current", S.tab === t[0] ? "page" : "false");
+          dock.appendChild(d);
+        }
+        return;
+      }
       nav.appendChild(btn(T(t[1]), S.tab === t[0] ? "active small" : "small", function () { go(t[0]); }));
     });
   }
@@ -1214,7 +1230,7 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "56";
+  var APP_VERSION = "57";
   var WH_LOG = [];
   function whLog(msg) {
     var d = new Date();
@@ -1662,14 +1678,21 @@
         m("Snelheid van voorlezen: stel het tempo in.", "Reading speed: set the tempo.", "Vorlesegeschwindigkeit: stelle das Tempo ein.", "Vitesse de lecture : règle le rythme."),
         m("Begrepen items resetten en Voortgang resetten wissen je voortgang.", "Reset understood items and Reset progress clear your progress.", "Verstandene Elemente zurücksetzen und Fortschritt zurücksetzen löschen deinen Fortschritt.", "Réinitialiser les éléments compris et Réinitialiser la progression effacent ta progression."),
         m("De onderste balk verdwijnt na een paar seconden. Veeg omhoog vanaf de onderkant om hem terug te halen.", "The bottom bar disappears after a few seconds. Swipe up from the bottom to bring it back.", "Die untere Leiste verschwindet nach ein paar Sekunden. Wische vom unteren Rand nach oben, um sie zurückzuholen.", "La barre du bas disparaît après quelques secondes. Glisse vers le haut depuis le bas pour la faire revenir."),
-        m("De uil in de koptekst reageert op het gesprek. Tik erop voor een sprong.", "The owl in the header reacts to the conversation. Tap it for a hop.", "Die Eule im Kopfbereich reagiert auf das Gespräch. Tippe darauf für einen Hüpfer.", "La chouette dans l'en-tête réagit à la conversation. Touche-la pour un petit saut.")] };
+        m("De uil in de koptekst reageert op het gesprek. Tik erop voor een sprong.", "The owl in the header reacts to the conversation. Tap it for a hop.", "Die Eule im Kopfbereich reagiert auf das Gespräch. Tippe darauf für einen Hüpfer.", "La chouette dans l'en-tête réagit à la conversation. Touche-la pour un petit saut."),
+        m("Zinnen (links), Vastlopen (boven), Gesprek (rechts) en Info (rechtsonder) staan altijd op dezelfde plek.", "Sentences (left), Stuck (top), Conversation (right) and Info (bottom right) always stay in the same place.", "Sätze (links), Hängen (oben), Gespräch (rechts) und Info (rechts unten) bleiben immer an derselben Stelle.", "Phrases (à gauche), Bloqué (en haut), Conversation (à droite) et Info (en bas à droite) restent toujours à la même place.")] };
   function viewInfo() {
     var w = el("div");
-    var head = el("div", "card big");
-    head.appendChild(el("div", "big-es", "Speech Partner.Spanish"));
-    head.appendChild(el("div", "nl", T("Versie") + " " + APP_VERSION + " · " + T("Gemaakt door Abel, met Claude")));
-    w.appendChild(head);
-    // Overzicht per tabblad: wat het is en wat je ermee kunt
+    // 1. Buiten de losse app (bijv. in Safari): eerst de stappen om de pagina op het beginscherm te zetten.
+    //    speels.js vult dit kaartje; op het beginscherm zelf blijft het leeg.
+    var slot = el("div");
+    slot.id = "installSlot";
+    w.appendChild(slot);
+    // 2. Eerst de 'Wat is'-kaart, daarna het overzicht per tabblad en de rest van de informatie
+    var what = INFO_SECTIONS[0];
+    var wc = el("div", "card");
+    wc.appendChild(el("div", "sec-title", L(what.t)));
+    wc.appendChild(el("div", "", L(what.b)));
+    w.appendChild(wc);
     w.appendChild(el("h2", "", T("Tabbladen")));
     TAB_GUIDE.forEach(function (tb) {
       var c = el("div", "card");
@@ -1688,17 +1711,18 @@
     EXTRA_GUIDE.k.forEach(function (k) { exl.appendChild(el("li", "", L(k))); });
     ex.appendChild(exl);
     w.appendChild(ex);
-    // De algemene secties (oude tabbladen-alinea is vervangen door het overzicht hierboven)
-    INFO_SECTIONS.filter(function (sec) { return sec.t.nl.indexOf("Zo gebruik je de tabbladen") !== 0; }).forEach(function (sec) {
+    // De overige secties (de oude tabbladen-alinea is vervangen door het overzicht hierboven)
+    INFO_SECTIONS.slice(1).filter(function (sec) { return sec.t.nl.indexOf("Zo gebruik je de tabbladen") !== 0; }).forEach(function (sec) {
       var c = el("div", "card");
       c.appendChild(el("div", "sec-title", L(sec.t)));
       c.appendChild(el("div", "", L(sec.b)));
       w.appendChild(c);
     });
-    // Plaats voor het installatiekaartje (vult speels.js), onderaan zodat het de uitleg niet onderbreekt
-    var slot = el("div");
-    slot.id = "installSlot";
-    w.appendChild(slot);
+    // 3. Onderaan: titel en versie
+    var head = el("div", "card");
+    head.appendChild(el("div", "sec-title", "Speech Partner.Spanish"));
+    head.appendChild(el("div", "nl", T("Versie") + " " + APP_VERSION + " · " + T("Gemaakt door Abel, met Claude")));
+    w.appendChild(head);
     return w;
   }
 

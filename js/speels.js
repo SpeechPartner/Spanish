@@ -39,13 +39,17 @@
   window.addEventListener("appinstalled", function () { deferredPrompt = null; fillInstall(); });
   var INSTALL_TXT = {
     nl: { title: "Zet de app op je telefoon", android: "Installeer de app, dan staat hij als eigen app op je beginscherm.", button: "Installeer de app",
-          ios: ["Open deze pagina in Safari.", "Tik onderin op het deelicoon.", "Kies 'Zet op beginscherm'."] },
+          ios: ["Open deze pagina in Safari.", "Tik onderin op het deelicoon.", "Kies 'Zet op beginscherm'."],
+          android: ["Open deze pagina in Chrome.", "Tik rechtsboven op de drie puntjes.", "Kies 'App installeren' of 'Toevoegen aan startscherm'."] },
     en: { title: "Put the app on your phone", android: "Install the app so it sits on your home screen like its own app.", button: "Install the app",
-          ios: ["Open this page in Safari.", "Tap the share icon at the bottom.", "Choose 'Add to Home Screen'."] },
+          ios: ["Open this page in Safari.", "Tap the share icon at the bottom.", "Choose 'Add to Home Screen'."],
+          android: ["Open this page in Chrome.", "Tap the three dots at the top right.", "Choose 'Install app' or 'Add to Home screen'."] },
     de: { title: "App auf dein Telefon legen", android: "Installiere die App, damit sie wie eine eigene App auf dem Startbildschirm liegt.", button: "App installieren",
-          ios: ["Öffne diese Seite in Safari.", "Tippe unten auf das Teilen-Symbol.", "Wähle 'Zum Home-Bildschirm'."] },
+          ios: ["Öffne diese Seite in Safari.", "Tippe unten auf das Teilen-Symbol.", "Wähle 'Zum Home-Bildschirm'."],
+          android: ["Öffne diese Seite in Chrome.", "Tippe oben rechts auf die drei Punkte.", "Wähle 'App installieren' oder 'Zum Startbildschirm hinzufügen'."] },
     fr: { title: "Installer l'application sur ton téléphone", android: "Installe l'application pour qu'elle apparaisse sur ton écran d'accueil comme une vraie application.", button: "Installer l'application",
-          ios: ["Ouvre cette page dans Safari.", "Touche l'icône de partage en bas.", "Choisis « Sur l'écran d'accueil »."] }
+          ios: ["Ouvre cette page dans Safari.", "Touche l'icône de partage en bas.", "Choisis « Sur l'écran d'accueil »."],
+          android: ["Ouvre cette page dans Chrome.", "Touche les trois points en haut à droite.", "Choisis « Installer l'application » ou « Ajouter à l'écran d'accueil »."] }
   };
   function isStandalone() { return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true; }
   function isIOSDevice() { return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1); }
@@ -67,14 +71,30 @@
         ev.userChoice.then(function () { slot.innerHTML = ""; fillInstall(); });
       });
       card.appendChild(b);
-    } else if (isIOSDevice()) {
+    } else if (isIOSDevice() || /Android/i.test(navigator.userAgent)) {
+      var steps = isIOSDevice() ? t.ios : t.android;
       var ol = document.createElement("ol"); ol.className = "guide-list";
-      t.ios.forEach(function (s0) { var li = document.createElement("li"); li.textContent = s0; ol.appendChild(li); });
+      steps.forEach(function (s0) { var li = document.createElement("li"); li.textContent = s0; ol.appendChild(li); });
       card.appendChild(ol);
     } else {
       return; // computer zonder installatieaanbod: niets tonen
     }
     slot.appendChild(card);
+  }
+
+  // Hoogte van koptekst en onderste balk, zodat de vaste tabbladen en de ruimte onderaan kloppen
+  var header = document.querySelector("header.top");
+  var root = document.documentElement;
+  function measure() {
+    if (header) root.style.setProperty("--hh", header.offsetHeight + "px");
+    root.style.setProperty("--navh", nav.offsetHeight + "px");
+  }
+  measure();
+  window.addEventListener("resize", measure);
+  if (window.ResizeObserver) {
+    var ro = new ResizeObserver(measure);
+    if (header) ro.observe(header);
+    ro.observe(nav);
   }
 
   var moodTimer = null;
