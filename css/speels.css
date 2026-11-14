@@ -106,7 +106,7 @@ body.speels.th-ruimte[data-lang] .btn.primary, body.speels.th-ruimte[data-lang] 
 body.speels.th-ruimte[data-lang] .nl, body.speels.th-ruimte[data-lang] .hint, body.speels.th-ruimte[data-lang] .stat, body.speels.th-ruimte[data-lang] .explain { color: #c9c3ff; }
 body.speels.th-ruimte[data-lang] .transbar input, body.speels.th-ruimte[data-lang] textarea.big-input { color: #f4f1ff; }
 body.speels.th-ruimte[data-lang] .transbar input::placeholder, body.speels.th-ruimte[data-lang] textarea.big-input::placeholder { color: #9d97d6; }
-body.speels.th-ijs[data-lang] header.top::after, body.speels.th-jungle[data-lang] header.top::after, body.speels.th-ruimte[data-lang] header.top::after { display: none; }
+body.speels.th-ijs[data-lang] header.top::after, body.speels.th-jungle[data-lang] header.top::after, body.speels.th-ruimte[data-lang] header.top::after, body.speels.th-nacht[data-lang] header.top::after { display: none; }
 body.speels .iconbtn { color: var(--ink-k); }
 
 /* ---------- Chatbellen: gesprekspartner links, jouw vervolgopties rechts ---------- */
@@ -147,3 +147,31 @@ body.speels .guide-list li { margin: 4px 0; line-height: 1.45; }
 body.speels .guide-list li::marker { color: var(--p); font-weight: 900; }
 body.speels .install-card { margin-top: 18px; }
 body.speels .install-card .btn { margin-top: 10px; }
+
+/* ---------- Nachtlampje: donker thema met neon-paarse lichtbuizen boven aan de app ---------- */
+body.speels.th-nacht[data-lang] {
+  --card:#1a1638; --ink-k:#f1ebff; --ink-soft:#bdb3e6; --paper:#07051a; --dots:rgba(180,140,255,.14);
+  --head:#140f2e; --head-ink:#f1ebff; --p:#b26bff; --s:#ff7ad9; --sInk:#1c1030; --hi:#2a2150; --t2:#241c48;
+  --hard: 4px 4px 0 #000;
+}
+body.speels.th-nacht[data-lang] .card.panel { color: #f4f1ff; }
+body.speels.th-nacht[data-lang] .btn { color: #f4f1ff; }
+body.speels.th-nacht[data-lang] .btn.primary, body.speels.th-nacht[data-lang] .btn.active, body.speels.th-nacht[data-lang] .speak { color: #1c1410; }
+body.speels.th-nacht[data-lang] .nl, body.speels.th-nacht[data-lang] .hint, body.speels.th-nacht[data-lang] .stat, body.speels.th-nacht[data-lang] .explain { color: #c9c3ff; }
+body.speels.th-nacht[data-lang] .transbar input, body.speels.th-nacht[data-lang] textarea.big-input { color: #f4f1ff; }
+body.speels.th-nacht[data-lang] .transbar input::placeholder, body.speels.th-nacht[data-lang] textarea.big-input::placeholder { color: #9d97d6; }
+body.speels.th-nacht[data-lang] header.top {
+  background-color: var(--head) !important; border-bottom-color: #3a2a6e !important;
+  background-image: linear-gradient(90deg, transparent 14px, #c084fc 14px, #c084fc calc(100% - 14px), transparent calc(100% - 14px));
+  background-size: 100% 3px; background-position: 0 calc(100% - 9px); background-repeat: no-repeat; overflow: hidden;
+}
+body.speels.th-nacht[data-lang] header.top::before {
+  content: ""; position: absolute; left: 14px; right: 14px; top: 10px; height: 8px; border-radius: 999px;
+  background: linear-gradient(90deg, #7c3aed, #e879f9 50%, #7c3aed);
+  box-shadow: 0 0 6px #d8b4fe, 0 0 14px #a855f7, 0 0 28px rgba(168,85,247,.7);
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  body.speels.th-nacht[data-lang] header.top::before { animation: nachtGlow 4s ease-in-out infinite; }
+}
+@keyframes nachtGlow { 0%, 100% { opacity: .8; } 50% { opacity: 1; } }
