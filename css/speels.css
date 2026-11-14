@@ -186,3 +186,41 @@ body.speels.th-nacht[data-lang] .settings label, body.speels.th-nacht[data-lang]
 body.speels.th-nacht[data-lang] select { background: var(--card); color: #f1ebff; border-color: #a78bfa; }
 body.speels.th-nacht[data-lang] select option { background: #1a1638; color: #f1ebff; }
 @keyframes nachtGlow { 0%, 100% { opacity: .65; } 50% { opacity: 1; } }
+
+/* ---------- Vaste tabbladen: Zinnen links, Vastlopen boven, Gesprek rechts, Info rechtsonder ---------- */
+:root { --navh: 66px; --hh: 200px; }
+body.speels .dock-btn {
+  position: fixed; z-index: 8; margin: 0; padding: 0 10px;
+  border: 3px solid var(--ink-k); background: var(--card); color: var(--ink-k);
+  font-weight: 900; font-size: 13px; line-height: 1; cursor: pointer;
+  box-shadow: 3px 3px 0 var(--ink-k); transition: transform .06s ease, box-shadow .06s ease;
+}
+body.speels .dock-btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink-k); }
+body.speels .dock-btn.active { background: var(--s); color: var(--sInk); }
+
+/* Links en rechts: smalle verticale lipjes tegen de rand, halverwege de hoogte */
+body.speels .dock-l, body.speels .dock-r {
+  top: calc(50% - 60px); width: 34px; height: 120px; padding: 10px 0;
+  writing-mode: vertical-rl; text-align: center;
+}
+body.speels .dock-l { left: 0; border-left: none; border-radius: 0 14px 14px 0; transform: rotate(180deg); }
+body.speels .dock-l:active { transform: rotate(180deg) translate(2px, 2px); }
+body.speels .dock-r { right: 0; border-right: none; border-radius: 14px 0 0 14px; }
+
+/* Boven: lipje dat aan de onderrand van de koptekst hangt; verdwijnt als de instellingen open staan */
+body.speels .dock-t {
+  top: calc(var(--hh) - 6px); left: 50%; transform: translateX(-50%);
+  height: 30px; padding: 0 16px; border-top: none; border-radius: 0 0 14px 14px;
+}
+body.speels .dock-t:active { transform: translate(calc(-50% + 2px), 2px); }
+body:has(#settings.open) .dock-t { display: none; }
+
+/* Rechtsonder: boven de onderste balk; zakt naar beneden als de balk verborgen is */
+body.speels .dock-br {
+  right: 12px; bottom: calc(var(--navh) + 10px); height: 40px; padding: 0 16px; border-radius: 999px;
+  transition: bottom .32s cubic-bezier(.2,.9,.3,1), transform .06s ease, box-shadow .06s ease;
+}
+body.speels.nav-away .dock-br { bottom: 14px; }
+
+/* Ruimte rond de inhoud: de vaste tabbladen en de onderste balk gaan niet over antwoorden heen */
+body.speels main#view { padding: 36px 44px calc(var(--navh) + 36px); }
