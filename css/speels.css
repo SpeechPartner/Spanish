@@ -276,3 +276,6 @@ body.speels .carousel .es { transition: opacity .3s ease; }
 body.speels .carousel .dots { display: flex; gap: 6px; margin-top: 10px; }
 body.speels .carousel .dot { width: 9px; height: 9px; border-radius: 50%; border: 2px solid var(--ink-k); background: var(--card); }
 body.speels .carousel .dot.on { background: var(--p); }
+
+/* Gekozen hulpvragen (wisselkaart) */
+body.speels .line-row.pick { cursor: pointer; }
