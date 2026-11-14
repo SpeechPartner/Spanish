@@ -20,6 +20,8 @@ var UI = {
   "Jungle": m("Jungle", "Jungle", "Dschungel", "Jungle"),
   "Ruimte": m("Ruimte", "Outer space", "Weltraum", "Espace"),
   "Nachtlampje": m("Nachtlampje", "Night light", "Nachtlicht", "Veilleuse"),
+  "Systeem (donker als je telefoon dat is)": m("Systeem (donker als je telefoon dat is)", "System (dark when your phone is)", "System (dunkel, wenn dein Telefon es ist)", "Système (sombre si ton téléphone l'est)"),
+  "Donker": m("Donker", "Dark", "Dunkel", "Sombre"),
   "Snelheid van voorlezen": m("Snelheid van voorlezen", "Reading speed", "Vorlesegeschwindigkeit", "Vitesse de lecture"),
   "Begrepen items resetten": m("Begrepen items resetten", "Reset understood items", "Verstandene zurücksetzen", "Réinitialiser les éléments compris"),
   "Voortgang resetten": m("Voortgang resetten", "Reset progress", "Fortschritt zurücksetzen", "Réinitialiser la progression"),

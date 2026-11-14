@@ -148,47 +148,88 @@ body.speels .guide-list li::marker { color: var(--p); font-weight: 900; }
 body.speels .install-card { margin-top: 18px; }
 body.speels .install-card .btn { margin-top: 10px; }
 
-/* ---------- Nachtlampje: donker thema met neon-paarse lichtbuizen boven aan de app ---------- */
-body.speels.th-nacht[data-lang] {
-  --card:#1a1638; --ink-k:#f1ebff; --ink-soft:#bdb3e6; --paper:#07051a; --dots:rgba(180,140,255,.14);
-  --head:#140f2e; --head-ink:#f1ebff; --p:#b26bff; --s:#ff7ad9; --sInk:#1c1030; --hi:#2a2150; --t2:#241c48;
-  --hard: 4px 4px 0 #000;
+/* ---------- Donker (systeem) en Nachtlampje: subtiel, rustig voor de ogen, met een neonbuis ---------- */
+body.speels.th-donker[data-lang], body.speels.th-nacht[data-lang] {
+  --card:#171429; --ink-k:#e4def3; --ink-soft:#9d95bd; --paper:#0d0b17; --dots:rgba(160,140,220,.06);
+  --head:#110e1f; --head-ink:#e9e4f7; --p:#6e52b8; --s:#2f2857; --sInk:#e9e4f7; --hi:#1c1834; --t2:#1a1631;
+  --line:#2a2448; --hard: 0 2px 10px rgba(0,0,0,.45);
+  color-scheme: dark;
 }
-body.speels.th-nacht[data-lang] .card.panel { color: #f4f1ff; }
-body.speels.th-nacht[data-lang] .btn { color: #f4f1ff; }
-body.speels.th-nacht[data-lang] .btn.primary, body.speels.th-nacht[data-lang] .btn.active, body.speels.th-nacht[data-lang] .speak { color: #1c1410; }
-body.speels.th-nacht[data-lang] .nl, body.speels.th-nacht[data-lang] .hint, body.speels.th-nacht[data-lang] .stat, body.speels.th-nacht[data-lang] .explain { color: #c9c3ff; }
-body.speels.th-nacht[data-lang] .transbar input, body.speels.th-nacht[data-lang] textarea.big-input { color: #f4f1ff; }
-body.speels.th-nacht[data-lang] .transbar input::placeholder, body.speels.th-nacht[data-lang] textarea.big-input::placeholder { color: #9d97d6; }
-body.speels.th-nacht[data-lang] header.top {
-  background-color: var(--head) !important; border-bottom-color: #3a2a6e !important;
-  background-image: linear-gradient(90deg, transparent 14px, #c084fc 14px, #c084fc calc(100% - 14px), transparent calc(100% - 14px));
-  background-size: 100% 3px; background-position: 0 calc(100% - 9px); background-repeat: no-repeat;
+body.speels.th-donker[data-lang] .card, body.speels.th-nacht[data-lang] .card {
+  border: 1px solid var(--line) !important; border-radius: 16px; box-shadow: var(--hard);
+  background-color: var(--card);
 }
+body.speels.th-donker[data-lang] .card.big, body.speels.th-nacht[data-lang] .card.big { transform: none; }
+body.speels.th-donker[data-lang] .card.panel, body.speels.th-nacht[data-lang] .card.panel { background: var(--hi); }
+body.speels.th-donker[data-lang] header.top, body.speels.th-nacht[data-lang] header.top {
+  background: var(--head) !important; border-bottom: 1px solid var(--line) !important; box-shadow: none !important; background-image: none;
+}
+body.speels.th-donker[data-lang] header.top::after, body.speels.th-nacht[data-lang] header.top::after { display: none; }
+body.speels.th-donker[data-lang] .btn, body.speels.th-nacht[data-lang] .btn {
+  background: #1d1838; color: #d8d0f0; border: 1px solid #352d5c; border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.4); font-weight: 700;
+}
+body.speels.th-donker[data-lang] .btn:active, body.speels.th-nacht[data-lang] .btn:active { transform: none; box-shadow: none; opacity: .85; }
+body.speels.th-donker[data-lang] .btn.primary, body.speels.th-nacht[data-lang] .btn.primary { background: #5b43a0; color: #f5f2ff; border-color: #6d56b4; }
+body.speels.th-donker[data-lang] .btn.active, body.speels.th-nacht[data-lang] .btn.active { background: #2d2656; color: #f1ecff; border-color: #7f67d6; }
+body.speels.th-donker[data-lang] .speak, body.speels.th-nacht[data-lang] .speak { background: #2a2350; color: #e6dcff; border: 1px solid #4a3f7d; box-shadow: none; }
+body.speels.th-donker[data-lang] .dock-btn, body.speels.th-nacht[data-lang] .dock-btn { background: #1d1838; color: #cfc6ee; border: 1px solid #352d5c; box-shadow: 0 1px 6px rgba(0,0,0,.4); }
+body.speels.th-donker[data-lang] .dock-btn.active, body.speels.th-nacht[data-lang] .dock-btn.active { background: #2d2656; color: #f1ecff; border-color: #7f67d6; }
+body.speels.th-donker[data-lang] .iconbtn, body.speels.th-nacht[data-lang] .iconbtn { background: var(--card); border: 1px solid var(--line); box-shadow: none; color: #d8d0f0; }
+body.speels.th-donker[data-lang] nav.bottomnav, body.speels.th-nacht[data-lang] nav.bottomnav { background: var(--head) !important; border-top: 1px solid var(--line) !important; }
+body.speels.th-donker[data-lang] .transbar input, body.speels.th-donker[data-lang] textarea.big-input, body.speels.th-donker[data-lang] .teach-input,
+body.speels.th-nacht[data-lang] .transbar input, body.speels.th-nacht[data-lang] textarea.big-input, body.speels.th-nacht[data-lang] .teach-input {
+  background: #120f24; border: 1px solid #352d5c; box-shadow: none; color: #e4def3;
+}
+body.speels.th-donker[data-lang] .transbar input::placeholder, body.speels.th-donker[data-lang] textarea.big-input::placeholder,
+body.speels.th-nacht[data-lang] .transbar input::placeholder, body.speels.th-nacht[data-lang] textarea.big-input::placeholder { color: #7d75a0; }
+body.speels.th-donker[data-lang] .transout, body.speels.th-donker[data-lang] .settings.open, body.speels.th-donker[data-lang] .langmenu, body.speels.th-donker[data-lang] .note,
+body.speels.th-nacht[data-lang] .transout, body.speels.th-nacht[data-lang] .settings.open, body.speels.th-nacht[data-lang] .langmenu, body.speels.th-nacht[data-lang] .note {
+  background: var(--card); border: 1px solid var(--line); box-shadow: var(--hard); color: #d8d0f0;
+}
+body.speels.th-donker[data-lang] .line-row.bubble.me, body.speels.th-nacht[data-lang] .line-row.bubble.me {
+  background: #2b2456; color: #efe9ff; border: 1px solid #443a74; box-shadow: none;
+}
+body.speels.th-donker[data-lang] .line-row.bubble.me .speak, body.speels.th-nacht[data-lang] .line-row.bubble.me .speak { background: #1d1838; color: #e6dcff; }
+body.speels.th-donker[data-lang] h1, body.speels.th-donker[data-lang] h2, body.speels.th-donker[data-lang] h3,
+body.speels.th-donker[data-lang] .sec-title, body.speels.th-donker[data-lang] label,
+body.speels.th-nacht[data-lang] h1, body.speels.th-nacht[data-lang] h2, body.speels.th-nacht[data-lang] h3,
+body.speels.th-nacht[data-lang] .sec-title, body.speels.th-nacht[data-lang] label { color: #e4def3; }
+body.speels.th-donker[data-lang] .nl, body.speels.th-donker[data-lang] .hint, body.speels.th-donker[data-lang] .stat, body.speels.th-donker[data-lang] .explain, body.speels.th-donker[data-lang] .replies .sec-title,
+body.speels.th-nacht[data-lang] .nl, body.speels.th-nacht[data-lang] .hint, body.speels.th-nacht[data-lang] .stat, body.speels.th-nacht[data-lang] .explain, body.speels.th-nacht[data-lang] .replies .sec-title { color: #9d95bd; }
+body.speels.th-donker[data-lang] select, body.speels.th-nacht[data-lang] select { background: #1a1636; color: #e4def3; border: 1px solid #352d5c; }
+body.speels.th-donker[data-lang] select option, body.speels.th-nacht[data-lang] select option { background: #1a1636; color: #e4def3; }
+body.speels.th-donker[data-lang] .settings label, body.speels.th-donker[data-lang] .settings .nl, body.speels.th-donker[data-lang] .settings .note,
+body.speels.th-nacht[data-lang] .settings label, body.speels.th-nacht[data-lang] .settings .nl, body.speels.th-nacht[data-lang] .settings .note { color: #bdb5dc; }
+
+/* Nachtlampje: een neonbuis boven aan de app, met glazen uiteinden en een lichte flikker */
+body.speels.th-nacht[data-lang] header.top { position: sticky; }
 body.speels.th-nacht[data-lang] header.top::before {
-  content: ""; position: absolute; left: 6px; right: 6px; top: 14px; height: 12px; border-radius: 999px;
-  background: linear-gradient(90deg, #a21caf, #f0abfc 18%, #ffffff 50%, #f0abfc 82%, #a21caf);
-  box-shadow: 0 0 4px #fff, 0 0 10px #f0abfc, 0 0 22px #c026d3, 0 0 44px rgba(192,38,211,.9), 0 0 70px rgba(147,51,234,.6);
+  content: ""; position: absolute; left: 14px; right: 14px; top: 4px; height: 8px; border-radius: 999px;
+  background: linear-gradient(180deg, #fff7fc 0%, #ffc4f1 32%, #ff6fd8 68%, #d02cae 100%);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.35), 0 0 2px rgba(255,210,245,.9), 0 0 6px rgba(255,90,215,.7),
+              0 0 16px rgba(255,60,205,.38), 0 0 34px rgba(190,40,180,.2);
   pointer-events: none;
 }
-body.speels.th-nacht[data-lang] header.top {
-  background-image: linear-gradient(90deg, transparent 6px, #e879f9 6px, #e879f9 calc(100% - 6px), transparent calc(100% - 6px));
-  background-size: 100% 4px; background-position: 0 calc(100% - 8px); background-repeat: no-repeat;
-  box-shadow: inset 0 -12px 24px -14px rgba(192,38,211,.9) !important;
+/* De glazen uiteinden en de houder van de buis */
+body.speels.th-nacht[data-lang] header.top::after {
+  display: block; content: ""; position: absolute; left: 4px; right: 4px; top: 2px; bottom: auto; height: 12px;
+  background: linear-gradient(90deg, #241d3c 0 10px, transparent 10px calc(100% - 10px), #241d3c calc(100% - 10px));
+  pointer-events: none; opacity: .9;
 }
 @media (prefers-reduced-motion: no-preference) {
-  body.speels.th-nacht[data-lang] header.top::before { animation: nachtGlow 3s ease-in-out infinite; }
+  body.speels.th-nacht[data-lang] header.top::before { animation: nachtFlikker 6s linear infinite; }
 }
-/* Koppen en labels leesbaar houden op de donkere achtergrond */
-body.speels.th-nacht[data-lang] h1, body.speels.th-nacht[data-lang] h2, body.speels.th-nacht[data-lang] h3,
-body.speels.th-nacht[data-lang] .sec-title, body.speels.th-nacht[data-lang] label { color: #f1ebff; }
-body.speels.th-nacht[data-lang] .settings label, body.speels.th-nacht[data-lang] .settings .nl, body.speels.th-nacht[data-lang] .settings .note { color: #d9d0ff; }
-body.speels.th-nacht[data-lang] select { background: var(--card); color: #f1ebff; border-color: #a78bfa; }
-body.speels.th-nacht[data-lang] select option { background: #1a1638; color: #f1ebff; }
-@keyframes nachtGlow { 0%, 100% { opacity: .65; } 50% { opacity: 1; } }
+@keyframes nachtFlikker {
+  0%, 100% { opacity: 1; }
+  2% { opacity: .8; } 2.5% { opacity: 1; } 3.5% { opacity: .9; } 4% { opacity: 1; }
+  38% { opacity: 1; } 38.5% { opacity: .55; } 39% { opacity: 1; } 39.5% { opacity: .8; } 40% { opacity: 1; }
+  71% { opacity: .94; } 72% { opacity: 1; }
+}
 
 /* ---------- Vaste tabbladen: Zinnen links, Vastlopen boven, Gesprek rechts, Info rechtsonder ---------- */
 :root { --navh: 66px; --hh: 200px; }
+#dock { position: fixed; left: 0; top: 0; width: 0; height: 0; z-index: 8; }
 body.speels .dock-btn {
   position: fixed; z-index: 8; margin: 0; padding: 0 10px;
   border: 3px solid var(--ink-k); background: var(--card); color: var(--ink-k);

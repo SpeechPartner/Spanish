@@ -203,18 +203,18 @@
   function renderNav() {
     var nav = document.getElementById("nav");
     var dock = document.getElementById("dock");
+    // Geen container (bijv. een oude index.html): maak hem zelf aan
+    if (!dock) { dock = el("div", "dock"); dock.id = "dock"; document.body.appendChild(dock); }
+    // Werkt de vaste stijl niet (bijv. speels.css ontbreekt), dan blijven de vier tabs gewoon in de onderste balk
+    var dockOk = getComputedStyle(dock).position === "fixed";
     nav.innerHTML = "";
-    if (dock) dock.innerHTML = "";
+    dock.innerHTML = "";
     TABS.forEach(function (t) {
-      if (DOCK_POS[t[0]]) {
-        if (dock) {
-          var d = btn(T(t[1]), "dock-btn " + DOCK_POS[t[0]] + (S.tab === t[0] ? " active" : ""), function () { go(t[0]); });
-          d.setAttribute("aria-current", S.tab === t[0] ? "page" : "false");
-          dock.appendChild(d);
-        }
-        return;
-      }
-      nav.appendChild(btn(T(t[1]), S.tab === t[0] ? "active small" : "small", function () { go(t[0]); }));
+      var where = DOCK_POS[t[0]] && dockOk ? dock : nav;
+      var cls = DOCK_POS[t[0]] && dockOk ? "dock-btn " + DOCK_POS[t[0]] + (S.tab === t[0] ? " active" : "") : (S.tab === t[0] ? "active small" : "small");
+      var b = btn(T(t[1]), cls, function () { go(t[0]); });
+      if (DOCK_POS[t[0]] && dockOk) b.setAttribute("aria-current", S.tab === t[0] ? "page" : "false");
+      where.appendChild(b);
     });
   }
 
@@ -1230,7 +1230,7 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "57";
+  var APP_VERSION = "60";
   var WH_LOG = [];
   function whLog(msg) {
     var d = new Date();
@@ -2204,6 +2204,12 @@
       '<span class="logolang">' + lang.toUpperCase() + '</span>';
   }
 
+  // Systeem: volgt de donkere modus van de telefoon (dan het subtiele donkere thema, zonder neonbuis)
+  function effectiveTheme() {
+    if (theme !== "systeem") return theme;
+    return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "donker" : "standaard";
+  }
+
   function applyStatic() {
     document.documentElement.lang = lang;
     document.body.setAttribute("data-lang", lang);
@@ -2213,8 +2219,9 @@
     document.getElementById("langSel").value = lang;
     document.getElementById("themeSel").value = theme;
     if (document.getElementById("genSel")) document.getElementById("genSel").value = partnerGenderSetting();
-    document.body.classList.toggle("cafe", theme === "cafe");
-    ["ijs", "jungle", "ruimte", "nacht"].forEach(function (t) { document.body.classList.toggle("th-" + t, theme === t); });
+    var eff = effectiveTheme();
+    document.body.classList.toggle("cafe", eff === "cafe");
+    ["ijs", "jungle", "ruimte", "nacht", "donker"].forEach(function (t) { document.body.classList.toggle("th-" + t, eff === t); });
     renderLogo();
   }
 
@@ -2271,6 +2278,11 @@
       store.set("partnerGender", e.target.value);
       render();
     });
+    if (window.matchMedia) {
+      var darkQ = window.matchMedia("(prefers-color-scheme: dark)");
+      var onScheme = function () { if (theme === "systeem") applyStatic(); };
+      if (darkQ.addEventListener) darkQ.addEventListener("change", onScheme); else if (darkQ.addListener) darkQ.addListener(onScheme);
+    }
     document.getElementById("themeSel").addEventListener("change", function (e) {
       theme = e.target.value;
       store.set("theme", theme);
