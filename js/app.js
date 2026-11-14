@@ -1368,7 +1368,7 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "69";
+  var APP_VERSION = "70";
   var WH_LOG = [];
   function whLog(msg) {
     var d = new Date();
@@ -1831,6 +1831,15 @@
     wc.appendChild(el("div", "sec-title", L(what.t)));
     wc.appendChild(el("div", "", L(what.b)));
     w.appendChild(wc);
+    // Direct daarna: het gespreksmodel moet één keer gedownload worden, daarna werkt de app offline.
+    var mc = el("div", "card");
+    mc.appendChild(el("div", "sec-title", L(m("Gespreksmodel en offline gebruik", "Conversation model and offline use", "Gesprächsmodell und Offline-Nutzung", "Modèle de conversation et usage hors ligne"))));
+    mc.appendChild(el("div", "", L(m(
+      "Voor de spraakherkenning heeft de app eenmalig een gespreksmodel nodig. Dat wordt op je toestel gedownload: ongeveer 40 MB voor de snelle versie of 80 MB voor de nauwkeurige. Daarna kun je de dienst offline gebruiken.",
+      "For speech recognition the app needs a conversation model once. It is downloaded to your device: about 40 MB for the fast version or 80 MB for the more accurate one. After that you can use the service offline.",
+      "Für die Spracherkennung braucht die App einmalig ein Gesprächsmodell. Es wird auf dein Gerät heruntergeladen: etwa 40 MB für die schnelle Version oder 80 MB für die genauere. Danach kannst du den Dienst offline nutzen.",
+      "Pour la reconnaissance vocale, l'application a besoin une fois d'un modèle de conversation. Il est téléchargé sur ton appareil : environ 40 Mo pour la version rapide ou 80 Mo pour la version plus précise. Ensuite, tu peux utiliser le service hors ligne."))));
+    w.appendChild(mc);
     w.appendChild(el("h2", "", T("Tabbladen")));
     TAB_GUIDE.forEach(function (tb) {
       var c = el("div", "card");
