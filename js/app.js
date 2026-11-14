@@ -1368,7 +1368,7 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "70";
+  var APP_VERSION = "71";
   var WH_LOG = [];
   function whLog(msg) {
     var d = new Date();
@@ -1840,6 +1840,18 @@
       "Für die Spracherkennung braucht die App einmalig ein Gesprächsmodell. Es wird auf dein Gerät heruntergeladen: etwa 40 MB für die schnelle Version oder 80 MB für die genauere. Danach kannst du den Dienst offline nutzen.",
       "Pour la reconnaissance vocale, l'application a besoin une fois d'un modèle de conversation. Il est téléchargé sur ton appareil : environ 40 Mo pour la version rapide ou 80 Mo pour la version plus précise. Ensuite, tu peux utiliser le service hors ligne."))));
     w.appendChild(mc);
+    // Help: één uitklapbare kaart met het stappenplan per onderdeel (bron: HELP_GUIDE in content.js)
+    var hp = el("details", "card help");
+    hp.appendChild(el("summary", "sec-title", L(m("Help: stappenplan van alle mogelijkheden", "Help: step plan for all features", "Hilfe: Schritt-für-Schritt-Plan aller Funktionen", "Aide : plan pas à pas de toutes les fonctions"))));
+    HELP_GUIDE.forEach(function (sec) {
+      var d = el("details", "help-sec");
+      d.appendChild(el("summary", "", L(sec.t)));
+      var ol = el("ol", "help-steps");
+      sec.s.forEach(function (x) { ol.appendChild(el("li", "", L(x))); });
+      d.appendChild(ol);
+      hp.appendChild(d);
+    });
+    w.appendChild(hp);
     w.appendChild(el("h2", "", T("Tabbladen")));
     TAB_GUIDE.forEach(function (tb) {
       var c = el("div", "card");
