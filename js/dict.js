@@ -34,6 +34,7 @@ if (typeof DICT_EXTRA !== "undefined") {
   ["nl", "en", "de", "fr"].forEach(function (l) {
     if (DICT_EXTRA[l]) DICT_RAW[l] += "|" + DICT_EXTRA[l];
     if (DICT_EXTRA._more && DICT_EXTRA._more[l]) DICT_RAW[l] += "|" + DICT_EXTRA._more[l];
+    if (DICT_EXTRA._adj && DICT_EXTRA._adj[l]) DICT_RAW[l] += "|" + DICT_EXTRA._adj[l];
     if (typeof DICT_WIKI !== "undefined" && DICT_WIKI[l]) DICT_RAW[l] += "|" + DICT_WIKI[l];
   });
 }
@@ -51,6 +52,11 @@ var DICTS = {}, PHRASES_BY_LANG = {}, REVS = {};
     var es = DICTS[l][src];
     if (REVS[l][es] === undefined && es.indexOf(" ") < 0) REVS[l][es] = src;
   });
+  // Vrouwelijke en meervoudsvormen van bijvoeglijke naamwoorden: elke Spaanse vorm krijgt zijn eigen woord
+  if (typeof DICT_EXTRA !== "undefined" && DICT_EXTRA._adjRev && DICT_EXTRA._adjRev[l]) {
+    var extraRev = parseDictString(DICT_EXTRA._adjRev[l]);
+    Object.keys(extraRev).forEach(function (es) { if (REVS[l][es] === undefined) REVS[l][es] = extraRev[es]; });
+  }
 });
 
 // Veelgebruikte Spaanse woorden en werkwoordsvormen met een vaste, juiste betekenis

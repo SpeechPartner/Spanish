@@ -135,6 +135,27 @@
     return out;
   }
 
+  // Andere manieren om een zin te zeggen (uit de tabel ALT in content.js)
+  var ALT_BY_KEY = {};
+  Object.keys(ALT).forEach(function (k) { ALT_BY_KEY[normKey(k)] = ALT[k]; });
+  function normKey(s) { return String(s || "").toLowerCase().replace(/[¿?¡!.,;:]/g, "").replace(/\s+/g, " ").trim(); }
+  function altsFor(es) { return ALT_BY_KEY[normKey(es)] || []; }
+  function altBlock(list) {
+    var wrap = el("div", "alts");
+    wrap.appendChild(el("div", "nl", T("Andere manieren om dit te zeggen:")));
+    list.forEach(function (x) {
+      var r = el("div", "line-row");
+      var t = el("div", "txt");
+      t.appendChild(el("div", "es", x.es));
+      t.appendChild(el("div", "nl", L(x.m)));
+      if (ALT_NOTE[x.es]) t.appendChild(el("div", "nl", "⚠ " + L(ALT_NOTE[x.es])));
+      r.appendChild(t);
+      r.appendChild(speakBtn(x.es));
+      wrap.appendChild(r);
+    });
+    return wrap;
+  }
+
   // ---------- Woord voor woord en uitleg ----------
   function explainBox(es, opts) {
     var box = el("div", "explain");
@@ -145,6 +166,7 @@
     });
     if (words.length) box.appendChild(el("div", "", T("Woord voor woord:") + " " + parts.join(" · ")));
     if (WHEN[es]) box.appendChild(el("div", "", T("Wanneer zeg je dit:") + " " + L(WHEN[es])));
+    if (altsFor(es).length) box.appendChild(altBlock(altsFor(es)));
     if (!(opts && opts.noUnderstood)) box.appendChild(understoodCheckbox(es));
     return box;
   }
@@ -1192,7 +1214,7 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "52";
+  var APP_VERSION = "54";
   var WH_LOG = [];
   function whLog(msg) {
     var d = new Date();
@@ -1763,6 +1785,7 @@
       // De vertaling wordt bij het tonen opnieuw gemaakt, zodat ze altijd de gekozen taal volgt.
       var trr = esToLang(t.es) || t.tr;
       card.appendChild(el("div", "", trr.text));
+      if (altsFor(t.es).length) card.appendChild(altBlock(altsFor(t.es)));
       if (t.gen) card.appendChild(el("div", "nl", T("Uit de zin afgeleid: vorm voor de gesprekspartner") + " (" + (t.gen === "zij" ? "zij" : "hij") + ")"));
       if (trr.about && trr.es) card.appendChild(el("div", "nl", T("Herkend als:") + " " + trr.es));
       if (trr.learned) card.appendChild(el("div", "nl", T("Door jou aangeleerd")));

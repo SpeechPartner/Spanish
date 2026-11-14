@@ -492,3 +492,172 @@ var TALK = [
   { re: "(como|que tal) (estuvo|fue|estuviste|fuiste|estuvieron|fueron) (tu |el |su |vuestro )?(fin de semana|finde)", es: "¿Cómo estuvo tu fin de semana?", m: m("Hoe was je weekend?", "How was your weekend?", "Wie war dein Wochenende?", "Comment s'est passé ton week-end ?"),
     a: [p("Muy bien, gracias. ¿Y el tuyo?", "Heel goed, dank je. En het jouwe?", "Very good, thanks. And yours?", "Sehr gut, danke. Und deins?", "Très bien, merci. Et le tien ?"), p("Fue tranquilo. Descansé mucho.", "Het was rustig. Ik heb veel gerust.", "It was quiet. I rested a lot.", "Es war ruhig. Ich habe viel ausgeruht.", "C'était calme. Je me suis beaucoup reposé.")] }
 ];
+
+// Andere manieren om dezelfde boodschap te zeggen. De sleutel is de zin zoals hierboven (zonder leestekens).
+var ALT = {
+  "¿Qué tal?": [
+    p("¿Cómo estás?", "Hoe gaat het met je?", "How are you?", "Wie geht es dir?", "Comment tu vas ?"),
+    p("¿Cómo va todo?", "Hoe gaat alles?", "How is everything going?", "Wie läuft alles?", "Tout va bien ?"),
+    p("¿Qué hay de nuevo?", "Wat is er nieuws?", "What's new?", "Was gibt es Neues?", "Quoi de neuf ?"),
+    p("¿Qué onda?", "Hoe is het?", "What's up?", "Was geht?", "Ça roule ?")
+  ],
+  "¿Cómo estás?": [
+    p("¿Qué tal?", "Hoe gaat het?", "How's it going?", "Wie geht's?", "Ça va ?"),
+    p("¿Cómo te va?", "Hoe gaat het met je?", "How are things going for you?", "Wie geht es dir so?", "Comment ça va pour toi ?")
+  ],
+  "¿Qué tal el fin de semana?": [
+    p("¿Cómo fue el fin de semana?", "Hoe was het weekend?", "How was the weekend?", "Wie war das Wochenende?", "Comment s'est passé le week-end ?"),
+    p("¿Qué hiciste el fin de semana?", "Wat heb je dit weekend gedaan?", "What did you do this weekend?", "Was hast du am Wochenende gemacht?", "Qu'est-ce que tu as fait ce week-end ?")
+  ],
+  "¿Qué has hecho hoy?": [
+    p("¿Qué tal tu día?", "Hoe was je dag?", "How was your day?", "Wie war dein Tag?", "Comment s'est passée ta journée ?"),
+    p("¿Qué tal el día?", "Hoe is je dag tot nu toe?", "How's your day so far?", "Wie läuft dein Tag bisher?", "Comment se passe ta journée ?")
+  ],
+  "Hablamos luego.": [
+    p("Hasta luego.", "Tot straks.", "See you later.", "Bis später.", "À tout à l'heure."),
+    p("Chao.", "Doei.", "Bye.", "Tschüss.", "Salut.")
+  ],
+  "Nos vemos.": [
+    p("Hasta luego.", "Tot straks.", "See you later.", "Bis später.", "À tout à l'heure."),
+    p("Hasta mañana.", "Tot morgen.", "See you tomorrow.", "Bis morgen.", "À demain.")
+  ],
+  "No entiendo.": [
+    p("No comprendo.", "Ik begrijp het niet.", "I don't understand.", "Ich verstehe nicht.", "Je ne comprends pas."),
+    p("No lo entiendo.", "Ik snap het niet.", "I don't get it.", "Ich verstehe es nicht.", "Je n'y comprends rien.")
+  ],
+  "¿Puedes repetirlo, por favor?": [
+    p("¿Me lo repites, por favor?", "Kun je dat nog een keer zeggen?", "Can you say that again?", "Kannst du das nochmal sagen?", "Tu peux le répéter, s'il te plaît ?")
+  ],
+  "Más despacio, por favor.": [
+    p("¿Puedes hablar más despacio?", "Kun je langzamer praten?", "Can you speak more slowly?", "Kannst du langsamer sprechen?", "Tu peux parler plus lentement ?")
+  ],
+  "Tengo que irme.": [
+    p("Me tengo que ir.", "Ik moet gaan.", "I have to go.", "Ich muss gehen.", "Je dois partir."),
+    p("Me voy.", "Ik ga.", "I'm off.", "Ich gehe.", "Je m'en vais.")
+  ],
+  "Me parece bien.": [
+    p("Estoy de acuerdo.", "Ik ben het ermee eens.", "I agree.", "Einverstanden.", "Je suis d'accord."),
+    p("Está bien.", "Goed.", "Okay.", "Gut.", "D'accord.")
+  ],
+  "Me alegro de verte.": [
+    p("Qué bueno verte.", "Wat fijn je te zien.", "Good to see you.", "Schön, dich zu sehen.", "Ravi de te voir."),
+    p("Me da gusto verte.", "Wat leuk je te zien.", "Nice to see you.", "Schön, dich zu sehen.", "Content de te voir.")
+  ],
+  "Creo que sí.": [
+    p("Supongo que sí.", "Ik denk van wel.", "I think so.", "Ich glaube schon.", "Je pense que oui."),
+    p("Puede ser.", "Misschien.", "Maybe.", "Kann sein.", "Ça se peut.")
+  ],
+  "¡Qué bien verte!": [
+    p("¡Qué alegría verte!", "Wat fijn je te zien!", "So nice to see you!", "Schön, dich zu sehen!", "Quel plaisir de te voir !"),
+    p("¡Qué gusto verte!", "Leuk je te zien!", "Good to see you!", "Schön dich zu sehen!", "Ravi de te voir !")
+  ],
+  "¿Y tú?": [
+    p("¿Y tú qué opinas?", "En wat vind jij?", "And what do you think?", "Und was denkst du?", "Et toi, qu'en penses-tu ?"),
+    p("¿Y tú, qué tal?", "En hoe gaat het met jou?", "And how about you?", "Und wie geht es dir?", "Et toi, ça va ?")
+  ],
+  "¿Cómo fue?": [
+    p("¿Qué tal fue?", "Hoe ging het?", "How did it go?", "Wie war es?", "Comment ça s'est passé ?"),
+    p("¿Cómo salió?", "Hoe is het afgelopen?", "How did it turn out?", "Wie ist es ausgegangen?", "Comment ça a tourné ?")
+  ],
+  "¿Por qué?": [
+    p("¿Y eso por qué?", "Waarom dan?", "Why is that?", "Warum denn?", "Pourquoi ça ?"),
+    p("¿Cuál es la razón?", "Wat is de reden?", "What's the reason?", "Was ist der Grund?", "Quelle est la raison ?")
+  ],
+  "¿Desde cuándo?": [
+    p("¿Hace cuánto?", "Hoe lang al?", "How long has it been?", "Seit wann?", "Depuis quand ?"),
+    p("¿Desde cuándo es así?", "Sinds wanneer is het zo?", "Since when has it been like that?", "Seit wann ist das so?", "Depuis quand c'est comme ça ?")
+  ],
+  "Cuéntame más.": [
+    p("Dime más.", "Vertel het me.", "Tell me.", "Erzähl mir.", "Dis-moi."),
+    p("¿Qué más?", "Wat nog meer?", "What else?", "Was noch?", "Quoi d'autre ?")
+  ],
+  "¿Qué pasó después?": [
+    p("¿Y luego?", "En toen?", "And then?", "Und dann?", "Et ensuite ?"),
+    p("¿Y después qué?", "En wat gebeurde er toen?", "And what happened then?", "Und was passierte dann?", "Et après, qu'est-ce qui s'est passé ?")
+  ],
+  "Creo que no.": [
+    p("No lo creo.", "Ik geloof het niet.", "I don't believe so.", "Ich glaube nicht.", "Je ne pense pas."),
+    p("No creo.", "Ik denk van niet.", "I don't think so.", "Ich denke nicht.", "Je ne pense pas.")
+  ],
+  "Me parece un poco raro.": [
+    p("Me parece extraño.", "Ik vind het vreemd.", "I find it strange.", "Ich finde es seltsam.", "Je trouve ça étrange."),
+    p("Es un poco extraño.", "Het is een beetje vreemd.", "It's a bit odd.", "Es ist ein bisschen seltsam.", "C'est un peu étrange.")
+  ],
+  "A mí me gusta mucho.": [
+    p("Me encanta.", "Ik vind het heerlijk.", "I love it.", "Ich liebe es.", "J'adore ça."),
+    p("Me gusta muchísimo.", "Ik vind het super leuk.", "I like it a lot.", "Es gefällt mir sehr.", "Ça me plaît beaucoup.")
+  ],
+  "Yo no estoy de acuerdo.": [
+    p("No estoy de acuerdo.", "Ik ben het niet eens.", "I don't agree.", "Ich bin nicht einverstanden.", "Je ne suis pas d'accord."),
+    p("No lo veo así.", "Ik zie het niet zo.", "I don't see it that way.", "Ich sehe das nicht so.", "Je ne vois pas les choses comme ça.")
+  ],
+  "A ver...": [
+    p("Vamos a ver...", "Laat me eens kijken...", "Let's see...", "Mal sehen...", "Voyons voir..."),
+    p("Un momento...", "Even...", "One moment...", "Einen Moment...", "Un instant...")
+  ],
+  "Espera, lo pienso.": [
+    p("Un momento, lo pienso.", "Even denken.", "Hang on, I'm thinking.", "Moment, ich überlege.", "Attends, je réfléchis."),
+    p("Déjame pensarlo.", "Laat me er even over nadenken.", "Let me think about it.", "Lass mich darüber nachdenken.", "Laisse-moi y réfléchir.")
+  ],
+  "Déjame pensar.": [
+    p("Déjame pensarlo un momento.", "Laat me even nadenken.", "Let me think for a moment.", "Lass mich kurz nachdenken.", "Laisse-moi réfléchir un instant."),
+    p("Dame un segundo.", "Geef me even een seconde.", "Give me a second.", "Gib mir eine Sekunde.", "Donne-moi une seconde.")
+  ],
+  "Bueno, pues...": [
+    p("Bueno, entonces...", "Nou, dan...", "Well, so...", "Also, dann...", "Bon, alors..."),
+    p("Pues bien...", "Nou, goed dan...", "Well then...", "Nun gut...", "Eh bien...")
+  ],
+  "¿Qué significa...?": [
+    p("¿Qué quiere decir...?", "Wat betekent...?", "What does ... mean?", "Was bedeutet ...?", "Qu'est-ce que ... veut dire ?")
+  ],
+  "¿Cómo se dice... en español?": [
+    p("¿Cómo se dice eso en español?", "Hoe zeg je dat in het Spaans?", "How do you say that in Spanish?", "Wie sagt man das auf Spanisch?", "Comment on dit ça en espagnol ?")
+  ],
+  "No me sale la palabra.": [
+    p("No me acuerdo de la palabra.", "Ik kan het woord niet vinden.", "I can't remember the word.", "Mir fällt das Wort nicht ein.", "Le mot ne me vient pas."),
+    p("Se me olvida la palabra.", "Het woord is me even kwijt.", "I've forgotten the word.", "Ich habe das Wort vergessen.", "J'ai oublié le mot.")
+  ],
+  "Lo digo de otra manera.": [
+    p("Lo explico de otra forma.", "Ik leg het anders uit.", "I'll explain it differently.", "Ich erkläre es anders.", "Je l'explique autrement."),
+    p("Dicho de otra forma...", "Anders gezegd...", "In other words...", "Anders gesagt...", "Autrement dit...")
+  ],
+  "Es algo como...": [
+    p("Es parecido a...", "Het lijkt op...", "It's similar to...", "Es ist ähnlich wie...", "C'est un peu comme...")
+  ],
+  "Es lo que se usa para...": [
+    p("Sirve para...", "Het is om ... mee te doen.", "It's used for...", "Es dient zum...", "Ça sert à...")
+  ],
+  "¿Me explicas esa palabra?": [
+    p("¿Qué significa esa palabra?", "Wat betekent dat woord?", "What does that word mean?", "Was bedeutet das Wort?", "Que veut dire ce mot ?")
+  ],
+  "Ayer fui al cine con mi amigo.": [
+    p("Ayer fui al cine con un amigo.", "Gisteren ging ik met een vriend naar de bioscoop.", "Yesterday I went to the cinema with a friend.", "Gestern bin ich mit einem Freund ins Kino gegangen.", "Hier, je suis allé au cinéma avec un ami."),
+    p("Ayer salí con mi amigo.", "Gisteren ben ik met mijn vriend uit geweest.", "Yesterday I went out with my friend.", "Gestern bin ich mit meinem Freund ausgegangen.", "Hier, je suis sorti avec mon ami.")
+  ],
+  "Hoy estoy cansado porque trabajé mucho.": [
+    p("Estoy cansado hoy porque trabajé mucho.", "Ik ben vandaag moe, want ik heb veel gewerkt.", "I'm tired today because I worked a lot.", "Ich bin heute müde, weil ich viel gearbeitet habe.", "Je suis fatigué aujourd'hui parce que j'ai beaucoup travaillé.")
+  ],
+  "Me gusta cocinar los domingos.": [
+    p("Los domingos me gusta cocinar.", "Op zondag kook ik graag.", "On Sundays I like to cook.", "Sonntags koche ich gern.", "Le dimanche, j'aime cuisiner."),
+    p("Me encanta cocinar los domingos.", "Ik kook op zondag heel graag.", "I love cooking on Sundays.", "Ich koche sonntags sehr gern.", "J'adore cuisiner le dimanche.")
+  ],
+  "Creo que va a llover mañana.": [
+    p("Creo que mañana lloverá.", "Ik denk dat het morgen regent.", "I think it'll rain tomorrow.", "Ich glaube, morgen regnet es.", "Je pense qu'il va pleuvoir demain."),
+    p("Parece que mañana va a llover.", "Het lijkt erop dat het morgen gaat regenen.", "It looks like it's going to rain tomorrow.", "Es sieht so aus, als ob es morgen regnet.", "Il semble qu'il va pleuvoir demain.")
+  ],
+  "Cuando tengo tiempo, leo un libro.": [
+    p("Si tengo tiempo, leo un libro.", "Als ik tijd heb, lees ik een boek.", "If I have time, I read a book.", "Wenn ich Zeit habe, lese ich ein Buch.", "Quand j'ai le temps, je lis un livre."),
+    p("Leo un libro cuando tengo tiempo.", "Ik lees een boek als ik tijd heb.", "I read a book when I have time.", "Ich lese ein Buch, wenn ich Zeit habe.", "Je lis un livre quand j'ai le temps.")
+  ],
+  "Quiero aprender más palabras.": [
+    p("Quiero aprender más vocabulario.", "Ik wil meer woordenschat leren.", "I want to learn more vocabulary.", "Ich möchte mehr Vokabeln lernen.", "Je veux apprendre plus de vocabulaire."),
+    p("Me gustaría aprender más palabras.", "Ik zou graag meer woorden leren.", "I would like to learn more words.", "Ich würde gern mehr Wörter lernen.", "J'aimerais apprendre plus de mots.")
+  ]
+};
+
+// Regionale of informele aantekeningen bij een alternatief (sleutel = de Spaanse zin van het alternatief)
+var ALT_NOTE = {
+  "¿Qué onda?": m("vooral in Mexico gebruikt, informeel.", "mainly used in Mexico, informal.", "vor allem in Mexiko gebraucht, umgangssprachlich.", "surtout utilisé au Mexique, familier."),
+  "Me da gusto verte.": m("vooral in Mexico gebruikt, informeel.", "mainly used in Mexico, informal.", "vor allem in Mexiko gebraucht, umgangssprachlich.", "surtout utilisé au Mexique, familier."),
+  "Chao.": m("vooral in Latijns-Amerika gebruikt, informeel.", "mainly used in Latin America, informal.", "vor allem in Lateinamerika gebraucht, umgangssprachlich.", "surtout utilisé en Amérique latine, familier.")
+};
