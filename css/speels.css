@@ -270,3 +270,9 @@ body.speels main#view { padding: 36px 44px calc(var(--navh) + 36px); }
 body.speels .followup { display: flex; flex-direction: column; align-items: flex-start; text-align: left; white-space: normal; width: 100%; max-width: 100%; margin: 0 0 6px; padding: 10px 12px; }
 body.speels .followup .es { font-weight: 900; }
 body.speels .followup .nl { font-size: 13px; }
+
+/* Wisselkaart bij Gesprek openen */
+body.speels .carousel .es { transition: opacity .3s ease; }
+body.speels .carousel .dots { display: flex; gap: 6px; margin-top: 10px; }
+body.speels .carousel .dot { width: 9px; height: 9px; border-radius: 50%; border: 2px solid var(--ink-k); background: var(--card); }
+body.speels .carousel .dot.on { background: var(--p); }
