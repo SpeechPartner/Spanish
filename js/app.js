@@ -892,13 +892,18 @@
   }
 
   // Op het Gesprek-tabblad start de vertaalbox een nieuwe beurt van de gesprekspartner.
+  // De zin is jouw eigen beurt (rechts). Daarna kan de gesprekspartner opnemen, met de andere manieren eronder.
   function startChatFromTop() {
     var vt = document.getElementById("vtxt");
     var raw = vt.value.trim();
     if (!raw) { S.note = T("Typ eerst iets."); render(); return; }
     var r = translateText(raw);
-    var text = (r && r.text && !(r.missing && r.missing.length)) ? r.text : raw;
-    var t = makeTurn(text);
+    if (!r || !r.text || (r.missing && r.missing.length)) {
+      S.note = T("Niet in de lijst:") + " " + ((r && r.missing && r.missing.length) ? r.missing.join(", ") : raw);
+      render();
+      return;
+    }
+    var t = { me: true, es: r.text };
     S.convo.push(t);
     S.chatStartTurn = t;
     S.note = "";
@@ -1258,7 +1263,7 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "62";
+  var APP_VERSION = "63";
   var WH_LOG = [];
   function whLog(msg) {
     var d = new Date();
@@ -1826,6 +1831,22 @@
       card.appendChild(f);
     }
     S.convo.slice().reverse().forEach(function (t, ti) {
+      // Jouw eigen beurt (vanuit de vertaalbox): rechts, met de andere manieren om het te zeggen
+      if (t.me) {
+        var mt = el("div", "turn");
+        var mb = el("div", "line-row bubble me");
+        var mx = el("div", "txt");
+        mx.appendChild(el("div", "nl", T("Jij zei")));
+        mx.appendChild(el("div", "es", t.es));
+        mb.appendChild(mx);
+        mb.appendChild(speakBtn(t.es));
+        mt.appendChild(mb);
+        var mrep = el("div", "replies");
+        if (altsFor(t.es).length) mrep.appendChild(altBlock(altsFor(t.es)));
+        if (startRep === null && S.chatStartTurn === t) startRep = mrep; else mt.appendChild(mrep);
+        built.push(mt);
+        return;
+      }
       var turn = el("div", "turn");
       var card = el("div", "card bubble partner");
       card.appendChild(el("div", "nl", T("Gesprekspartner zei")));
