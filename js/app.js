@@ -182,41 +182,68 @@
     var tx = el("div", "txt");
     tx.appendChild(el("div", "es", it.es));
     tx.appendChild(el("div", "nl", L(it.m)));
-    var fu = typeof FOLLOWUPS !== "undefined" ? FOLLOWUPS[it.es] : null;
-    if (fu) {
-      // Tik op de zin: de vervolgsuggesties verschijnen
-      tx.style.cursor = "pointer";
-      tx.setAttribute("role", "button");
-      tx.setAttribute("aria-expanded", S.openFollow === it.es ? "true" : "false");
-      tx.onclick = function () { S.openFollow = S.openFollow === it.es ? null : it.es; render(); };
-    }
     line.appendChild(tx);
     line.appendChild(speakBtn(it.es));
     card.appendChild(line);
     card.appendChild(explainBox(it.es));
     if (extra) card.appendChild(extra);
-    if (fu && S.openFollow === it.es) {
-      var sug = el("div", "replies");
-      sug.appendChild(el("div", "sec-title", T("Kies een vervolg: je gaat dan verder in Gesprek")));
-      fu.forEach(function (f) {
-        var fb = el("button", "btn small followup");
-        fb.type = "button";
-        fb.appendChild(el("div", "es", f.es));
-        fb.appendChild(el("div", "nl", L(f.m)));
-        fb.onclick = function () { startChatWith(f.es); };
-        sug.appendChild(fb);
-      });
-      card.appendChild(sug);
+    return card;
+  }
+
+  // Wisselkaart: elke 2,5 seconde een nieuwe zin. Vegen wisselt zelf; tikken start het gesprek in Gesprek.
+  var carTimer = null;
+  function openersCard() {
+    var card = el("div", "card carousel");
+    var i = 0, sx = null, moved = false;
+    function show() {
+      var o = OPENERS[i];
+      card.innerHTML = "";
+      var line = el("div", "line-row");
+      var tx = el("div", "txt");
+      tx.appendChild(el("div", "es", o.es));
+      tx.appendChild(el("div", "nl", L(o.m)));
+      line.appendChild(tx);
+      var sp = speakBtn(o.es);
+      sp.addEventListener("click", function (e) { e.stopPropagation(); });
+      line.appendChild(sp);
+      card.appendChild(line);
+      var dots = el("div", "dots");
+      OPENERS.forEach(function (_, k) { dots.appendChild(el("span", "dot" + (k === i ? " on" : ""))); });
+      card.appendChild(dots);
+      card.appendChild(el("div", "note", T("Tik op de zin om in Gesprek verder te gaan. Veeg om te wisselen.")));
     }
+    function stop() { if (carTimer) { clearInterval(carTimer); carTimer = null; } }
+    function next(d) { i = (i + d + OPENERS.length) % OPENERS.length; show(); }
+    function start() {
+      stop();
+      carTimer = setInterval(function () {
+        if (!document.body.contains(card)) { stop(); return; }
+        next(1);
+      }, 2500);
+    }
+    card.addEventListener("touchstart", function (e) { sx = e.touches[0].clientX; moved = false; }, { passive: true });
+    card.addEventListener("touchend", function (e) {
+      if (sx === null) return;
+      var dx = e.changedTouches[0].clientX - sx;
+      sx = null;
+      if (Math.abs(dx) > 40) { moved = true; next(dx < 0 ? 1 : -1); start(); }
+    });
+    card.addEventListener("click", function () {
+      if (moved) { moved = false; return; }
+      stop();
+      startChatWith(OPENERS[i].es);
+    });
+    show();
+    start();
     return card;
   }
 
   // Een gekozen zin wordt jouw eerste beurt in het Gesprek-tabblad; het gesprek gaat daar verder.
   function startChatWith(text) {
+    if (carTimer) { clearInterval(carTimer); carTimer = null; }
     var t = { me: true, es: text };
     S.convo.push(t);
     S.chatStartTurn = t;
-    S.openFollow = null;
     S.note = "";
     go("gesprek");
   }
@@ -269,6 +296,7 @@
     w.appendChild(row);
     var canBuild = BUILDABLE_CATS.indexOf(S.cat) >= 0;
     var shown = 0;
+    if (S.cat === "Gesprek openen") { w.appendChild(openersCard()); shown++; }
     PHRASES[S.cat].forEach(function (it) {
       var extra = null;
       if (canBuild && BUILD_STEMS[it.es]) {
@@ -1313,7 +1341,7 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "66";
+  var APP_VERSION = "67";
   var WH_LOG = [];
   function whLog(msg) {
     var d = new Date();
