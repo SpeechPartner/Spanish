@@ -193,6 +193,16 @@
   // ---------- Navigatie en weergave van de vaste onderbalk ----------
   function go(tab) {
     if (typeof prRelease === "function") prRelease();
+    // Info werkt als schakelaar: tik je er nog eens op, dan ga je terug naar de pagina waar je vandaan kwam
+    if (tab === "info" && S.tab === "info") {
+      tab = S.backTab || "zinnen";
+      var y = S.backY || 0;
+      S.tab = tab; S.build = null;
+      render();
+      window.scrollTo(0, y);
+      return;
+    }
+    if (tab === "info") { S.backTab = S.tab; S.backY = window.scrollY; }
     S.tab = tab; S.build = null;
     render();
     window.scrollTo(0, 0);
@@ -1248,7 +1258,7 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "61";
+  var APP_VERSION = "62";
   var WH_LOG = [];
   function whLog(msg) {
     var d = new Date();
