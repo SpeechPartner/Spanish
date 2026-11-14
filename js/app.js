@@ -1341,7 +1341,7 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "67";
+  var APP_VERSION = "68";
   var WH_LOG = [];
   function whLog(msg) {
     var d = new Date();
@@ -1921,6 +1921,21 @@
         mt.appendChild(mb);
         var mrep = el("div", "replies");
         if (altsFor(t.es).length) mrep.appendChild(altBlock(altsFor(t.es)));
+        // Vervolgopties: wat de gesprekspartner kan antwoorden, en vragen die je zelf kunt stellen
+        var mopts = makeTurn(t.es).options;
+        if (mopts.length) {
+          mrep.appendChild(el("div", "sec-title", T("Mogelijke vervolg")));
+          mopts.forEach(function (o) {
+            var l = el("div", "line-row bubble me");
+            var x = el("div", "txt");
+            x.appendChild(el("div", "nl", L(o.label)));
+            x.appendChild(el("div", "es", o.es));
+            if (o.m) x.appendChild(el("div", "nl", L(o.m)));
+            l.appendChild(x);
+            l.appendChild(speakBtn(o.es));
+            mrep.appendChild(l);
+          });
+        }
         if (startRep === null && S.chatStartTurn === t) startRep = mrep; else mt.appendChild(mrep);
         built.push(mt);
         return;
