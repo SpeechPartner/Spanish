@@ -265,3 +265,8 @@ body.speels.nav-away .dock-br { bottom: 14px; }
 
 /* Ruimte rond de inhoud: de vaste tabbladen en de onderste balk gaan niet over antwoorden heen */
 body.speels main#view { padding: 36px 44px calc(var(--navh) + 36px); }
+
+/* Vervolgsuggesties bij een zin: twee regels per knop, Spaans en vertaling */
+body.speels .followup { display: flex; flex-direction: column; align-items: flex-start; text-align: left; white-space: normal; width: 100%; max-width: 100%; margin: 0 0 6px; padding: 10px 12px; }
+body.speels .followup .es { font-weight: 900; }
+body.speels .followup .nl { font-size: 13px; }
