@@ -54,6 +54,27 @@ var OPENERS = [
   p("¿Disculpe?", "Pardon?", "Excuse me?", "Entschuldigung?", "Excusez-moi ?")
 ];
 
+// Positief antwoord van de gesprekspartner op de kaart-zinnen (volgorde gelijk aan OPENERS)
+var OPENER_REPLY = [
+  p("Sí, claro. ¿En qué le puedo ayudar?", "Ja, natuurlijk. Waarmee kan ik u helpen?", "Yes, of course. How can I help you?", "Ja, natürlich. Wobei kann ich Ihnen helfen?", "Oui, bien sûr. Comment puis-je vous aider ?"),
+  p("Claro, adelante. ¿Qué quiere saber?", "Natuurlijk, ga uw gang. Wat wilt u weten?", "Of course, go ahead. What would you like to know?", "Natürlich, fragen Sie ruhig. Was möchten Sie wissen?", "Bien sûr, allez-y. Que voulez-vous savoir ?"),
+  p("Sí, claro. ¿Qué necesita?", "Ja, zeker. Wat heeft u nodig?", "Yes, sure. What do you need?", "Ja, sicher. Was brauchen Sie?", "Oui, bien sûr. De quoi avez-vous besoin ?"),
+  p("Sí, dígame.", "Ja, zegt u het maar.", "Yes, go ahead.", "Ja, bitte.", "Oui, je vous écoute.")
+];
+
+// Hulpvragen die na het positieve antwoord verschijnen. Met een kleine toelichting, zodat het niet kaal klinkt.
+function helpOpt(label_nl, label_en, label_de, label_fr, es, nl, en, de, fr) {
+  return { l: m(label_nl, label_en, label_de, label_fr), es: es, m: m(nl, en, de, fr) };
+}
+var HELP_OPTIONS = [
+  helpOpt("Tijd", "Time", "Zeit", "Heure", "No soy de aquí. ¿Me puede decir qué hora es?", "Ik kom hier niet vandaan. Kunt u me zeggen hoe laat het is?", "I'm not from here. Can you tell me what time it is?", "Ich komme nicht von hier. Können Sie mir sagen, wie spät es ist?", "Je ne suis pas d'ici. Pouvez-vous me dire quelle heure il est ?"),
+  helpOpt("Restaurant", "Restaurant", "Restaurant", "Restaurant", "Tengo hambre. ¿Me recomienda un buen restaurante cerca?", "Ik heb honger. Kunt u een goed restaurant in de buurt aanbevelen?", "I'm hungry. Can you recommend a good restaurant nearby?", "Ich habe Hunger. Können Sie ein gutes Restaurant in der Nähe empfehlen?", "J'ai faim. Pouvez-vous me recommander un bon restaurant près d'ici ?"),
+  helpOpt("Busstation", "Bus station", "Busbahnhof", "Gare routière", "No soy de aquí. ¿Dónde está la estación de autobuses?", "Ik kom hier niet vandaan. Waar is het busstation?", "I'm not from here. Where is the bus station?", "Ich komme nicht von hier. Wo ist der Busbahnhof?", "Je ne suis pas d'ici. Où est la gare routière ?"),
+  helpOpt("Trein", "Train", "Zug", "Train", "Quiero ir a la estación de tren. ¿A qué hora sale el próximo tren?", "Ik wil naar het station. Hoe laat vertrekt de volgende trein?", "I want to go to the train station. What time does the next train leave?", "Ich möchte zum Bahnhof. Wann fährt der nächste Zug ab?", "Je veux aller à la gare. À quelle heure part le prochain train ?"),
+  helpOpt("Kaartje", "Ticket", "Fahrkarte", "Billet", "¿Cuánto cuesta el billete al centro?", "Hoeveel kost het kaartje naar het centrum?", "How much is the ticket to the city centre?", "Wie viel kostet die Fahrkarte ins Zentrum?", "Combien coûte le billet pour le centre-ville ?"),
+  helpOpt("Hulp", "Help", "Hilfe", "Aide", "Estoy perdido. ¿Me puede ayudar a encontrar la farmacia?", "Ik ben verdwaald. Kunt u me helpen de apotheek te vinden?", "I'm lost. Can you help me find the pharmacy?", "Ich habe mich verlaufen. Können Sie mir helfen, die Apotheke zu finden?", "Je suis perdu. Pouvez-vous m'aider à trouver la pharmacie ?")
+];
+
 var STUCK = [
   p("¿Cómo se dice... en español?", "Hoe zeg je ... in het Spaans?", "How do you say ... in Spanish?", "Wie sagt man ... auf Spanisch?", "Comment dit-on ... en espagnol ?"),
   p("No me sale la palabra.", "Het woord komt niet bij me op.", "The word won't come to me.", "Mir fällt das Wort nicht ein.", "Le mot ne me vient pas."),

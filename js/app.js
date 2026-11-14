@@ -231,7 +231,7 @@
     card.addEventListener("click", function () {
       if (moved) { moved = false; return; }
       stop();
-      startChatWith(OPENERS[i].es);
+      startOpenerChat(i);
     });
     show();
     start();
@@ -239,6 +239,33 @@
   }
 
   // Een gekozen zin wordt jouw eerste beurt in het Gesprek-tabblad; het gesprek gaat daar verder.
+  // Tik op een kaart-zin: die wordt je eigen beurt, de gesprekspartner antwoordt positief,
+  // daarna kies je een hulpvraag. Alleen voor de wisselkaart; de vertaalbox blijft zoals hij was.
+  function startOpenerChat(i) {
+    if (carTimer) { clearInterval(carTimer); carTimer = null; }
+    var me = { me: true, es: OPENERS[i].es, flow: true };
+    S.convo.push(me);
+    var rt = makeTurn(OPENER_REPLY[i].es);
+    rt.fixedM = OPENER_REPLY[i].m; rt.flow = true; rt.help = true;
+    rt.options = HELP_OPTIONS.map(function (h) { return { label: h.l, es: h.es, m: h.m }; });
+    S.convo.push(rt);
+    S.chatStartTurn = null;
+    S.note = "";
+    go("gesprek");
+    window.scrollTo(0, 0);
+  }
+
+  // Gekozen hulpvraag: de rest verdwijnt, de microfoon gaat aan en het antwoord wordt vertaald.
+  function pickHelp(t, o) {
+    t.help = false; t.options = [];
+    S.convo.push({ me: true, es: o.es, flow: true });
+    S.note = "";
+    startMic();
+    if (S.listening) S.note = T("Wacht op het antwoord van de gesprekspartner. Tik op Stop als die klaar is.");
+    render();
+    window.scrollTo(0, 0);
+  }
+
   function startChatWith(text) {
     if (carTimer) { clearInterval(carTimer); carTimer = null; }
     var t = { me: true, es: text };
@@ -1341,7 +1368,7 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "68";
+  var APP_VERSION = "69";
   var WH_LOG = [];
   function whLog(msg) {
     var d = new Date();
@@ -1922,7 +1949,7 @@
         var mrep = el("div", "replies");
         if (altsFor(t.es).length) mrep.appendChild(altBlock(altsFor(t.es)));
         // Vervolgopties: wat de gesprekspartner kan antwoorden, en vragen die je zelf kunt stellen
-        var mopts = makeTurn(t.es).options;
+        var mopts = t.flow ? [] : makeTurn(t.es).options;
         if (mopts.length) {
           mrep.appendChild(el("div", "sec-title", T("Mogelijke vervolg")));
           mopts.forEach(function (o) {
@@ -1951,7 +1978,7 @@
       card.appendChild(line);
       card.appendChild(el("div", "nl", T("Vertaling")));
       // De vertaling wordt bij het tonen opnieuw gemaakt, zodat ze altijd de gekozen taal volgt.
-      var trr = esToLang(t.es) || t.tr;
+      var trr = t.fixedM ? { text: L(t.fixedM) } : (esToLang(t.es) || t.tr);
       card.appendChild(el("div", "", trr.text));
       if (altsFor(t.es).length) card.appendChild(altBlock(altsFor(t.es)));
       if (t.gen) card.appendChild(el("div", "nl", T("Uit de zin afgeleid: vorm voor de gesprekspartner") + " (" + (t.gen === "zij" ? "zij" : "hij") + ")"));
@@ -1977,19 +2004,25 @@
       turn.appendChild(card);
       // Vervolgopties als eigen bellen aan de andere kant van het gesprek
       var rep = el("div", "replies");
-      rep.appendChild(el("div", "sec-title", T("Mogelijke vervolg")));
-      t.options.forEach(function (o) {
-        var l = el("div", "line-row bubble me");
-        var x = el("div", "txt");
-        x.appendChild(el("div", "nl", L(o.label)));
-        x.appendChild(el("div", "es", o.es));
-        if (o.m) x.appendChild(el("div", "nl", L(o.m)));
-        l.appendChild(x);
-        l.appendChild(speakBtn(o.es));
-        rep.appendChild(l);
-      });
-      // De start van de chat (vanuit de vertaalbox) krijgt de antwoorden pas na de opneemfunctie
-      if (startRep === null && S.chatStartTurn && t === S.chatStartTurn) startRep = rep; else turn.appendChild(rep);
+      if (t.options.length) {
+        rep.appendChild(el("div", "sec-title", t.help ? T("Kies wat je wilt vragen:") : T("Mogelijke vervolg")));
+        t.options.forEach(function (o) {
+          var l = el("div", "line-row bubble me" + (t.help ? " pick" : ""));
+          var x = el("div", "txt");
+          x.appendChild(el("div", "nl", L(o.label)));
+          x.appendChild(el("div", "es", o.es));
+          if (o.m) x.appendChild(el("div", "nl", L(o.m)));
+          l.appendChild(x);
+          l.appendChild(speakBtn(o.es));
+          if (t.help) {
+            l.setAttribute("role", "button");
+            l.onclick = function () { pickHelp(t, o); };
+          }
+          rep.appendChild(l);
+        });
+        // De start van de chat (vanuit de vertaalbox) krijgt de antwoorden pas na de opneemfunctie
+        if (startRep === null && S.chatStartTurn && t === S.chatStartTurn) startRep = rep; else turn.appendChild(rep);
+      }
       built.push(turn);
     });
     if (startRep) {

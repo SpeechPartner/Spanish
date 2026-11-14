@@ -99,6 +99,8 @@ var UI = {
   "Typ hier de Spaanse zin": m("Typ hier de Spaanse zin", "Type the Spanish sentence here", "Schreibe den spanischen Satz hier", "Écris la phrase espagnole ici"),
   "Of typ wat je gesprekspartner zei": m("Of typ wat je gesprekspartner zei", "Or type what your partner said", "Oder tippe, was dein Gesprächspartner sagte", "Ou tape ce que ton partenaire a dit"),
   "Verwerk": m("Verwerk", "Process", "Verarbeiten", "Traiter"),
+  "Kies wat je wilt vragen:": m("Kies wat je wilt vragen:", "Choose what you want to ask:", "Wähle, was du fragen möchtest:", "Choisis ce que tu veux demander :"),
+  "Wacht op het antwoord van de gesprekspartner. Tik op Stop als die klaar is.": m("Wacht op het antwoord van de gesprekspartner. Tik op Stop als die klaar is.", "Waiting for the conversation partner's answer. Tap Stop when they are done.", "Warte auf die Antwort deines Gesprächspartners. Tippe auf Stopp, wenn er fertig ist.", "En attente de la réponse de ton interlocuteur. Appuie sur Stop quand il a fini."),
   "Opnemen": m("Opnemen", "Record", "Aufnehmen", "Enregistrer"),
   "Stop": m("Stop", "Stop", "Stopp", "Arrêter"),
   "Wis gesprek": m("Wis gesprek", "Clear conversation", "Gespräch leeren", "Effacer la conversation"),
