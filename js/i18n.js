@@ -19,6 +19,7 @@ var UI = {
   "Uit de zin afgeleid: vorm voor de gesprekspartner": m("Uit de zin afgeleid: vorm voor de gesprekspartner", "Taken from the sentence: form for the partner", "Aus dem Satz abgeleitet: Form für den Gesprächspartner", "Déduit de la phrase : forme pour le partenaire"),
   "Jungle": m("Jungle", "Jungle", "Dschungel", "Jungle"),
   "Ruimte": m("Ruimte", "Outer space", "Weltraum", "Espace"),
+  "Nachtlampje": m("Nachtlampje", "Night light", "Nachtlicht", "Veilleuse"),
   "Snelheid van voorlezen": m("Snelheid van voorlezen", "Reading speed", "Vorlesegeschwindigkeit", "Vitesse de lecture"),
   "Begrepen items resetten": m("Begrepen items resetten", "Reset understood items", "Verstandene zurücksetzen", "Réinitialiser les éléments compris"),
   "Voortgang resetten": m("Voortgang resetten", "Reset progress", "Fortschritt zurücksetzen", "Réinitialiser la progression"),

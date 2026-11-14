@@ -1214,7 +1214,7 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "54";
+  var APP_VERSION = "56";
   var WH_LOG = [];
   function whLog(msg) {
     var d = new Date();
@@ -2190,7 +2190,7 @@
     document.getElementById("themeSel").value = theme;
     if (document.getElementById("genSel")) document.getElementById("genSel").value = partnerGenderSetting();
     document.body.classList.toggle("cafe", theme === "cafe");
-    ["ijs", "jungle", "ruimte"].forEach(function (t) { document.body.classList.toggle("th-" + t, theme === t); });
+    ["ijs", "jungle", "ruimte", "nacht"].forEach(function (t) { document.body.classList.toggle("th-" + t, theme === t); });
     renderLogo();
   }
 
