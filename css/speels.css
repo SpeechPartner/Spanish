@@ -89,7 +89,7 @@ body.speels.nav-away nav.bottomnav .btn, body.speels.nav-away nav.bottomnav .btn
 }
 body.speels.nav-away #navHandle { bottom: 8px; }
 /* Zolang de knoppen omhoog staan, is er geen belletje: de actieve knop in de balk is de aanduiding */
-body.speels:not(.nav-away) #navHandle { opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; transition: opacity .25s ease, visibility .25s; }
+body.speels:not(.nav-away) #navHandle { opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; transition: none !important; }
 /* Aan het einde van de pagina: alleen de onderste rij, Zinnen en Gesprek; Vastlopen blijft weg tot je het belletje gebruikt */
 body.speels.nav-end .dock-t { transform: translate(-50%, calc(-100% - 6px)); opacity: 0; visibility: hidden; pointer-events: none; transition: transform .5s cubic-bezier(.22,.8,.25,1), opacity .3s ease, visibility .5s; }
 /* Het belletje is de knop van de geselecteerde pagina: geen puntjes meer */
@@ -446,3 +446,12 @@ body.speels nav.bottomnav .btn.active { font-size: 16px; }
 body.speels:not(.cafe)[data-lang] .dock-btn.active::after, body.speels:not(.cafe)[data-lang] nav.bottomnav .btn.active::after, body.speels:not(.cafe)[data-lang] #navHandle.active::after {
   background-size: 260% 260%; background-position: 0% 0%; transition: none;
 }
+
+/* Banner: ?, instellingen en microfoon zijn losse pictogrammen, zonder knopvorm en op dezelfde plek */
+body.speels .iconbtn.hicon, body.speels #mbtn.hicon {
+  width: 32px; height: 32px; min-width: 32px; min-height: 32px; padding: 0; margin: 0;
+  border: none !important; background: none !important; box-shadow: none !important;
+  font-size: 22px; line-height: 1; font-weight: 900; color: var(--ink-k); cursor: pointer;
+}
+body.speels #mbtn.hicon { font-size: 20px; }
+body.speels #mbtn.hicon.rec { color: var(--bad); }
