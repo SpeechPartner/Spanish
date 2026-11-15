@@ -345,12 +345,8 @@ body.speels:not(.cafe) header.top::after {
 
 /* Ontwerp als op de foto: pil met golvende kleurvlakken, witte vette tekst, gekleurde gloed.
    Alle knoppen (onderbalk, Zinnen, Vastlopen, Gesprek, Info en het handvat) krijgen dit ontwerp.
-   Elke knop heeft een eigen variant (data-v 0-3): de vlakken wisselen van volgorde en hoek, zoals op de foto. */
+/* Alle knoppen gebruiken dezelfde lagen per thema: geen verschil per knop */
 body.speels[data-lang] { --c1: var(--bt1); --c2: var(--bt2); --c3: var(--bt3); --ang: 105deg; }
-body.speels[data-lang] [data-v="0"] { --c1: var(--bt1); --c2: var(--bt2); --c3: var(--bt3); --ang: 105deg; }
-body.speels[data-lang] [data-v="1"] { --c1: var(--bt2); --c2: var(--bt3); --c3: var(--bt1); --ang: 70deg; }
-body.speels[data-lang] [data-v="2"] { --c1: var(--bt2); --c2: var(--bt1); --c3: var(--bt3); --ang: 140deg; }
-body.speels[data-lang] [data-v="3"] { --c1: var(--bt1); --c2: var(--bt3); --c3: var(--bt2); --ang: 170deg; }
 
 body.speels:not(.cafe)[data-lang] nav.bottomnav .btn, body.speels:not(.cafe)[data-lang] #vbtn,
 body.speels:not(.cafe)[data-lang] .dock-l, body.speels:not(.cafe)[data-lang] .dock-r,
