@@ -404,6 +404,12 @@
       if (DOCK_POS[t[0]] && dockOk) b.setAttribute("aria-current", S.tab === t[0] ? "page" : "false");
       where.appendChild(b);
     });
+    // Het belletje toont de knop van de geselecteerde pagina (zelfde ontwerp, met glans)
+    var h = document.getElementById("navHandle");
+    if (!h) { h = document.createElement("button"); h.id = "navHandle"; h.type = "button"; h.setAttribute("aria-label", "Menu tonen"); document.body.appendChild(h); }
+    var cur = TABS.filter(function (t) { return t[0] === S.tab; })[0];
+    h.textContent = cur ? T(cur[1]) : "";
+    h.classList.add("active");
   }
 
   // ---------- Zinnen ----------
@@ -1461,7 +1467,7 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "1.3";
+  var APP_VERSION = "1.5";
   // Versies waarvoor gebruikers de app opnieuw op hun beginscherm moeten zetten (oude icoon weg, nieuwe erop).
   // Bij zo'n update verschijnt eenmalig een melding met uitleg.
   var REINSTALL_VERSIONS = ["97"];
