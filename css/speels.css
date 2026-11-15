@@ -313,63 +313,68 @@ body.speels:not(.cafe) .dock-l, body.speels:not(.cafe) .dock-r, body.speels:not(
 
 /* ===== v83: nieuw ontwerp alleen voor de verdwijnende onderknoppen en Zinnen/Gesprek; kleuren uit land en thema ===== */
 /* Kleuren per taal (landen) */
-body.speels:not(.cafe)[data-lang="nl"] { --bt1: #E0303F; --bt2: #2F5FC4; --bt3: #FF9CC0; }
-body.speels:not(.cafe)[data-lang="en"] { --bt1: #C8102E; --bt2: #1F3F9E; --bt3: #7FB8FF; }
-body.speels:not(.cafe)[data-lang="de"] { --bt1: #DD0000; --bt2: #FFCE00; --bt3: #FF7A3D; }
-body.speels:not(.cafe)[data-lang="fr"] { --bt1: #ED2939; --bt2: #002395; --bt3: #F4F6FF; }
-/* Kleuren per thema (overschrijven de taalkleuren) */
+/* Landskleuren (vlaggen) en themakleuren: alleen deze drie kleuren komen in de knoppen */
+body.speels:not(.cafe)[data-lang="nl"] { --bt1: #AE1C28; --bt2: #21468B; --bt3: #7F9CD0; }
+body.speels:not(.cafe)[data-lang="en"] { --bt1: #C8102E; --bt2: #012169; --bt3: #8FA8DE; }
+body.speels:not(.cafe)[data-lang="de"] { --bt1: #1A1A1A; --bt2: #DD0000; --bt3: #FFB400; }
+body.speels:not(.cafe)[data-lang="fr"] { --bt1: #002395; --bt2: #ED2939; --bt3: #9AA6CF; }
+
 body.speels.th-ijs[data-lang] { --bt1: #2a7fd4; --bt2: #8fd3f4; --bt3: #d4f0ff; }
 body.speels.th-jungle[data-lang] { --bt1: #2f7d32; --bt2: #e4572e; --bt3: #f6c744; }
 body.speels.th-ruimte[data-lang] { --bt1: #ff5d8f; --bt2: #6e52b8; --bt3: #2be4ff; }
 body.speels.th-donker[data-lang] { --bt1: #6e52b8; --bt2: #2f2857; --bt3: #ff7ad9; }
 
-/* Ontwerp als op de foto: pil met golvende kleurvlakken, witte vette tekst, gekleurde gloed eronder */
-body.speels:not(.cafe)[data-lang] nav.bottomnav .btn {
-  position: relative; overflow: hidden; border: none !important; color: #fff !important;
-  text-shadow: 0 1px 2px rgba(0,0,0,.3); font-weight: 900;
-  background:
-    radial-gradient(130% 80% at 0% 115%, var(--bt2) 0 52%, rgba(255,255,255,0) 53%),
-    radial-gradient(130% 80% at 100% -15%, var(--bt3) 0 48%, rgba(255,255,255,0) 49%),
-    radial-gradient(110% 70% at 60% 40%, var(--bt1) 0 40%, rgba(255,255,255,0) 41%),
-    linear-gradient(105deg, var(--bt1) 0%, var(--bt2) 45%, var(--bt3) 100%) !important;
-  box-shadow: 0 10px 18px -8px var(--bt1) !important;
-}
-/* Zinnen en Gesprek: zelfde kleuren, hun vaste plek en vorm blijven */
-body.speels:not(.cafe)[data-lang] .dock-l,
-body.speels:not(.cafe)[data-lang] .dock-r {
+/* Ontwerp als op de foto: pil met golvende kleurvlakken, witte vette tekst, gekleurde gloed.
+   Alle knoppen (onderbalk, Zinnen, Vastlopen, Gesprek, Info en het handvat) krijgen dit ontwerp.
+   Elke knop heeft een eigen variant (data-v 0-3): de vlakken wisselen van volgorde en hoek, zoals op de foto. */
+body.speels[data-lang] { --c1: var(--bt1); --c2: var(--bt2); --c3: var(--bt3); --ang: 105deg; }
+body.speels[data-lang] [data-v="0"] { --c1: var(--bt1); --c2: var(--bt2); --c3: var(--bt3); --ang: 105deg; }
+body.speels[data-lang] [data-v="1"] { --c1: var(--bt2); --c2: var(--bt3); --c3: var(--bt1); --ang: 70deg; }
+body.speels[data-lang] [data-v="2"] { --c1: var(--bt2); --c2: var(--bt1); --c3: var(--bt3); --ang: 140deg; }
+body.speels[data-lang] [data-v="3"] { --c1: var(--bt1); --c2: var(--bt3); --c3: var(--bt2); --ang: 170deg; }
+
+body.speels:not(.cafe)[data-lang] nav.bottomnav .btn,
+body.speels:not(.cafe)[data-lang] .dock-l, body.speels:not(.cafe)[data-lang] .dock-r,
+body.speels:not(.cafe)[data-lang] .dock-t, body.speels:not(.cafe)[data-lang] .dock-br,
+body.speels:not(.cafe)[data-lang] #navHandle {
   overflow: hidden; border: none !important; color: #fff !important;
   text-shadow: 0 1px 2px rgba(0,0,0,.3); font-weight: 900;
   background:
-    radial-gradient(130% 80% at 0% 115%, var(--bt2) 0 52%, rgba(255,255,255,0) 53%),
-    radial-gradient(130% 80% at 100% -15%, var(--bt3) 0 48%, rgba(255,255,255,0) 49%),
-    radial-gradient(110% 70% at 60% 40%, var(--bt1) 0 40%, rgba(255,255,255,0) 41%),
-    linear-gradient(105deg, var(--bt1) 0%, var(--bt2) 45%, var(--bt3) 100%) !important;
-  box-shadow: 0 10px 18px -8px var(--bt1) !important;
+    radial-gradient(130% 80% at 0% 115%, var(--c2) 0 52%, rgba(255,255,255,0) 53%),
+    radial-gradient(130% 80% at 100% -15%, var(--c3) 0 48%, rgba(255,255,255,0) 49%),
+    radial-gradient(110% 70% at 60% 40%, var(--c1) 0 40%, rgba(255,255,255,0) 41%),
+    linear-gradient(var(--ang), var(--c1) 0%, var(--c2) 45%, var(--c3) 100%) !important;
+  box-shadow: 0 10px 18px -8px var(--c1) !important;
 }
 body.speels:not(.cafe)[data-lang] nav.bottomnav .btn { border-radius: 999px !important; }
+body.speels:not(.cafe)[data-lang] #navHandle::before { background: #fff; }
 /* Golfband bovenaan, zoals de lichte lint op de foto */
 body.speels:not(.cafe)[data-lang] nav.bottomnav .btn::before,
-body.speels:not(.cafe)[data-lang] .dock-l::before,
-body.speels:not(.cafe)[data-lang] .dock-r::before {
+body.speels:not(.cafe)[data-lang] .dock-l::before, body.speels:not(.cafe)[data-lang] .dock-r::before,
+body.speels:not(.cafe)[data-lang] .dock-t::before, body.speels:not(.cafe)[data-lang] .dock-br::before {
   content: ""; position: absolute; left: -10%; right: -10%; top: 0; height: 55%; pointer-events: none; z-index: 0;
   background: linear-gradient(180deg, rgba(255,255,255,.25) 0%, rgba(255,255,255,0) 100%);
   border-radius: 50% 50% 60% 40% / 40% 40% 60% 60%;
 }
 /* Glans die bij aanraking van hoek verspringt */
 body.speels:not(.cafe)[data-lang] nav.bottomnav .btn::after,
-body.speels:not(.cafe)[data-lang] .dock-l::after,
-body.speels:not(.cafe)[data-lang] .dock-r::after {
+body.speels:not(.cafe)[data-lang] .dock-l::after, body.speels:not(.cafe)[data-lang] .dock-r::after,
+body.speels:not(.cafe)[data-lang] .dock-t::after, body.speels:not(.cafe)[data-lang] .dock-br::after,
+body.speels:not(.cafe)[data-lang] #navHandle::after {
   content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 1;
   background: linear-gradient(160deg, rgba(255,255,255,.45) 0%, rgba(255,255,255,.08) 38%, rgba(255,255,255,0) 50%);
   background-size: 220% 220%; background-position: 0% 0%; transition: background-position .35s ease;
 }
 body.speels:not(.cafe)[data-lang] nav.bottomnav .btn:active::after,
-body.speels:not(.cafe)[data-lang] .dock-l:active::after,
-body.speels:not(.cafe)[data-lang] .dock-r:active::after {
+body.speels:not(.cafe)[data-lang] .dock-l:active::after, body.speels:not(.cafe)[data-lang] .dock-r:active::after,
+body.speels:not(.cafe)[data-lang] .dock-t:active::after, body.speels:not(.cafe)[data-lang] .dock-br:active::after,
+body.speels:not(.cafe)[data-lang] #navHandle:active::after {
   background-position: 100% 100%;
   background-image: linear-gradient(330deg, rgba(255,255,255,.45) 0%, rgba(255,255,255,.08) 38%, rgba(255,255,255,0) 50%);
 }
-body.speels:not(.cafe)[data-lang] nav.bottomnav .btn:active, body.speels:not(.cafe)[data-lang] .dock-l:active, body.speels:not(.cafe)[data-lang] .dock-r:active { filter: brightness(.94); }
+body.speels:not(.cafe)[data-lang] nav.bottomnav .btn:active, body.speels:not(.cafe)[data-lang] .dock-l:active,
+body.speels:not(.cafe)[data-lang] .dock-r:active, body.speels:not(.cafe)[data-lang] .dock-t:active,
+body.speels:not(.cafe)[data-lang] .dock-br:active { filter: brightness(.94); }
 
 /* Onderbalk: nooit een achtergrond of rand, ook niet als hij verborgen is */
 body.speels nav.bottomnav, body.speels.nav-away nav.bottomnav, body.speels:not(.cafe)[data-lang] nav.bottomnav, body.speels.nav-away:not(.cafe)[data-lang] nav.bottomnav {
