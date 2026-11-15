@@ -396,8 +396,6 @@
     var dockOk = getComputedStyle(dock).position === "fixed";
     nav.innerHTML = "";
     dock.innerHTML = "";
-    var pi = document.getElementById("pageInfo");
-    if (pi) { var cur = TABS.filter(function (t) { return t[0] === S.tab; })[0]; pi.textContent = cur ? T(cur[1]) : ""; }
     TABS.forEach(function (t) {
       var where = DOCK_POS[t[0]] && dockOk ? dock : nav;
       var cls = DOCK_POS[t[0]] && dockOk ? "dock-btn " + DOCK_POS[t[0]] + (S.tab === t[0] ? " active" : "") : (S.tab === t[0] ? "active small" : "small");
@@ -1463,7 +1461,7 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "1.1";
+  var APP_VERSION = "1.2";
   // Versies waarvoor gebruikers de app opnieuw op hun beginscherm moeten zetten (oude icoon weg, nieuwe erop).
   // Bij zo'n update verschijnt eenmalig een melding met uitleg.
   var REINSTALL_VERSIONS = ["97"];
@@ -2638,6 +2636,11 @@
     renderNav();
     var view = document.getElementById("view");
     view.innerHTML = "";
+    // De titel van de pagina staat bovenaan (niet bij de Info-bladen, die hebben hun eigen kopjes)
+    if (!S.build && S.tab !== "info") {
+      var tt = TABS.filter(function (t) { return t[0] === S.tab; })[0];
+      if (tt) view.appendChild(el("h2", "page-title", T(tt[1])));
+    }
     view.appendChild(S.build ? viewBuilder() : VIEWS[S.tab]());
     updateMic();
   }

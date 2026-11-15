@@ -126,11 +126,6 @@
   // Verdwijnen bij een paginawissel, bij een tik op een leeg stuk van de pagina en bij scrollen.
   // Komen terug als je onderaan de pagina bent, of met een tik op het belletje.
   // Het belletje blijft altijd zichtbaar, ook over de pagina's heen.
-  // Knop links van het belletje: toont de pagina waar je op zit (alleen ter info, niet aan te tikken)
-  var pageInfo = document.createElement("div");
-  pageInfo.id = "pageInfo";
-  pageInfo.setAttribute("aria-hidden", "true");
-  document.body.appendChild(pageInfo);
   var handle = document.createElement("button");
   handle.id = "navHandle";
   handle.type = "button";
