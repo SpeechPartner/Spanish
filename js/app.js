@@ -345,6 +345,19 @@
   // links gaat terug, rechts gaat verder. Vegen wisselt niet meer van pagina.
   // Tik op een leeg stuk van de banner: het thema wisselt.
   var EDGE = 44;
+  // Ligt de tik op de tekst van de titel (en niet op het lege stuk eromheen)?
+  function onTitleText(e) {
+    var h1 = document.querySelector("header.top h1");
+    if (!h1) return false;
+    var rg = document.createRange();
+    rg.selectNodeContents(h1);
+    var rects = rg.getClientRects();
+    for (var i = 0; i < rects.length; i++) {
+      var q = rects[i];
+      if (e.clientX >= q.left - 6 && e.clientX <= q.right + 6 && e.clientY >= q.top - 6 && e.clientY <= q.bottom + 6) return true;
+    }
+    return false;
+  }
   // Café heeft geen banner en Systeem is geen vaste kleur: die staan alleen in de instellingen
   var BANNER_THEMES = ["standaard", "ijs", "jungle", "ruimte"];
   function cycleTheme() {
@@ -357,10 +370,11 @@
   document.addEventListener("click", function (e) {
     var t = e.target;
     if (!t || !t.closest) return;
-    if (t.closest("button, a, input, textarea, select, details, label, nav, .dock, #navHandle, .carousel, .leafdots, #settings")) return;
+    if (t.closest("button, a, input, textarea, select, details, label, nav, .dock, #navHandle, .carousel, .leafdots, #settings, .langmenu, .transout")) return;
     if (t.closest("header.top")) {
-      var hd = document.querySelector("header.top");
-      if (t === hd || t.classList.contains("brand") || t.classList.contains("transbar")) cycleTheme();
+      // Tekst van de titel gaat naar het begin (zie hierboven); het lege stuk van de banner wisselt het thema
+      if (t.closest("h1") && onTitleText(e)) return;
+      cycleTheme();
       return;
     }
     var W = window.innerWidth, x = e.clientX;
@@ -1446,7 +1460,7 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "95";
+  var APP_VERSION = "96";
   var WH_LOG = [];
   function whLog(msg) {
     var d = new Date();
@@ -1887,7 +1901,7 @@
       k: [] }
   ];
   var EXTRA_GUIDE = { n: m("Instellingen en extra's", "Settings and extras", "Einstellungen und Extras", "Réglages et extras"),
-    k: [m("Vertaalbalk bovenaan: typ Nederlands en tik op Vertaal.", "Translation bar at the top: type Dutch and tap Translate.", "Übersetzungsleiste oben: Niederländisch tippen und auf Übersetzen tippen.", "Barre de traduction en haut : écris en néerlandais et touche Traduire."),
+    k: [m("Vertaalbalk bovenaan: typ Nederlands en tik op Vertaal.", "Translation bar at the top: type English and tap Translate.", "Übersetzungsleiste oben: Deutsch tippen und auf Übersetzen tippen.", "Barre de traduction en haut : écris en français et touche Traduire."),
         m("Taal: via het logo of het tandwiel (Nederlands, Engels, Duits, Frans).", "Language: via the logo or the gear icon (Dutch, English, German, French).", "Sprache: über das Logo oder das Zahnrad (Niederländisch, Englisch, Deutsch, Französisch).", "Langue : via le logo ou la roue crantée (néerlandais, anglais, allemand, français)."),
         m("Thema: Standaard, Café, IJs, Jungle of Ruimte.", "Theme: Standard, Café, Ice, Jungle or Outer space.", "Design: Standard, Café, Eis, Dschungel oder Weltraum.", "Thème : Standard, Café, Glace, Jungle ou Espace."),
         m("Gesprekspartner: automatisch, neutraal (o/a), man (hij) of vrouw (zij). Automatisch leidt het alleen af uit een zin die de partner over zichzelf zegt.", "Conversation partner: automatic, neutral (o/a), man (he) or woman (she). Automatic only uses a sentence in which the partner describes themselves.", "Gesprächspartner: automatisch, neutral (o/a), Mann (er) oder Frau (sie). Automatisch leitet nur aus einem Satz ab, in dem der Partner sich selbst beschreibt.", "Partenaire : automatique, neutre (o/a), homme (il) ou femme (elle). Automatique ne se base que sur une phrase où le partenaire se décrit lui-même."),
@@ -2587,6 +2601,9 @@
     if (document.getElementById("genSel")) document.getElementById("genSel").value = partnerGenderSetting();
     var eff = effectiveTheme();
     document.body.classList.toggle("cafe", eff === "cafe");
+    // Het café-thema heet in de banner "Business Café"
+    var ttlEl = document.querySelector("header.top h1");
+    if (ttlEl) ttlEl.textContent = eff === "cafe" ? "Business Café" : T("Speech Partner.Spanish");
     ["ijs", "jungle", "ruimte", "donker"].forEach(function (t) { document.body.classList.toggle("th-" + t, eff === t); });
     renderLogo();
   }
@@ -2686,7 +2703,8 @@
     var ttl = document.querySelector("header.top h1");
     if (ttl) {
       ttl.style.cursor = "pointer";
-      ttl.onclick = function () {
+      ttl.onclick = function (e) {
+        if (!onTitleText(e)) return;
         S.build = null; S.teach = null; S.listening = false;
         document.getElementById("settings").classList.remove("open");
         go("zinnen");

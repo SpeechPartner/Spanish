@@ -211,6 +211,10 @@ var UI = {
   "Wis voortgang uitspraak": m("Wis voortgang uitspraak", "Clear pronunciation progress", "Aussprache-Fortschritt löschen", "Effacer la progression de prononciation"),
   "Vorige": m("Vorige", "Previous", "Zurück", "Précédent"),
   "Woordenlijst: Wiktionary, CC BY-SA 4.0, via kaikki.org": m("Woordenlijst: Wiktionary, CC BY-SA 4.0, via kaikki.org", "Word list: Wiktionary, CC BY-SA 4.0, via kaikki.org", "Wortliste: Wiktionary, CC BY-SA 4.0, über kaikki.org", "Liste de mots : Wiktionary, CC BY-SA 4.0, via kaikki.org"),
+  "Tik op de zin om in Gesprek verder te gaan. Veeg om te wisselen.": m("Tik op de zin om in Gesprek verder te gaan. Veeg om te wisselen.", "Tap the sentence to continue in Conversation. Swipe to change.", "Tippe auf den Satz, um im Gespräch weiterzumachen. Wische zum Wechseln.", "Touche la phrase pour continuer dans Conversation. Glisse pour changer."),
+  "De microfoon kan niet worden gebruikt. Sluit andere apps of tabbladen die de microfoon gebruiken, controleer de microfoon-toegang van je browser, of typ hieronder.": m("De microfoon kan niet worden gebruikt. Sluit andere apps of tabbladen die de microfoon gebruiken, controleer de microfoon-toegang van je browser, of typ hieronder.", "The microphone cannot be used. Close other apps or tabs that use the microphone, check your browser's microphone access, or type below.", "Das Mikrofon kann nicht verwendet werden. Schließe andere Apps oder Tabs, die das Mikrofon nutzen, prüfe den Mikrofonzugriff deines Browsers oder tippe unten.", "Le micro ne peut pas être utilisé. Ferme les autres applis ou onglets qui utilisent le micro, vérifie l'accès au micro de ton navigateur, ou écris ci-dessous."),
+  "Tabbladen": m("Tabbladen", "Tabs", "Reiter", "Onglets"),
+  "Jij zei": m("Jij zei", "You said", "Du hast gesagt", "Tu as dit")
 };
 
 // Labels voor reacties (Ik vraag / Vriend vertelt)
