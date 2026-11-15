@@ -1471,7 +1471,7 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "1.17";
+  var APP_VERSION = "1.18";
   // Versies waarvoor gebruikers de app opnieuw op hun beginscherm moeten zetten (oude icoon weg, nieuwe erop).
   // Bij zo'n update verschijnt eenmalig een melding met uitleg.
   var REINSTALL_VERSIONS = ["1.8"];
@@ -2029,6 +2029,17 @@
 
     // Blad: aanleren
     page(L(INFO_SECTIONS[3].t), [el("p", "", L(INFO_SECTIONS[3].b))]);
+
+    // Blad: privacy (los document, dus een gewone link)
+    var privA = el("a", "", L(m("Lees de privacyverklaring", "Read the privacy statement", "Zur Datenschutzerklärung", "Lire la déclaration de confidentialité")));
+    privA.href = "privacy.html";
+    privA.target = "_blank";
+    privA.rel = "noopener";
+    page(L(m("Privacy", "Privacy", "Datenschutz", "Confidentialité")), [el("p", "", L(m(
+      "De app heeft geen account, geen advertenties en geen analytics. Je voortgang blijft op je eigen toestel.",
+      "The app has no account, no ads and no analytics. Your progress stays on your own device.",
+      "Die App hat kein Konto, keine Werbung und keine Analyse. Dein Fortschritt bleibt auf deinem Gerät.",
+      "L'application n'a pas de compte, pas de publicité et pas d'analyse. Ta progression reste sur ton appareil.")) ), privA]);
 
     // Het boekje zelf: één blad tegelijk, een vaste grootte, stipjes onderaan
     var n = pages.length;
