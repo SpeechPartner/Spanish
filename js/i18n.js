@@ -101,6 +101,8 @@ var UI = {
   "Verwerk": m("Verwerk", "Process", "Verarbeiten", "Traiter"),
   "Kies wat je wilt vragen:": m("Kies wat je wilt vragen:", "Choose what you want to ask:", "Wähle, was du fragen möchtest:", "Choisis ce que tu veux demander :"),
   "Wacht op het antwoord van de gesprekspartner. Tik op Stop als die klaar is.": m("Wacht op het antwoord van de gesprekspartner. Tik op Stop als die klaar is.", "Waiting for the conversation partner's answer. Tap Stop when they are done.", "Warte auf die Antwort deines Gesprächspartners. Tippe auf Stopp, wenn er fertig ist.", "En attente de la réponse de ton interlocuteur. Appuie sur Stop quand il a fini."),
+  "Stem van voorlezen": m("Stem van voorlezen", "Reading voice", "Stimme zum Vorlesen", "Voix de lecture"),
+  "Automatisch (beste stem)": m("Automatisch (beste stem)", "Automatic (best voice)", "Automatisch (beste Stimme)", "Automatique (meilleure voix)"),
   "Opnemen": m("Opnemen", "Record", "Aufnehmen", "Enregistrer"),
   "Stop": m("Stop", "Stop", "Stopp", "Arrêter"),
   "Wis gesprek": m("Wis gesprek", "Clear conversation", "Gespräch leeren", "Effacer la conversation"),
