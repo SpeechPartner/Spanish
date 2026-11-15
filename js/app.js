@@ -26,6 +26,7 @@
   var lang = store.get("lang", "nl");
   if (LANGS.indexOf(lang) < 0) lang = "nl";
   var theme = store.get("theme", "standaard");
+  if (theme === "nacht") theme = "donker"; // het Nachtlampje is vervallen: opgeslagen keuzes vallen terug op de donkere modus
   var rate = parseFloat(store.get("rate", 0.9)) || 0.9;
 
   // ---------- Toestand ----------
@@ -1381,7 +1382,7 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "72";
+  var APP_VERSION = "75";
   var WH_LOG = [];
   function whLog(msg) {
     var d = new Date();
@@ -2442,7 +2443,7 @@
     if (document.getElementById("genSel")) document.getElementById("genSel").value = partnerGenderSetting();
     var eff = effectiveTheme();
     document.body.classList.toggle("cafe", eff === "cafe");
-    ["ijs", "jungle", "ruimte", "nacht", "donker"].forEach(function (t) { document.body.classList.toggle("th-" + t, eff === t); });
+    ["ijs", "jungle", "ruimte", "donker"].forEach(function (t) { document.body.classList.toggle("th-" + t, eff === t); });
     renderLogo();
   }
 
