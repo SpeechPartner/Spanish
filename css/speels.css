@@ -318,15 +318,24 @@ body.speels:not(.cafe) .dock-l, body.speels:not(.cafe) .dock-r, body.speels:not(
 /* ===== v83: nieuw ontwerp alleen voor de verdwijnende onderknoppen en Zinnen/Gesprek; kleuren uit land en thema ===== */
 /* Kleuren per taal (landen) */
 /* Landskleuren (vlaggen) en themakleuren: alleen deze drie kleuren komen in de knoppen */
-body.speels:not(.cafe)[data-lang="nl"] { --bt1: #AE1C28; --bt2: #21468B; --bt3: #7F9CD0; }
-body.speels:not(.cafe)[data-lang="en"] { --bt1: #C8102E; --bt2: #012169; --bt3: #8FA8DE; }
-body.speels:not(.cafe)[data-lang="de"] { --bt1: #1A1A1A; --bt2: #DD0000; --bt3: #FFB400; }
-body.speels:not(.cafe)[data-lang="fr"] { --bt1: #002395; --bt2: #ED2939; --bt3: #9AA6CF; }
+body.speels:not(.cafe)[data-lang="nl"] { --bt1: #E0303F; --bt2: #2F5FC4; --bt3: #FF9CC0; }
+body.speels:not(.cafe)[data-lang="en"] { --bt1: #C8102E; --bt2: #1F3F9E; --bt3: #7FB8FF; }
+body.speels:not(.cafe)[data-lang="de"] { --bt1: #DD0000; --bt2: #FFCE00; --bt3: #FF7A3D; }
+body.speels:not(.cafe)[data-lang="fr"] { --bt1: #ED2939; --bt2: #002395; --bt3: #F4F6FF; }
 
 body.speels.th-ijs[data-lang] { --bt1: #2a7fd4; --bt2: #8fd3f4; --bt3: #d4f0ff; }
 body.speels.th-jungle[data-lang] { --bt1: #2f7d32; --bt2: #e4572e; --bt3: #f6c744; }
 body.speels.th-ruimte[data-lang] { --bt1: #ff5d8f; --bt2: #6e52b8; --bt3: #2be4ff; }
 body.speels.th-donker[data-lang] { --bt1: #6e52b8; --bt2: #2f2857; --bt3: #ff7ad9; }
+
+/* De drie kleuren-balk onder de banner: vaste vlagvolgorde per taal (los van de knopkleuren) */
+body.speels:not(.cafe)[data-lang="nl"] { --f1: #AE1C28; --f2: #FFFFFF; --f3: #21468B; }
+body.speels:not(.cafe)[data-lang="en"] { --f1: #012169; --f2: #C8102E; --f3: #FFFFFF; }
+body.speels:not(.cafe)[data-lang="de"] { --f1: #DD0000; --f2: #FFCE00; --f3: #FF7A3D; }
+body.speels:not(.cafe)[data-lang="fr"] { --f1: #002395; --f2: #FFFFFF; --f3: #ED2939; }
+body.speels:not(.cafe) header.top::after {
+  background: linear-gradient(90deg, var(--f1) 0 33.33%, var(--f2) 33.33% 66.66%, var(--f3) 66.66% 100%);
+}
 
 /* Ontwerp als op de foto: pil met golvende kleurvlakken, witte vette tekst, gekleurde gloed.
    Alle knoppen (onderbalk, Zinnen, Vastlopen, Gesprek, Info en het handvat) krijgen dit ontwerp.
