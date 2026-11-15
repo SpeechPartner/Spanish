@@ -333,7 +333,7 @@ body.speels[data-lang] [data-v="1"] { --c1: var(--bt2); --c2: var(--bt3); --c3: 
 body.speels[data-lang] [data-v="2"] { --c1: var(--bt2); --c2: var(--bt1); --c3: var(--bt3); --ang: 140deg; }
 body.speels[data-lang] [data-v="3"] { --c1: var(--bt1); --c2: var(--bt3); --c3: var(--bt2); --ang: 170deg; }
 
-body.speels:not(.cafe)[data-lang] nav.bottomnav .btn,
+body.speels:not(.cafe)[data-lang] nav.bottomnav .btn, body.speels:not(.cafe)[data-lang] #vbtn,
 body.speels:not(.cafe)[data-lang] .dock-l, body.speels:not(.cafe)[data-lang] .dock-r,
 body.speels:not(.cafe)[data-lang] .dock-t, body.speels:not(.cafe)[data-lang] .dock-br,
 body.speels:not(.cafe)[data-lang] #navHandle {
@@ -346,10 +346,12 @@ body.speels:not(.cafe)[data-lang] #navHandle {
     linear-gradient(var(--ang), var(--c1) 0%, var(--c2) 45%, var(--c3) 100%) !important;
   box-shadow: 0 10px 18px -8px var(--c1) !important;
 }
-body.speels:not(.cafe)[data-lang] nav.bottomnav .btn { border-radius: 999px !important; }
+body.speels:not(.cafe)[data-lang] nav.bottomnav .btn, body.speels:not(.cafe)[data-lang] #vbtn { border-radius: 999px !important; }
+/* De knop is zelf het ankerpunt van het bandje: dat blijft binnen de pil */
+body.speels:not(.cafe)[data-lang] nav.bottomnav .btn, body.speels:not(.cafe)[data-lang] #vbtn { position: relative !important; }
 body.speels:not(.cafe)[data-lang] #navHandle::before { background: #fff; }
 /* Golfband bovenaan, zoals de lichte lint op de foto */
-body.speels:not(.cafe)[data-lang] nav.bottomnav .btn::before,
+body.speels:not(.cafe)[data-lang] nav.bottomnav .btn::before, body.speels:not(.cafe)[data-lang] #vbtn::before,
 body.speels:not(.cafe)[data-lang] .dock-l::before, body.speels:not(.cafe)[data-lang] .dock-r::before,
 body.speels:not(.cafe)[data-lang] .dock-t::before, body.speels:not(.cafe)[data-lang] .dock-br::before {
   content: ""; position: absolute; left: -10%; right: -10%; top: 0; height: 55%; pointer-events: none; z-index: 0;
@@ -357,7 +359,7 @@ body.speels:not(.cafe)[data-lang] .dock-t::before, body.speels:not(.cafe)[data-l
   border-radius: 50% 50% 60% 40% / 40% 40% 60% 60%;
 }
 /* Glans die bij aanraking van hoek verspringt */
-body.speels:not(.cafe)[data-lang] nav.bottomnav .btn::after,
+body.speels:not(.cafe)[data-lang] nav.bottomnav .btn::after, body.speels:not(.cafe)[data-lang] #vbtn::after,
 body.speels:not(.cafe)[data-lang] .dock-l::after, body.speels:not(.cafe)[data-lang] .dock-r::after,
 body.speels:not(.cafe)[data-lang] .dock-t::after, body.speels:not(.cafe)[data-lang] .dock-br::after,
 body.speels:not(.cafe)[data-lang] #navHandle::after {
@@ -365,14 +367,14 @@ body.speels:not(.cafe)[data-lang] #navHandle::after {
   background: linear-gradient(160deg, rgba(255,255,255,.45) 0%, rgba(255,255,255,.08) 38%, rgba(255,255,255,0) 50%);
   background-size: 220% 220%; background-position: 0% 0%; transition: background-position .35s ease;
 }
-body.speels:not(.cafe)[data-lang] nav.bottomnav .btn:active::after,
+body.speels:not(.cafe)[data-lang] nav.bottomnav .btn:active::after, body.speels:not(.cafe)[data-lang] #vbtn:active::after,
 body.speels:not(.cafe)[data-lang] .dock-l:active::after, body.speels:not(.cafe)[data-lang] .dock-r:active::after,
 body.speels:not(.cafe)[data-lang] .dock-t:active::after, body.speels:not(.cafe)[data-lang] .dock-br:active::after,
 body.speels:not(.cafe)[data-lang] #navHandle:active::after {
   background-position: 100% 100%;
   background-image: linear-gradient(330deg, rgba(255,255,255,.45) 0%, rgba(255,255,255,.08) 38%, rgba(255,255,255,0) 50%);
 }
-body.speels:not(.cafe)[data-lang] nav.bottomnav .btn:active, body.speels:not(.cafe)[data-lang] .dock-l:active,
+body.speels:not(.cafe)[data-lang] nav.bottomnav .btn:active, body.speels:not(.cafe)[data-lang] #vbtn:active, body.speels:not(.cafe)[data-lang] .dock-l:active,
 body.speels:not(.cafe)[data-lang] .dock-r:active, body.speels:not(.cafe)[data-lang] .dock-t:active,
 body.speels:not(.cafe)[data-lang] .dock-br:active { filter: brightness(.94); }
 
@@ -381,25 +383,26 @@ body.speels nav.bottomnav, body.speels.nav-away nav.bottomnav, body.speels:not(.
   background: transparent !important; border: none !important; box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
 }
 
-/* Paginawissel: het oude blad slaat om over de scharnier-rand, de nieuwe pagina ligt er al onder */
-body.speels main#view.page-in, body.speels .leaf-card.page-in { animation: pageIn .45s ease-out both; }
-@keyframes pageIn { from { opacity: .4; } to { opacity: 1; } }
-body.speels .page-leaf { position: fixed; z-index: 60; margin: 0; pointer-events: none; overflow: hidden; border-radius: 14px; box-shadow: 0 12px 30px rgba(0,0,0,.25); background: var(--paper); }
-body.speels .page-leaf.leaf-fwd { transform-origin: right center; animation: leafFwd .6s cubic-bezier(.3,.6,.2,1) forwards; }
-body.speels .page-leaf.leaf-back { transform-origin: left center; animation: leafBack .6s cubic-bezier(.3,.6,.2,1) forwards; }
-@keyframes leafFwd {
-  0% { transform: perspective(1400px) rotateY(0deg); filter: brightness(1); }
-  50% { filter: brightness(.7); }
-  100% { transform: perspective(1400px) rotateY(-180deg); filter: brightness(1); }
-}
-@keyframes leafBack {
-  0% { transform: perspective(1400px) rotateY(0deg); filter: brightness(1); }
-  50% { filter: brightness(.7); }
-  100% { transform: perspective(1400px) rotateY(180deg); filter: brightness(1); }
-}
-/* Info als boekje: één blad tegelijk, stipjes onderaan */
-body.speels .booklet { margin-bottom: 14px; }
-body.speels .leafsec + .leafsec { margin-top: 16px; padding-top: 14px; border-top: 2px dashed var(--ink-k); }
-body.speels .leafdots { display: flex; justify-content: center; gap: 9px; margin: 12px 0 4px; }
+/* Boek: het blad dat je omslaat volgt de vinger. Schaduw aan de rand, een donkere kant tijdens het draaien,
+   en een schaduw op de pagina eronder die met de rand meebeweegt. */
+body.speels .page-leaf { position: fixed; z-index: 60; margin: 0 !important; pointer-events: none; overflow: hidden; box-shadow: 0 0 22px rgba(0,0,0,.28); animation: none !important; }
+body.speels .page-leaf.tab-leaf { background: var(--paper); }
+body.speels .page-leaf .leaf-shade { position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0;
+  background: linear-gradient(90deg, rgba(0,0,0,.05), rgba(0,0,0,.55)); }
+body.speels .turn-cast { position: fixed; z-index: 59; width: 56px; pointer-events: none; opacity: 0;
+  background: linear-gradient(90deg, rgba(0,0,0,0) 0%, rgba(0,0,0,.34) 50%, rgba(0,0,0,0) 100%); }
+body.speels main#view.page-in, body.speels .leaf-card.page-in { animation: pageIn .4s ease-out both; }
+@keyframes pageIn { from { opacity: .5; } to { opacity: 1; } }
+
+/* Info als boekje: vaste bladgrootte, de bladen scrollen alleen binnenin als een blad te vol is */
+body.speels .booklet { position: relative; margin-bottom: 14px; }
+body.speels .leaf-card { animation: none; height: min(70vh, 640px); min-height: 380px; overflow-y: auto; display: flex; flex-direction: column;
+  background-image: linear-gradient(90deg, rgba(0,0,0,.07) 0, rgba(0,0,0,0) 16px); }
+body.speels .leafpage { flex: none; }
+body.speels .leafhead { margin: 0 0 12px; padding-bottom: 8px; border-bottom: 3px solid var(--p); font-size: 1.2em; font-weight: 900; }
+body.speels .leafsec + .leafsec { margin-top: 14px; padding-top: 12px; border-top: 2px dashed var(--ink-k); }
+body.speels .leafsec p, body.speels .leafpage > p { margin: 0; line-height: 1.5; }
+body.speels .leafnum { margin-top: auto; padding-top: 10px; text-align: center; font-size: 12px; opacity: .6; }
+body.speels .leafdots { display: flex; justify-content: center; gap: 9px; margin: 12px 0 4px; flex-wrap: wrap; }
 body.speels .leafdot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--ink-k); background: var(--card); padding: 0; cursor: pointer; }
 body.speels .leafdot.on { background: var(--p); }
