@@ -378,7 +378,8 @@
       return;
     }
     var W = window.innerWidth, x = e.clientX;
-    if (x > EDGE && x < W - EDGE) return;
+    // Tik op een leeg stuk van de pagina: de knoppen onderaan verdwijnen
+    if (x > EDGE && x < W - EDGE) { if (window.speelsHideChrome) window.speelsHideChrome(); return; }
     var dir = x >= W - EDGE ? 1 : -1;
     var apply = navTarget("tab", dir);
     if (apply) flipTo(null, dir, apply);
@@ -1460,7 +1461,7 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "98";
+  var APP_VERSION = "99";
   // Versies waarvoor gebruikers de app opnieuw op hun beginscherm moeten zetten (oude icoon weg, nieuwe erop).
   // Bij zo'n update verschijnt eenmalig een melding met uitleg.
   var REINSTALL_VERSIONS = ["97"];

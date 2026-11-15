@@ -122,8 +122,9 @@
   });
   obs.observe(document.body, { childList: true, subtree: true });
 
-  // ---------- Onderste balk, Vastlopen, Zinnen en Gesprek: verdwijnen bij een paginawissel ----------
-  // Alleen een veeg omhoog vanaf de onderkant (of een tik op het belletje) brengt ze terug.
+  // ---------- Onderste balk, Vastlopen, Zinnen en Gesprek ----------
+  // Verdwijnen bij een paginawissel, bij een tik op een leeg stuk van de pagina en bij scrollen.
+  // Komen terug als je onderaan de pagina bent, of met een tik op het belletje.
   // Het belletje blijft altijd zichtbaar, ook over de pagina's heen.
   var handle = document.createElement("button");
   handle.id = "navHandle";
@@ -133,15 +134,15 @@
 
   function hideChrome() { document.body.classList.add("nav-away"); }
   function showChrome() { document.body.classList.remove("nav-away"); }
-  window.speelsHideChrome = hideChrome;   // app.js roept dit aan bij elke paginawissel
-  var sy = null, sx = null;
-  document.addEventListener("touchstart", function (e) { var t = e.touches[0]; sy = t.clientY; sx = t.clientX; }, { passive: true });
-  document.addEventListener("touchend", function (e) {
-    if (sy === null) return;
-    var t = e.changedTouches[0];
-    var dy = sy - t.clientY, dx = Math.abs(sx - t.clientX);
-    if (dy > 50 && dx < dy && sy > window.innerHeight - 140) showChrome();
-    sy = null;
+  window.speelsHideChrome = hideChrome;   // app.js roept dit aan bij paginawissel en bij een tik op de pagina
+  // Scrollen verbergt de knoppen; alleen onderaan de pagina komen ze terug
+  var lastScrollY = window.scrollY;
+  window.addEventListener("scroll", function () {
+    var y = window.scrollY;
+    if (Math.abs(y - lastScrollY) < 4) return;
+    lastScrollY = y;
+    var atEnd = y + window.innerHeight >= document.documentElement.scrollHeight - 8;
+    if (atEnd) showChrome(); else hideChrome();
   }, { passive: true });
   handle.addEventListener("click", showChrome);
 })();
