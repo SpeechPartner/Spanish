@@ -299,73 +299,41 @@
   function snapshot(src) {
     return { el: src.cloneNode(true), rect: src.getBoundingClientRect() };
   }
-  // Het blad buigt: het is opgedeeld in smalle stroken. Die staan elk onder een eigen hoek; bij het scharnier
-  // blijft het blad vlakker en aan de vrije rand krult het het meest, zoals echt papier.
-  var CURL_N = 10, CURL_BEND = 0.5;
+  // Het blad is één vlak dat om het scharnier draait. Volgende (dir > 0): het scharnier zit aan de linkerkant
+  // (de rug van het boek), het blad komt van rechts en slaat naar links om. Vorige (dir < 0): andersom.
+  // Het loopt over de koptekst heen.
   function flipSetup(snap, dir) {
-    var r = snap.rect, W = r.width, H = r.height;
-    var stage = document.createElement("div");
-    stage.className = "curl";
-    stage.style.left = r.left + "px"; stage.style.top = r.top + "px";
-    stage.style.width = W + "px"; stage.style.height = H + "px";
-    var ds = W / CURL_N, strips = [];
-    for (var i = 0; i < CURL_N; i++) {
-      var st = document.createElement("div");
-      st.className = "curl-strip";
-      st.style.width = ds + "px"; st.style.height = H + "px";
-      var inner = snap.el.cloneNode(true);
-      inner.removeAttribute("id");
-      inner.classList.remove("page-in", "leaf-card");
-      inner.classList.add("curl-page");
-      if (inner.tagName === "MAIN") inner.classList.add("tab-leaf");
-      inner.setAttribute("aria-hidden", "true");
-      inner.style.width = W + "px"; inner.style.height = H + "px";
-      // vooruit (scharnier rechts): de pagina is gespiegeld; terug (scharnier links): gewoon
-      inner.style.transform = dir > 0 ? "translateX(" + ((i + 1) * ds) + "px) scaleX(-1)" : "translateX(" + (-i * ds) + "px)";
-      st.appendChild(inner);
-      var sh = document.createElement("div");
-      sh.className = "leaf-shade";
-      st.appendChild(sh);
-      stage.appendChild(st);
-      strips.push({ el: st, shade: sh, i: i });
-    }
+    var r = snap.rect, leaf = snap.el;
+    leaf.removeAttribute("id");
+    leaf.classList.remove("page-in");
+    leaf.classList.add("page-leaf");
+    if (leaf.tagName === "MAIN") leaf.classList.add("tab-leaf");
+    leaf.setAttribute("aria-hidden", "true");
+    leaf.style.left = r.left + "px"; leaf.style.top = r.top + "px";
+    leaf.style.width = r.width + "px"; leaf.style.height = r.height + "px";
+    leaf.style.transformOrigin = dir > 0 ? "0% 50%" : "100% 50%";
+    var shade = document.createElement("div");
+    shade.className = "leaf-shade";
+    leaf.appendChild(shade);
     var cast = document.createElement("div");
     cast.className = "turn-cast";
-    cast.style.top = r.top + "px"; cast.style.height = H + "px";
-    // Het gebogen blad blijft binnen het gebied tussen de koptekst (incl. Vastlopen) en de knoppen, met een marge
-    var hb = 0, hdr = document.querySelector("header.top");
-    if (hdr) hb = hdr.getBoundingClientRect().bottom;
-    var dtop = document.querySelector(".dock-t");
-    if (dtop && dtop.offsetParent !== null) hb = Math.max(hb, dtop.getBoundingClientRect().bottom);
-    var nb = window.innerHeight, nav = document.getElementById("nav");
-    if (nav) nb = Math.min(nb, nav.getBoundingClientRect().top);
-    var dbr = document.querySelector(".dock-br");
-    if (dbr && dbr.offsetParent !== null) nb = Math.min(nb, dbr.getBoundingClientRect().top);
-    var clipT = Math.max(r.top, hb + 8), clipB = Math.min(r.bottom, nb - 8);
-    stage.style.clipPath = "inset(" + Math.max(0, clipT - r.top) + "px 0px " + Math.max(0, r.bottom - clipB) + "px 0px)";
-    document.body.appendChild(stage);
+    cast.style.top = r.top + "px"; cast.style.height = r.height + "px";
     document.body.appendChild(cast);
-    return { stage: stage, cast: cast, strips: strips, dir: dir, W: W, L: r.left, R: r.right, H: H, ds: ds, p: 0, revert: null };
+    document.body.appendChild(leaf);
+    return { leaf: leaf, shade: shade, cast: cast, dir: dir, W: r.width, L: r.left, R: r.right, p: 0, revert: null };
   }
-  // p = 0: het blad ligt nog op de oude pagina; p = 1: het blad ligt op de andere kant
+  // p = 0: het blad ligt op de oude pagina; p = 1: het blad ligt op de andere kant
   function setTurn(t, p) {
     t.p = p;
-    var n = t.strips.length, fwd = t.dir > 0;
-    var X = fwd ? t.W : 0, Z = 0;   // het scharnier: rechts bij vooruit, links bij terug
-    // van het scharnier naar de vrije rand: elke strook krijgt zijn hoek
-    for (var j = 0; j < n; j++) {
-      var s = t.strips[fwd ? n - 1 - j : j];
-      var from = (j + 0.5) / n;      // 0 bij het scharnier, 1 bij de vrije rand
-      var b = Math.max(0, Math.min(1, p * (1 + CURL_BEND) - CURL_BEND * (1 - from))) * 180;
-      var rad = b * Math.PI / 180;
-      var rot = fwd ? 180 + b : -b;
-      s.el.style.transform = "translate3d(" + X.toFixed(2) + "px," + (-Z).toFixed(2) + "px,0) rotateY(" + rot.toFixed(2) + "deg)";
-      s.shade.style.opacity = (Math.sin(rad) * 0.5).toFixed(3);
-      X += (fwd ? -1 : 1) * t.ds * Math.cos(rad);
-      Z += t.ds * Math.sin(rad);
-    }
-    t.cast.style.left = (t.L + X - 28) + "px";
-    t.cast.style.opacity = (Math.sin(p * Math.PI) * 0.8).toFixed(3);
+    var deg = (t.dir > 0 ? -180 : 180) * p;
+    var rad = Math.abs(deg) * Math.PI / 180;
+    var s = Math.sin(p * Math.PI);
+    t.leaf.style.transform = "perspective(1600px) rotateY(" + deg.toFixed(2) + "deg)";
+    t.shade.style.opacity = (s * 0.42).toFixed(3);
+    // de vrije rand van het blad werpt een zachte schaduw op de pagina eronder
+    var edge = t.dir > 0 ? t.L + t.W * Math.cos(rad) : t.R - t.W * Math.cos(rad);
+    t.cast.style.left = (edge - 22) + "px";
+    t.cast.style.opacity = (s * 0.6).toFixed(3);
   }
   // Tween van de huidige stand naar het doel
   function tweenTurn(t, to, ms, done) {
@@ -380,13 +348,14 @@
   }
   // Maakt het blad af: commit = de nieuwe pagina blijft; anders keert het blad terug naar de oude pagina
   function endTurn(t, commit) {
-    tweenTurn(t, commit ? 1 : 0, 380, function () {
-      [t.stage, t.cast].forEach(function (x) { if (x.parentNode) x.parentNode.removeChild(x); });
+    tweenTurn(t, commit ? 1 : 0, 420, function () {
+      [t.leaf, t.cast].forEach(function (x) { if (x.parentNode) x.parentNode.removeChild(x); });
       if (!commit && t.revert) t.revert();
     });
   }
   // Een knop of stip: het blad slaat direct om
   function flipTo(src, dir, apply) {
+    if (window.speelsHideChrome) window.speelsHideChrome();
     var snap = snapshot(src);
     apply();
     var t = flipSetup(snap, dir);
@@ -434,8 +403,8 @@
     flipTo(view, dir, function () { S.tab = tab; S.build = null; render(); });
     window.scrollTo(0, 0);
   }
-  // Veeg: het blad volgt de vinger. Naar rechts slaat het van links naar rechts om (volgend tabblad / blad),
-  // naar links andersom. Pas bij loslaten wordt de omslag afgemaakt of teruggedraaid.
+  // Veeg: het blad volgt de vinger. Naar links slaat het om naar het volgende tabblad / blad (zoals in een boek),
+  // naar rechts terug naar het vorige. Pas bij loslaten wordt de omslag afgemaakt of teruggedraaid.
   // De luisteraars zitten op het aangeraakte element zelf: de pagina wordt tijdens de veeg opnieuw opgebouwd,
   // en dan krijgt het element onder de vinger anders geen bewegingen meer.
   var sw = null;
@@ -445,10 +414,11 @@
     sw.dx = dx;
     if (!sw.mode) {
       if (Math.abs(dx) < 12 || Math.abs(dx) < 1.3 * Math.abs(dy)) return;
-      sw.dir = dx > 0 ? 1 : -1;
+      sw.dir = dx < 0 ? 1 : -1;
       var nt = navTarget(sw.kind, sw.dir);
       if (!nt) { sw.mode = "none"; return; }
       sw.mode = "turn";
+      if (window.speelsHideChrome) window.speelsHideChrome();
       var snap = snapshot(nt.src);
       nt.apply();
       sw.t = flipSetup(snap, sw.dir);
@@ -1565,7 +1535,7 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "89";
+  var APP_VERSION = "90";
   var WH_LOG = [];
   function whLog(msg) {
     var d = new Date();

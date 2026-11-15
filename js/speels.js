@@ -122,38 +122,26 @@
   });
   obs.observe(document.body, { childList: true, subtree: true });
 
-  // ---------- Onderste balk: verdwijnt en komt terug met een veeg omhoog ----------
+  // ---------- Onderste balk, Vastlopen, Zinnen en Gesprek: verdwijnen bij een paginawissel ----------
+  // Alleen een veeg omhoog vanaf de onderkant (of een tik op het belletje) brengt ze terug.
+  // Het belletje blijft altijd zichtbaar, ook over de pagina's heen.
   var handle = document.createElement("button");
   handle.id = "navHandle";
   handle.type = "button";
   handle.setAttribute("aria-label", "Menu tonen");
   document.body.appendChild(handle);
 
-  var timer = null, hidden = false, lastY = window.scrollY, quietUntil = 0;
-  function hide() { if (hidden) return; hidden = true; document.body.classList.add("nav-away"); }
-  function schedule() { clearTimeout(timer); timer = setTimeout(hide, 3500); }
-  function show(fromGesture) {
-    if (fromGesture) quietUntil = Date.now() + 700;
-    hidden = false; document.body.classList.remove("nav-away"); schedule();
-  }
-  window.addEventListener("scroll", function () {
-    var y = window.scrollY;
-    if (Date.now() > quietUntil) {
-      if (y > lastY + 8 && y > 80) hide();
-      else if (y < lastY - 8) show(false);
-    }
-    lastY = y;
-  }, { passive: true });
+  function hideChrome() { document.body.classList.add("nav-away"); }
+  function showChrome() { document.body.classList.remove("nav-away"); }
+  window.speelsHideChrome = hideChrome;   // app.js roept dit aan bij elke paginawissel
   var sy = null, sx = null;
   document.addEventListener("touchstart", function (e) { var t = e.touches[0]; sy = t.clientY; sx = t.clientX; }, { passive: true });
   document.addEventListener("touchend", function (e) {
     if (sy === null) return;
     var t = e.changedTouches[0];
     var dy = sy - t.clientY, dx = Math.abs(sx - t.clientX);
-    if (dy > 60 && dx < dy && sy > window.innerHeight * 0.75) show(true);
+    if (dy > 50 && dx < dy && sy > window.innerHeight - 140) showChrome();
     sy = null;
   }, { passive: true });
-  document.addEventListener("pointerdown", function () { if (!hidden) schedule(); });
-  handle.addEventListener("click", function () { show(true); });
-  schedule();
+  handle.addEventListener("click", showChrome);
 })();
