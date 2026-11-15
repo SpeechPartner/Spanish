@@ -78,6 +78,8 @@ body.speels nav.bottomnav .btn { transition: transform .55s cubic-bezier(.22,.8,
 body.speels nav.bottomnav { transition: background-color .5s ease, border-color .5s ease; }
 /* Veeg omhoog op het handvat: de balk zelf blijft weg, alleen de knoppen schuiven omhoog */
 body.speels.nav-away nav.bottomnav { background: var(--paper) !important; border-top: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+/* Verborgen balk vangt geen tikken meer op: de Info-knop onderaan blijft altijd bereikbaar */
+body.speels.nav-away nav.bottomnav { pointer-events: none; }
 body.speels.nav-away nav.bottomnav .btn, body.speels.nav-away nav.bottomnav .btn.active, body.speels.nav-away nav.bottomnav .btn.primary { transform: translateY(calc(100% + 40px)); opacity: 0; pointer-events: none; }
 #navHandle {
   position: fixed; left: 50%; bottom: calc(var(--navh) + 6px); transform: translateX(-50%); z-index: 95;
@@ -269,12 +271,12 @@ body.speels .dock-br {
 }
 /* Bij een paginawissel verdwijnen Vastlopen (omhoog, onder de banner), Zinnen (links) en Gesprek (rechts).
    Info blijft staan, zodat je er altijd naartoe kunt. */
-body.speels.nav-away #dock { z-index: 4; }
+body.speels.nav-away #dock { z-index: 6; }
 body.speels.nav-away .dock-t { transform: translate(-50%, calc(-100% - 6px)); pointer-events: none; opacity: 0; visibility: hidden; transition: transform .5s cubic-bezier(.22,.8,.25,1), opacity .3s ease, visibility 0s linear .5s; }
 body.speels.nav-away .dock-l { transform: translate(calc(-100% - 24px), -50%); pointer-events: none; opacity: 0; visibility: hidden; transition: transform .5s cubic-bezier(.22,.8,.25,1), opacity .3s ease, visibility 0s linear .5s; }
 body.speels.nav-away .dock-r { transform: translate(calc(100% + 24px), -50%); pointer-events: none; opacity: 0; visibility: hidden; transition: transform .5s cubic-bezier(.22,.8,.25,1), opacity .3s ease, visibility 0s linear .5s; }
 /* Info schuift mee met het belletje: beneden als de knoppen weg zijn */
-body.speels.nav-away .dock-br { bottom: 8px; }
+body.speels.nav-away .dock-br { bottom: calc(8px + env(safe-area-inset-bottom, 0px)); z-index: 2; }
 
 /* Ruimte rond de inhoud: de vaste tabbladen en de onderste balk gaan niet over antwoorden heen */
 body.speels main#view { padding: 36px 44px calc(var(--navh) + 36px); }
