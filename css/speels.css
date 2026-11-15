@@ -90,10 +90,6 @@ body.speels.nav-away #navHandle { bottom: 8px; }
 body.speels.nav-end .dock-t { transform: translate(-50%, calc(-100% - 6px)); opacity: 0; visibility: hidden; pointer-events: none; transition: transform .5s cubic-bezier(.22,.8,.25,1), opacity .3s ease, visibility .5s; }
 /* Drie puntjes in het belletje */
 #navHandle::before { content: ""; display: block; width: 30px; height: 6px; margin: 4px auto 0; background: radial-gradient(circle, var(--ink-k) 2.6px, transparent 3px) 0 0 / 10px 6px repeat-x; }
-/* Knop links van het belletje: alleen ter info */
-#pageInfo { position: fixed; right: calc(50% + 50px); bottom: calc(var(--navh) + 6px); z-index: 95; height: 26px; padding: 0 10px; border: 3px solid var(--ink-k); border-radius: 999px; background: var(--card); color: var(--ink-k); font-size: 11px; font-weight: 900; line-height: 20px; text-transform: uppercase; white-space: nowrap; box-shadow: var(--hard); pointer-events: none; transition: bottom .35s cubic-bezier(.2,.9,.3,1); }
-body.speels.nav-away #pageInfo { bottom: 8px; }
-
 /* ---------- Thema's: IJs, Jungle, Ruimte (naast Standaard en Café) ---------- */
 body.speels.th-ijs[data-lang] {
   --card:#ffffff; --ink-k:#0d2b45; --ink-soft:#33607f; --paper:#e9f6ff; --dots:rgba(42,127,212,.28);
@@ -328,10 +324,10 @@ body.speels:not(.cafe) .dock-l, body.speels:not(.cafe) .dock-r, body.speels:not(
 /* ===== v83: nieuw ontwerp alleen voor de verdwijnende onderknoppen en Zinnen/Gesprek; kleuren uit land en thema ===== */
 /* Kleuren per taal (landen) */
 /* Landskleuren (vlaggen) en themakleuren: alleen deze drie kleuren komen in de knoppen */
-body.speels:not(.cafe)[data-lang="nl"] { --bt1: #AE1C28; --bt2: #FFFFFF; --bt3: #21468B; }
-body.speels:not(.cafe)[data-lang="en"] { --bt1: #012169; --bt2: #C8102E; --bt3: #FFFFFF; }
+body.speels:not(.cafe)[data-lang="nl"] { --bt1: #AE1C28; --bt2: #111111; --bt3: #21468B; }
+body.speels:not(.cafe)[data-lang="en"] { --bt1: #012169; --bt2: #C8102E; --bt3: #111111; }
 body.speels:not(.cafe)[data-lang="de"] { --bt1: #000000; --bt2: #DD0000; --bt3: #FFCE00; }
-body.speels:not(.cafe)[data-lang="fr"] { --bt1: #002395; --bt2: #FFFFFF; --bt3: #ED2939; }
+body.speels:not(.cafe)[data-lang="fr"] { --bt1: #002395; --bt2: #111111; --bt3: #ED2939; }
 
 body.speels.th-ijs[data-lang] { --bt1: #2a6fa8; --bt2: #7fbfe0; --bt3: #d4ebf7; }
 body.speels.th-jungle[data-lang] { --bt1: #2f6b33; --bt2: #c24a2b; --bt3: #e0b13a; }
@@ -372,13 +368,13 @@ body.speels:not(.cafe)[data-lang] #navHandle {
 body.speels:not(.cafe)[data-lang] nav.bottomnav .btn, body.speels:not(.cafe)[data-lang] #vbtn { border-radius: 999px !important; }
 /* De knop is zelf het ankerpunt van het bandje: dat blijft binnen de pil */
 body.speels:not(.cafe)[data-lang] nav.bottomnav .btn, body.speels:not(.cafe)[data-lang] #vbtn { position: relative !important; }
-body.speels:not(.cafe)[data-lang] #navHandle::before { background: radial-gradient(circle, #fff 2.6px, transparent 3px) 0 0 / 10px 6px repeat-x; }
+body.speels:not(.cafe)[data-lang] #navHandle::before { background: radial-gradient(circle, #111111 2.6px, transparent 3px) 0 0 / 10px 6px repeat-x; }
 /* Golfband bovenaan, zoals de lichte lint op de foto */
 body.speels:not(.cafe)[data-lang] nav.bottomnav .btn::before, body.speels:not(.cafe)[data-lang] #vbtn::before,
 body.speels:not(.cafe)[data-lang] .dock-l::before, body.speels:not(.cafe)[data-lang] .dock-r::before,
 body.speels:not(.cafe)[data-lang] .dock-t::before, body.speels:not(.cafe)[data-lang] .dock-br::before {
   content: ""; position: absolute; left: -10%; right: -10%; top: 0; height: 55%; pointer-events: none; z-index: 0;
-  background: linear-gradient(180deg, rgba(255,255,255,.25) 0%, rgba(255,255,255,0) 100%);
+  background: linear-gradient(180deg, rgba(0,0,0,.18) 0%, rgba(0,0,0,0) 100%);
   border-radius: 50% 50% 60% 40% / 40% 40% 60% 60%;
 }
 /* Glans die bij aanraking van hoek verspringt */
@@ -387,7 +383,7 @@ body.speels:not(.cafe)[data-lang] .dock-l::after, body.speels:not(.cafe)[data-la
 body.speels:not(.cafe)[data-lang] .dock-t::after, body.speels:not(.cafe)[data-lang] .dock-br::after,
 body.speels:not(.cafe)[data-lang] #navHandle::after {
   content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 1;
-  background: linear-gradient(160deg, rgba(255,255,255,.45) 0%, rgba(255,255,255,.08) 38%, rgba(255,255,255,0) 50%);
+  background: linear-gradient(160deg, color-mix(in srgb, var(--c3) 55%, transparent) 0%, color-mix(in srgb, var(--c3) 12%, transparent) 38%, rgba(0,0,0,0) 50%);
   background-size: 220% 220%; background-position: 0% 0%; transition: background-position .35s ease;
 }
 body.speels:not(.cafe)[data-lang] nav.bottomnav .btn:active::after, body.speels:not(.cafe)[data-lang] #vbtn:active::after,
@@ -395,7 +391,7 @@ body.speels:not(.cafe)[data-lang] .dock-l:active::after, body.speels:not(.cafe)[
 body.speels:not(.cafe)[data-lang] .dock-t:active::after, body.speels:not(.cafe)[data-lang] .dock-br:active::after,
 body.speels:not(.cafe)[data-lang] #navHandle:active::after {
   background-position: 100% 100%;
-  background-image: linear-gradient(330deg, rgba(255,255,255,.45) 0%, rgba(255,255,255,.08) 38%, rgba(255,255,255,0) 50%);
+  background-image: linear-gradient(330deg, color-mix(in srgb, var(--c3) 55%, transparent) 0%, color-mix(in srgb, var(--c3) 12%, transparent) 38%, rgba(0,0,0,0) 50%);
 }
 body.speels:not(.cafe)[data-lang] nav.bottomnav .btn:active, body.speels:not(.cafe)[data-lang] #vbtn:active, body.speels:not(.cafe)[data-lang] .dock-l:active,
 body.speels:not(.cafe)[data-lang] .dock-r:active, body.speels:not(.cafe)[data-lang] .dock-t:active,
@@ -438,3 +434,19 @@ body.speels .reinstall-note .btn { margin-top: 8px; }
 body.speels:not(.cafe)[data-lang] nav.bottomnav .btn, body.speels:not(.cafe)[data-lang] #vbtn,
 body.speels:not(.cafe)[data-lang] .dock-t, body.speels:not(.cafe)[data-lang] .dock-l, body.speels:not(.cafe)[data-lang] .dock-r,
 body.speels:not(.cafe)[data-lang] .dock-br { text-shadow: 0 1px 2px rgba(0,0,0,.7), 0 0 4px rgba(0,0,0,.45); }
+
+
+/* Paginatitel bovenaan de pagina */
+body.speels .page-title { font-size: 26px; font-weight: 900; line-height: 1.2; letter-spacing: -.3px; margin: 0 0 14px; color: var(--ink-k); }
+
+/* Actieve pagina: de knop is iets groter en een glans schittert er langs */
+body.speels .dock-btn.active { font-size: 16px; }
+body.speels .dock-t.active { height: 34px; }
+body.speels nav.bottomnav .btn.active { font-size: 16px; }
+body.speels:not(.cafe)[data-lang] .dock-btn.active::after, body.speels:not(.cafe)[data-lang] nav.bottomnav .btn.active::after {
+  animation: sheen 2.4s ease-in-out infinite; background-size: 260% 260%;
+}
+@keyframes sheen { 0%, 100% { background-position: 0% 0%; } 50% { background-position: 100% 100%; } }
+@media (prefers-reduced-motion: reduce) {
+  body.speels .dock-btn.active::after, body.speels nav.bottomnav .btn.active::after { animation: none; }
+}
