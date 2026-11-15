@@ -126,11 +126,15 @@
   // Verdwijnen bij een paginawissel, bij een tik op een leeg stuk van de pagina en bij scrollen.
   // Komen terug als je onderaan de pagina bent, of met een tik op het belletje.
   // Het belletje blijft altijd zichtbaar, ook over de pagina's heen.
-  var handle = document.createElement("button");
-  handle.id = "navHandle";
-  handle.type = "button";
-  handle.setAttribute("aria-label", "Menu tonen");
-  document.body.appendChild(handle);
+  // Het belletje is de knop van de geselecteerde pagina; app.js vult de tekst (renderNav) en maakt hem aan als hij ontbreekt
+  var handle = document.getElementById("navHandle");
+  if (!handle) {
+    handle = document.createElement("button");
+    handle.id = "navHandle";
+    handle.type = "button";
+    handle.setAttribute("aria-label", "Menu tonen");
+    document.body.appendChild(handle);
+  }
 
   // Drie standen: alles zichtbaar; alleen de onderste rij (aan het einde van de pagina); alles verborgen
   function hideChrome() { document.body.classList.remove("nav-end"); document.body.classList.add("nav-away"); }
