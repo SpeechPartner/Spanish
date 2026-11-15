@@ -290,18 +290,20 @@
   }
 
   // ---------- Navigatie en weergave van de vaste onderbalk ----------
+  var pageTurnNext = false;
   function go(tab) {
     if (typeof prRelease === "function") prRelease();
     // Info werkt als schakelaar: tik je er nog eens op, dan ga je terug naar de pagina waar je vandaan kwam
     if (tab === "info" && S.tab === "info") {
       tab = S.backTab || "zinnen";
       var y = S.backY || 0;
-      S.tab = tab; S.build = null;
+      S.tab = tab; S.build = null; pageTurnNext = true;
       render();
       window.scrollTo(0, y);
       return;
     }
     if (tab === "info") { S.backTab = S.tab; S.backY = window.scrollY; }
+    if (tab !== S.tab) pageTurnNext = true;
     S.tab = tab; S.build = null;
     render();
     window.scrollTo(0, 0);
@@ -1382,7 +1384,7 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "81";
+  var APP_VERSION = "82";
   var WH_LOG = [];
   function whLog(msg) {
     var d = new Date();
@@ -2472,6 +2474,12 @@
     var view = document.getElementById("view");
     view.innerHTML = "";
     view.appendChild(S.build ? viewBuilder() : VIEWS[S.tab]());
+    if (pageTurnNext) {
+      pageTurnNext = false;
+      view.classList.remove("page-turn"); void view.offsetWidth;
+      view.classList.add("page-turn");
+      view.addEventListener("animationend", function () { view.classList.remove("page-turn"); }, { once: true });
+    }
     updateMic();
   }
 
