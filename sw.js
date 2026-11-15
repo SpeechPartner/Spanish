@@ -1,6 +1,6 @@
 // Service worker: maakt de app offline bruikbaar.
 // BELANGRIJK: verhoog CACHE_VERSION bij elke nieuwe versie, anders blijft de oude versie op het toestel.
-const CACHE_VERSION = "gespreksgids-v1.5";
+const CACHE_VERSION = "gespreksgids-v1.8";
 const ASSETS = [
   "./",
   "./index.html",
@@ -20,7 +20,8 @@ const ASSETS = [
   "./manifest.webmanifest",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
-  "./icons/apple-touch-icon.png"
+  "./icons/apple-touch-icon.png",
+  "./icons/logo.png"
 ];
 
 self.addEventListener("install", (event) => {
