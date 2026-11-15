@@ -447,11 +447,6 @@ body.speels:not(.cafe)[data-lang] .dock-btn.active::after, body.speels:not(.cafe
   background-size: 260% 260%; background-position: 0% 0%; transition: none;
 }
 
-/* Banner: ?, instellingen en microfoon zijn losse pictogrammen, zonder knopvorm en op dezelfde plek */
-body.speels .iconbtn.hicon, body.speels #mbtn.hicon {
-  width: 32px; height: 32px; min-width: 32px; min-height: 32px; padding: 0; margin: 0;
-  border: none !important; background: none !important; box-shadow: none !important;
-  font-size: 22px; line-height: 1; font-weight: 900; color: var(--ink-k); cursor: pointer;
-}
-body.speels #mbtn.hicon { font-size: 20px; }
-body.speels #mbtn.hicon.rec { color: var(--bad); }
+/* Knoppen in de banner: donkere tekst op de lichte knop; bij selectie een gekleurde knop met witte tekst (kleur van thema of land) */
+body.speels .iconbtn.on { background: var(--bt1) !important; color: #fff !important; }
+body.speels.cafe .iconbtn.on { background: var(--accent) !important; color: #fff !important; }
