@@ -1535,7 +1535,7 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "90";
+  var APP_VERSION = "92";
   var WH_LOG = [];
   function whLog(msg) {
     var d = new Date();
