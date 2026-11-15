@@ -83,11 +83,24 @@
   }
 
   // ---------- Voorlezen (Spaans) ----------
-  function pickVoice() {
+  // Score per stem: natuurlijke of verbeterde stemmen eerst (die klinken minder mechanisch), daarna Spaans uit Spanje.
+  function voiceScore(v) {
+    var s = 0, n = v.name || "";
+    if (/enhanced|premium|natural|neural|mejorad|premium|online|google|microsoft/i.test(n)) s += 4;
+    if (/^es-ES/i.test(v.lang)) s += 2; else if (/^es/i.test(v.lang)) s += 1;
+    if (v.localService === false) s += 1;
+    return s;
+  }
+  function spanishVoices() {
     var vs = window.speechSynthesis ? speechSynthesis.getVoices() : [];
-    for (var i = 0; i < vs.length; i++) if (/^es-ES/i.test(vs[i].lang)) return vs[i];
-    for (var j = 0; j < vs.length; j++) if (/^es/i.test(vs[j].lang)) return vs[j];
-    return null;
+    return vs.filter(function (v) { return /^es/i.test(v.lang); });
+  }
+  function pickVoice() {
+    var es = spanishVoices(), saved = store.get("stem", "");
+    for (var i = 0; i < es.length; i++) if (saved && es[i].name === saved) return es[i];
+    var best = null, bs = -1;
+    es.forEach(function (v) { var sc = voiceScore(v); if (sc > bs) { best = v; bs = sc; } });
+    return best;
   }
   function speak(text) {
     if (!("speechSynthesis" in window)) return;
@@ -1368,7 +1381,7 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "71";
+  var APP_VERSION = "72";
   var WH_LOG = [];
   function whLog(msg) {
     var d = new Date();
@@ -2474,6 +2487,26 @@
       rateVal.textContent = rateEl.value;
       store.set("rate", rate);
     });
+
+    // Stem van voorlezen: 'Automatisch' kiest de beste beschikbare, of je kiest zelf een Spaanse stem
+    var vSel = document.getElementById("voiceSel");
+    if (vSel) {
+      var fillVoices = function () {
+        var cur = store.get("stem", "");
+        vSel.innerHTML = "";
+        vSel.appendChild(el("option", "", T("Automatisch (beste stem)")));
+        vSel.firstChild.value = "";
+        spanishVoices().forEach(function (v) {
+          var o = el("option", "", v.name + " (" + v.lang + ")");
+          o.value = v.name;
+          vSel.appendChild(o);
+        });
+        vSel.value = cur;
+      };
+      vSel.addEventListener("change", function () { store.set("stem", vSel.value); });
+      fillVoices();
+      if (window.speechSynthesis) speechSynthesis.onvoiceschanged = fillVoices;
+    }
 
     document.getElementById("langSel").addEventListener("change", function (e) {
       lang = e.target.value;
