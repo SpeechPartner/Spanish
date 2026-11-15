@@ -293,98 +293,36 @@
   // ---------- Paginawissel als boek: het blad volgt de vinger; pas bij loslaten komt de volgende pagina ----------
   var TAB_ORDER = TABS.map(function (t) { return t[0]; });
   // Zinnen en Gesprek staan niet in de veeg-volgorde: die bereik je met een tik
-  var SWIPE_TABS = ["onderwerpen", "vastlopen", "bouwen", "reageren", "leren", "regels", "uitspraak", "info"];
+  // Veeg-volgorde: Zinnen vooraan, Gesprek achteraan. Vastlopen en Info doen niet mee.
+  var SWIPE_TABS = ["zinnen", "onderwerpen", "bouwen", "reageren", "leren", "regels", "uitspraak", "gesprek"];
   function tabIdx(t) { return TAB_ORDER.indexOf(t); }
-  // Een momentopname van de pagina zoals die nu op het scherm staat
-  function snapshot(src) {
-    return { el: src.cloneNode(true), rect: src.getBoundingClientRect() };
-  }
-  // Het blad is één vlak dat om het scharnier draait. Volgende (dir > 0): het scharnier zit aan de linkerkant
-  // (de rug van het boek), het blad komt van rechts en slaat naar links om. Vorige (dir < 0): andersom.
-  // Het loopt over de koptekst heen.
-  function flipSetup(snap, dir) {
-    var r = snap.rect, leaf = snap.el;
-    leaf.removeAttribute("id");
-    leaf.classList.remove("page-in");
-    leaf.classList.add("page-leaf");
-    if (leaf.tagName === "MAIN") leaf.classList.add("tab-leaf");
-    leaf.setAttribute("aria-hidden", "true");
-    leaf.style.left = r.left + "px"; leaf.style.top = r.top + "px";
-    leaf.style.width = r.width + "px"; leaf.style.height = r.height + "px";
-    leaf.style.transformOrigin = dir > 0 ? "0% 50%" : "100% 50%";
-    var shade = document.createElement("div");
-    shade.className = "leaf-shade";
-    leaf.appendChild(shade);
-    var cast = document.createElement("div");
-    cast.className = "turn-cast";
-    cast.style.top = r.top + "px"; cast.style.height = r.height + "px";
-    document.body.appendChild(cast);
-    document.body.appendChild(leaf);
-    return { leaf: leaf, shade: shade, cast: cast, dir: dir, W: r.width, L: r.left, R: r.right, p: 0, revert: null };
-  }
-  // p = 0: het blad ligt op de oude pagina; p = 1: het blad ligt op de andere kant
-  function setTurn(t, p) {
-    t.p = p;
-    var deg = (t.dir > 0 ? -180 : 180) * p;
-    var rad = Math.abs(deg) * Math.PI / 180;
-    var s = Math.sin(p * Math.PI);
-    t.leaf.style.transform = "perspective(1600px) rotateY(" + deg.toFixed(2) + "deg)";
-    t.shade.style.opacity = (s * 0.42).toFixed(3);
-    // de vrije rand van het blad werpt een zachte schaduw op de pagina eronder
-    var edge = t.dir > 0 ? t.L + t.W * Math.cos(rad) : t.R - t.W * Math.cos(rad);
-    t.cast.style.left = (edge - 22) + "px";
-    t.cast.style.opacity = (s * 0.6).toFixed(3);
-  }
-  // Tween van de huidige stand naar het doel
-  function tweenTurn(t, to, ms, done) {
-    var from = t.p, t0 = performance.now();
-    function step(now) {
-      var k = Math.min(1, (now - t0) / ms);
-      var e = 1 - Math.pow(1 - k, 3);
-      setTurn(t, from + (to - from) * e);
-      if (k < 1) requestAnimationFrame(step); else done();
-    }
-    requestAnimationFrame(step);
-  }
-  // Maakt het blad af: commit = de nieuwe pagina blijft; anders keert het blad terug naar de oude pagina
-  function endTurn(t, commit) {
-    tweenTurn(t, commit ? 1 : 0, 420, function () {
-      [t.leaf, t.cast].forEach(function (x) { if (x.parentNode) x.parentNode.removeChild(x); });
-      if (!commit && t.revert) t.revert();
-    });
-  }
-  // Een knop of stip: het blad slaat direct om
+  // Pagina wisselen: de knoppen onderaan verdwijnen en de nieuwe pagina verschijnt zacht.
+  // Geen omslag-animatie meer.
   function flipTo(src, dir, apply) {
     if (window.speelsHideChrome) window.speelsHideChrome();
-    var snap = snapshot(src);
     apply();
-    var t = flipSetup(snap, dir);
-    setTurn(t, 0);
-    requestAnimationFrame(function () { endTurn(t, true); });
+    var v = document.getElementById("view");
+    if (!v) return;
+    v.classList.remove("page-in");
+    void v.offsetWidth;
+    v.classList.add("page-in");
+    setTimeout(function () { v.classList.remove("page-in"); }, 450);
   }
-  // Doel van een veeg: het tabblad (kind "tab") of het volgende blad van het boekje (kind "leaf")
+  // Doel van een veeg: het tabblad (kind "tab") of het volgende blad van het boekje (kind "leaf").
+  // Geeft de functie terug die de nieuwe pagina aanzet, of null als er geen volgende is.
   function navTarget(kind, dir) {
     if (kind === "leaf") {
       var bk = document.querySelector("#view .booklet");
       if (!bk) return null;
       var cur = +bk.dataset.cur, j = cur + dir;
       if (j < 0 || j >= +bk.dataset.n) return null;
-      return {
-        src: bk.querySelector(".leaf-card"),
-        apply: function () { S.infoLeaf = j; render(); },
-        revert: function () { S.infoLeaf = cur; render(); }
-      };
+      return function () { S.infoLeaf = j; render(); };
     }
     var k = SWIPE_TABS.indexOf(S.tab);
     if (k < 0) return null;
     var nt = SWIPE_TABS[k + dir];
     if (!nt) return null;
-    var prev = S.tab;
-    return {
-      src: document.getElementById("view"),
-      apply: function () { S.tab = nt; S.build = null; render(); window.scrollTo(0, 0); },
-      revert: function () { S.tab = prev; S.build = null; render(); }
-    };
+    return function () { S.tab = nt; S.build = null; render(); window.scrollTo(0, 0); };
   }
   function go(tab) {
     if (typeof prRelease === "function") prRelease();
@@ -403,61 +341,34 @@
     flipTo(view, dir, function () { S.tab = tab; S.build = null; render(); });
     window.scrollTo(0, 0);
   }
-  // Veeg: het blad volgt de vinger. Naar links slaat het om naar het volgende tabblad / blad (zoals in een boek),
-  // naar rechts terug naar het vorige. Pas bij loslaten wordt de omslag afgemaakt of teruggedraaid.
-  // De luisteraars zitten op het aangeraakte element zelf: de pagina wordt tijdens de veeg opnieuw opgebouwd,
-  // en dan krijgt het element onder de vinger anders geen bewegingen meer.
-  var sw = null;
-  function onTouchMove(e) {
-    if (!sw || e.touches.length !== 1) return;
-    var dx = e.touches[0].clientX - sw.x0, dy = e.touches[0].clientY - sw.y0;
-    sw.dx = dx;
-    if (!sw.mode) {
-      if (Math.abs(dx) < 12 || Math.abs(dx) < 1.3 * Math.abs(dy)) return;
-      sw.dir = dx < 0 ? 1 : -1;
-      var nt = navTarget(sw.kind, sw.dir);
-      if (!nt) { sw.mode = "none"; return; }
-      sw.mode = "turn";
-      if (window.speelsHideChrome) window.speelsHideChrome();
-      var snap = snapshot(nt.src);
-      nt.apply();
-      sw.t = flipSetup(snap, sw.dir);
-      sw.t.revert = nt.revert;
-    }
-    if (sw.mode === "turn" && sw.t) {
-      if (e.cancelable) e.preventDefault();
-      var along = Math.max(0, sw.dir * dx);
-      setTurn(sw.t, Math.min(1, along / (sw.t.W * 0.85)));
-    }
+  // Tik op een leeg stuk aan de uiterste zijkant van de pagina (de lege ruimte naast de kaarten):
+  // links gaat terug, rechts gaat verder. Vegen wisselt niet meer van pagina.
+  // Tik op een leeg stuk van de banner: het thema wisselt.
+  var EDGE = 44;
+  // Café heeft geen banner en Systeem is geen vaste kleur: die staan alleen in de instellingen
+  var BANNER_THEMES = ["standaard", "ijs", "jungle", "ruimte"];
+  function cycleTheme() {
+    var opts = BANNER_THEMES;
+    var i = opts.indexOf(theme);
+    theme = opts[(i + 1) % opts.length];
+    store.set("theme", theme);
+    applyStatic();
   }
-  function onTouchEnd(e) {
-    var s = sw;
-    sw = null;
-    if (!s) return;
-    s.el.removeEventListener("touchmove", onTouchMove);
-    s.el.removeEventListener("touchend", onTouchEnd);
-    s.el.removeEventListener("touchcancel", onTouchEnd);
-    if (!s.t) return;
-    var dt = Math.max(1, Date.now() - s.t0);
-    var v = Math.abs(s.dx) / dt;
-    var commit = e.type !== "touchcancel" && (s.t.p > 0.42 || (v > 0.6 && dt > 60 && s.t.p > 0.1));
-    endTurn(s.t, commit);
-  }
-  // Vangnet: sluit de veeg ook af als het loslaten niet bij het oorspronkelijke element aankomt
-  document.addEventListener("touchend", function (e) { if (sw) onTouchEnd(e); }, { passive: true });
-  document.addEventListener("touchcancel", function (e) { if (sw) onTouchEnd(e); }, { passive: true });
-  document.addEventListener("touchstart", function (e) {
-    if (sw || e.touches.length !== 1) return;
+  document.addEventListener("click", function (e) {
     var t = e.target;
     if (!t || !t.closest) return;
-    if (t.closest("nav, #navHandle, .dock, input, textarea, select, details, .carousel, .leafdots")) return;
-    var inBk = t.closest(".booklet");
-    if (inBk && !t.closest(".leaf-card")) return;
-    sw = { el: t, kind: inBk ? "leaf" : "tab", x0: e.touches[0].clientX, y0: e.touches[0].clientY, t0: Date.now(), dx: 0, mode: null, t: null, dir: 0 };
-    t.addEventListener("touchmove", onTouchMove, { passive: false });
-    t.addEventListener("touchend", onTouchEnd, { passive: true });
-    t.addEventListener("touchcancel", onTouchEnd, { passive: true });
-  }, { passive: true });
+    if (t.closest("button, a, input, textarea, select, details, label, nav, .dock, #navHandle, .carousel, .leafdots, #settings")) return;
+    if (t.closest("header.top")) {
+      var hd = document.querySelector("header.top");
+      if (t === hd || t.classList.contains("brand") || t.classList.contains("transbar")) cycleTheme();
+      return;
+    }
+    var W = window.innerWidth, x = e.clientX;
+    if (x > EDGE && x < W - EDGE) return;
+    var dir = x >= W - EDGE ? 1 : -1;
+    var apply = navTarget("tab", dir);
+    if (apply) flipTo(null, dir, apply);
+  });
   // Vier vaste tabbladen staan op een eigen plek: Zinnen links, Vastlopen boven, Gesprek rechts,
   // Info rechtsonder (boven de onderste balk). De rest blijft in de onderste balk.
   var DOCK_POS = { zinnen: "dock-l", vastlopen: "dock-t", gesprek: "dock-r", info: "dock-br" };
@@ -1535,7 +1446,7 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "92";
+  var APP_VERSION = "95";
   var WH_LOG = [];
   function whLog(msg) {
     var d = new Date();
@@ -2098,6 +2009,12 @@
     bk.dataset.n = String(n);
     bk.dataset.cur = String(cur);
     var card = el("div", "card leaf-card");
+    card.addEventListener("click", function (e) {
+      if (e.target.closest && e.target.closest("button, a, input, textarea, select, details, .leafdots")) return;
+      var r = card.getBoundingClientRect(), x = (e.clientX - r.left) / r.width;
+      var next = x > 0.7 ? cur + 1 : (x < 0.3 ? cur - 1 : cur);
+      if (next !== cur && next >= 0 && next < n) goLeaf(next);
+    });
     card.appendChild(pages[cur]);
     card.appendChild(el("div", "leafnum", (cur + 1) + " / " + n));
     bk.appendChild(card);
