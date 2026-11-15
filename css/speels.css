@@ -414,3 +414,10 @@ body.speels .leafnum { margin-top: auto; padding-top: 10px; text-align: center; 
 body.speels .leafdots { display: flex; justify-content: center; gap: 9px; margin: 12px 0 4px; flex-wrap: wrap; }
 body.speels .leafdot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--ink-k); background: var(--card); padding: 0; cursor: pointer; }
 body.speels .leafdot.on { background: var(--p); }
+
+
+/* Café: kleurenblind-vriendelijk. Geen rood/groen-paren: goed = blauw, fout = donker oranje-bruin,
+   met een teken erbij zodat de betekenis niet alleen op kleur rust. Blijft binnen de café-stijl. */
+body.cafe { --ok: #1f5f8b; --bad: #9a4a00; }
+body.cafe .ok::before { content: "✓ "; }
+body.cafe .bad::before { content: "✕ "; }
