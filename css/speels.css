@@ -74,7 +74,8 @@ body.speels:not(.cafe) nav.bottomnav .btn { border-radius: 12px; font-size: 14px
 body.speels:not(.cafe) nav.bottomnav .btn.active { transform: none; }
 
 /* ---------- App-gedrag: onderste balk verdwijnt en komt terug met een veeg omhoog ---------- */
-body.speels nav.bottomnav .btn { transition: transform .32s cubic-bezier(.2,.9,.3,1), opacity .25s ease, box-shadow .06s ease, filter .06s ease; }
+body.speels nav.bottomnav .btn { transition: transform .55s cubic-bezier(.22,.8,.25,1), opacity .45s ease, box-shadow .06s ease, filter .06s ease; }
+body.speels nav.bottomnav { transition: background-color .5s ease, border-color .5s ease; }
 /* Veeg omhoog op het handvat: de balk zelf blijft weg, alleen de knoppen schuiven omhoog */
 body.speels.nav-away nav.bottomnav { background: var(--paper) !important; border-top: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
 body.speels.nav-away nav.bottomnav .btn, body.speels.nav-away nav.bottomnav .btn.active, body.speels.nav-away nav.bottomnav .btn.primary { transform: translateY(calc(100% + 40px)); opacity: 0; pointer-events: none; }
@@ -262,11 +263,12 @@ body.speels .dock-br {
   right: 12px; bottom: calc(var(--navh) + 10px); height: 40px; padding: 0 16px; border-radius: 999px;
   transition: bottom .32s cubic-bezier(.2,.9,.3,1), transform .35s cubic-bezier(.2,.9,.3,1), box-shadow .06s ease, filter .06s ease;
 }
-/* Bij een paginawissel verdwijnen Vastlopen (omhoog), Zinnen (links), Gesprek (rechts) en Info (omlaag) */
-body.speels.nav-away .dock-t { transform: translate(-50%, calc(-100% - 24px)); pointer-events: none; }
-body.speels.nav-away .dock-l { transform: translate(calc(-100% - 24px), -50%); pointer-events: none; }
-body.speels.nav-away .dock-r { transform: translate(calc(100% + 24px), -50%); pointer-events: none; }
-body.speels.nav-away .dock-br { transform: translateY(calc(100% + 40px)); pointer-events: none; }
+/* Bij een paginawissel verdwijnen Vastlopen (omhoog, onder de banner), Zinnen (links) en Gesprek (rechts).
+   Info blijft staan, zodat je er altijd naartoe kunt. */
+body.speels.nav-away #dock { z-index: 4; }
+body.speels.nav-away .dock-t { transform: translate(-50%, calc(-100% - 6px)); pointer-events: none; transition: transform .5s cubic-bezier(.22,.8,.25,1); }
+body.speels.nav-away .dock-l { transform: translate(calc(-100% - 24px), -50%); pointer-events: none; transition: transform .5s cubic-bezier(.22,.8,.25,1); }
+body.speels.nav-away .dock-r { transform: translate(calc(100% + 24px), -50%); pointer-events: none; transition: transform .5s cubic-bezier(.22,.8,.25,1); }
 
 /* Ruimte rond de inhoud: de vaste tabbladen en de onderste balk gaan niet over antwoorden heen */
 body.speels main#view { padding: 36px 44px calc(var(--navh) + 36px); }
@@ -396,14 +398,7 @@ body.speels nav.bottomnav, body.speels.nav-away nav.bottomnav, body.speels:not(.
   background: transparent !important; border: none !important; box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
 }
 
-/* Boek: het blad dat je omslaat volgt de vinger. Schaduw aan de rand, een donkere kant tijdens het draaien,
-   en een schaduw op de pagina eronder die met de rand meebeweegt. */
-body.speels .page-leaf { position: fixed; z-index: 60; margin: 0 !important; pointer-events: none; overflow: hidden; box-shadow: 0 0 22px rgba(0,0,0,.28); animation: none !important; }
-body.speels .page-leaf.tab-leaf { background: var(--paper); }
-body.speels .page-leaf .leaf-shade { position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0;
-  background: linear-gradient(90deg, rgba(0,0,0,.05), rgba(0,0,0,.55)); }
-body.speels .turn-cast { position: fixed; z-index: 59; width: 56px; pointer-events: none; opacity: 0;
-  background: linear-gradient(90deg, rgba(0,0,0,0) 0%, rgba(0,0,0,.34) 50%, rgba(0,0,0,0) 100%); }
+/* Pagina's wisselen met een zachte overgang (geen omslag-animatie meer) */
 body.speels main#view.page-in, body.speels .leaf-card.page-in { animation: pageIn .4s ease-out both; }
 @keyframes pageIn { from { opacity: .5; } to { opacity: 1; } }
 
