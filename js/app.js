@@ -406,6 +406,9 @@
       where.appendChild(b);
     });
     // Het belletje toont de knop van de geselecteerde pagina (zelfde ontwerp, met glans)
+    // Het ?-knopje is geselecteerd als je op Info bent (witte tekst op de kleur van het thema of de vlag)
+    var ib = document.getElementById("infoBtn");
+    if (ib) ib.classList.toggle("on", S.tab === "info");
     var h = document.getElementById("navHandle");
     if (!h) { h = document.createElement("button"); h.id = "navHandle"; h.type = "button"; h.setAttribute("aria-label", "Menu tonen"); document.body.appendChild(h); }
     var cur = TABS.filter(function (t) { return t[0] === S.tab; })[0];
@@ -1468,7 +1471,7 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "1.11";
+  var APP_VERSION = "1.13";
   // Versies waarvoor gebruikers de app opnieuw op hun beginscherm moeten zetten (oude icoon weg, nieuwe erop).
   // Bij zo'n update verschijnt eenmalig een melding met uitleg.
   var REINSTALL_VERSIONS = ["1.8"];
@@ -2708,6 +2711,7 @@
       var open = !p.classList.contains("open");
       p.classList.toggle("open", open);
       p.setAttribute("aria-hidden", open ? "false" : "true");
+      document.getElementById("setBtn").classList.toggle("on", open);
     }
     document.getElementById("setBtn").onclick = toggleSettings;
     // Het ?-knopje in de banner opent Info; nog eens tikken brengt je terug naar de vorige pagina
