@@ -320,15 +320,15 @@ body.speels:not(.cafe) .dock-l, body.speels:not(.cafe) .dock-r, body.speels:not(
 /* ===== v83: nieuw ontwerp alleen voor de verdwijnende onderknoppen en Zinnen/Gesprek; kleuren uit land en thema ===== */
 /* Kleuren per taal (landen) */
 /* Landskleuren (vlaggen) en themakleuren: alleen deze drie kleuren komen in de knoppen */
-body.speels:not(.cafe)[data-lang="nl"] { --bt1: #E0303F; --bt2: #2F5FC4; --bt3: #FF9CC0; }
-body.speels:not(.cafe)[data-lang="en"] { --bt1: #C8102E; --bt2: #1F3F9E; --bt3: #7FB8FF; }
-body.speels:not(.cafe)[data-lang="de"] { --bt1: #DD0000; --bt2: #FFCE00; --bt3: #FF7A3D; }
-body.speels:not(.cafe)[data-lang="fr"] { --bt1: #ED2939; --bt2: #002395; --bt3: #F4F6FF; }
+body.speels:not(.cafe)[data-lang="nl"] { --bt1: #a3262f; --bt2: #2c4c7d; --bt3: #e7dccb; }
+body.speels:not(.cafe)[data-lang="en"] { --bt1: #1d2f6b; --bt2: #a3262f; --bt3: #e7dccb; }
+body.speels:not(.cafe)[data-lang="de"] { --bt1: #1b1b1b; --bt2: #b01e1e; --bt3: #d9a520; }
+body.speels:not(.cafe)[data-lang="fr"] { --bt1: #23449a; --bt2: #e7dccb; --bt3: #b8323c; }
 
-body.speels.th-ijs[data-lang] { --bt1: #2a7fd4; --bt2: #8fd3f4; --bt3: #d4f0ff; }
-body.speels.th-jungle[data-lang] { --bt1: #2f7d32; --bt2: #e4572e; --bt3: #f6c744; }
-body.speels.th-ruimte[data-lang] { --bt1: #ff5d8f; --bt2: #6e52b8; --bt3: #2be4ff; }
-body.speels.th-donker[data-lang] { --bt1: #6e52b8; --bt2: #2f2857; --bt3: #ff7ad9; }
+body.speels.th-ijs[data-lang] { --bt1: #2a6fa8; --bt2: #7fbfe0; --bt3: #d4ebf7; }
+body.speels.th-jungle[data-lang] { --bt1: #2f6b33; --bt2: #c24a2b; --bt3: #e0b13a; }
+body.speels.th-ruimte[data-lang] { --bt1: #c94a7a; --bt2: #5a45a0; --bt3: #20b5cc; }
+body.speels.th-donker[data-lang] { --bt1: #5a45a0; --bt2: #2a2148; --bt3: #b05688; }
 
 /* De drie kleuren-balk onder de banner: vaste vlagvolgorde per taal (los van de knopkleuren) */
 body.speels:not(.cafe)[data-lang="nl"] { --f1: #AE1C28; --f2: #FFFFFF; --f3: #21468B; }
