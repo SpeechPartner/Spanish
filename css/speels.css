@@ -421,3 +421,7 @@ body.speels .leafdot.on { background: var(--p); }
 body.cafe { --ok: #1f5f8b; --bad: #9a4a00; }
 body.cafe .ok::before { content: "✓ "; }
 body.cafe .bad::before { content: "✕ "; }
+
+/* Melding bij een update waarvoor de app opnieuw op het beginscherm moet */
+body.speels .reinstall-note { position: fixed; left: 12px; right: 12px; bottom: calc(var(--navh) + 14px); z-index: 90; max-width: 460px; margin: 0 auto; }
+body.speels .reinstall-note .btn { margin-top: 8px; }
