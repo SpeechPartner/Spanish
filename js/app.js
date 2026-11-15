@@ -367,6 +367,7 @@
       var where = DOCK_POS[t[0]] && dockOk ? dock : nav;
       var cls = DOCK_POS[t[0]] && dockOk ? "dock-btn " + DOCK_POS[t[0]] + (S.tab === t[0] ? " active" : "") : (S.tab === t[0] ? "active small" : "small");
       var b = btn(T(t[1]), cls, function () { go(t[0]); });
+      b.setAttribute("data-v", String(TABS.indexOf(t) % 4));
       if (DOCK_POS[t[0]] && dockOk) b.setAttribute("aria-current", S.tab === t[0] ? "page" : "false");
       where.appendChild(b);
     });
@@ -1427,7 +1428,7 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "86";
+  var APP_VERSION = "87";
   var WH_LOG = [];
   function whLog(msg) {
     var d = new Date();
