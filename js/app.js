@@ -290,66 +290,165 @@
   }
 
   // ---------- Navigatie en weergave van de vaste onderbalk ----------
-  var pageTurnNext = false;
+  // ---------- Paginawissel als boek: het blad volgt de vinger; pas bij loslaten komt de volgende pagina ----------
   var TAB_ORDER = TABS.map(function (t) { return t[0]; });
+  // Zinnen en Gesprek staan niet in de veeg-volgorde: die bereik je met een tik
   var SWIPE_TABS = ["onderwerpen", "vastlopen", "bouwen", "reageren", "leren", "regels", "uitspraak", "info"];
   function tabIdx(t) { return TAB_ORDER.indexOf(t); }
-  // Omslag: het huidige blad draait weg over de scharnier-rand, de nieuwe pagina ligt er al onder.
-  // dir > 0 (naar een tabblad rechts): scharnier rechts, het blad slaat van links naar rechts om.
-  // dir < 0 (naar een tabblad links): scharnier links, het blad slaat van rechts naar links om.
-  function turnLeaf(src, dir) {
-    if (!src || !src.getBoundingClientRect) return;
-    var r = src.getBoundingClientRect();
-    var leaf = src.cloneNode(true);
+  // Het blad scharniert: dir > 0 aan de rechterrand (het slaat van links naar rechts om), dir < 0 aan de linkerrand
+  function snapshot(src) {
+    return { el: src.cloneNode(true), rect: src.getBoundingClientRect() };
+  }
+  function flipSetup(snap, dir) {
+    var r = snap.rect, leaf = snap.el;
     leaf.removeAttribute("id");
-    leaf.className = "page-leaf " + (dir > 0 ? "leaf-fwd" : "leaf-back");
+    leaf.classList.remove("page-in");
+    leaf.classList.add("page-leaf");
+    if (leaf.tagName === "MAIN") leaf.classList.add("tab-leaf");
     leaf.setAttribute("aria-hidden", "true");
-    leaf.style.cssText = "left:" + r.left + "px;top:" + r.top + "px;width:" + r.width + "px;height:" + r.height + "px;";
+    leaf.style.left = r.left + "px"; leaf.style.top = r.top + "px";
+    leaf.style.width = r.width + "px"; leaf.style.height = r.height + "px";
+    leaf.style.transformOrigin = dir > 0 ? "100% 50%" : "0% 50%";
+    var shade = document.createElement("div");
+    shade.className = "leaf-shade";
+    leaf.appendChild(shade);
+    var cast = document.createElement("div");
+    cast.className = "turn-cast";
+    cast.style.top = r.top + "px"; cast.style.height = r.height + "px";
+    document.body.appendChild(cast);
     document.body.appendChild(leaf);
-    var done = function () { if (leaf.parentNode) leaf.parentNode.removeChild(leaf); };
-    leaf.addEventListener("animationend", done);
-    setTimeout(done, 900);
+    return { leaf: leaf, shade: shade, cast: cast, dir: dir, W: r.width, L: r.left, R: r.right, p: 0, revert: null };
+  }
+  // p = 0: het blad ligt nog op de oude pagina; p = 1: het blad ligt op de andere kant
+  function setTurn(t, p, ms) {
+    t.p = p;
+    var deg = (t.dir > 0 ? -180 : 180) * p;
+    var rad = Math.abs(deg) * Math.PI / 180;
+    var edge = t.dir > 0 ? t.R - t.W * Math.cos(rad) : t.L + t.W * Math.cos(rad);
+    var s = Math.sin(p * Math.PI);
+    var tm = ms ? " " + ms + "ms cubic-bezier(.3,.6,.2,1)" : " 0ms";
+    t.leaf.style.transition = "transform" + tm;
+    t.leaf.style.transform = "perspective(1400px) rotateY(" + deg.toFixed(2) + "deg)";
+    t.shade.style.transition = "opacity" + tm;
+    t.shade.style.opacity = (s * 0.5).toFixed(3);
+    t.cast.style.transition = "left" + tm + ", opacity" + tm;
+    t.cast.style.left = (edge - 28) + "px";
+    t.cast.style.opacity = (s * 0.8).toFixed(3);
+  }
+  // Maakt het blad af: commit = de nieuwe pagina blijft; anders keert het blad terug naar de oude pagina
+  function endTurn(t, commit) {
+    var ms = 360;
+    setTurn(t, commit ? 1 : 0, ms);
+    var done = false;
+    setTimeout(function () {
+      if (done) return;
+      done = true;
+      [t.leaf, t.cast].forEach(function (x) { if (x.parentNode) x.parentNode.removeChild(x); });
+      if (!commit && t.revert) t.revert();
+    }, ms + 60);
+  }
+  // Een knop of stip: het blad slaat direct om
+  function flipTo(src, dir, apply) {
+    var snap = snapshot(src);
+    apply();
+    var t = flipSetup(snap, dir);
+    setTurn(t, 0, 0);
+    requestAnimationFrame(function () { endTurn(t, true); });
+  }
+  // Doel van een veeg: het tabblad (kind "tab") of het volgende blad van het boekje (kind "leaf")
+  function navTarget(kind, dir) {
+    if (kind === "leaf") {
+      var bk = document.querySelector("#view .booklet");
+      if (!bk) return null;
+      var cur = +bk.dataset.cur, j = cur + dir;
+      if (j < 0 || j >= +bk.dataset.n) return null;
+      return {
+        src: bk.querySelector(".leaf-card"),
+        apply: function () { S.infoLeaf = j; render(); },
+        revert: function () { S.infoLeaf = cur; render(); }
+      };
+    }
+    var k = SWIPE_TABS.indexOf(S.tab);
+    if (k < 0) return null;
+    var nt = SWIPE_TABS[k + dir];
+    if (!nt) return null;
+    var prev = S.tab;
+    return {
+      src: document.getElementById("view"),
+      apply: function () { S.tab = nt; S.build = null; render(); },
+      revert: function () { S.tab = prev; S.build = null; render(); }
+    };
   }
   function go(tab) {
     if (typeof prRelease === "function") prRelease();
     var view = document.getElementById("view");
     // Info werkt als schakelaar: tik je er nog eens op, dan ga je terug naar de pagina waar je vandaan kwam
     if (tab === "info" && S.tab === "info") {
-      tab = S.backTab || "zinnen";
+      var back = S.backTab || "zinnen";
       var y = S.backY || 0;
-      turnLeaf(view, tabIdx(tab) > tabIdx("info") ? 1 : -1);
-      S.tab = tab; S.build = null; pageTurnNext = true;
-      render();
+      flipTo(view, tabIdx(back) > tabIdx("info") ? 1 : -1, function () { S.tab = back; S.build = null; render(); });
       window.scrollTo(0, y);
       return;
     }
     if (tab === "info") { S.backTab = S.tab; S.backY = window.scrollY; S.infoLeaf = 0; }
-    if (tab !== S.tab) { turnLeaf(view, tabIdx(tab) > tabIdx(S.tab) ? 1 : -1); pageTurnNext = true; }
-    S.tab = tab; S.build = null;
-    render();
+    if (tab === S.tab) { render(); window.scrollTo(0, 0); return; }
+    var dir = tabIdx(tab) > tabIdx(S.tab) ? 1 : -1;
+    flipTo(view, dir, function () { S.tab = tab; S.build = null; render(); });
     window.scrollTo(0, 0);
   }
-  // Veeg over het scherm wisselt van tabblad: een snelle, bijna volledige veeg. Binnen het boekje, velden en de onderbalk niet.
-  var swX = 0, swY = 0, swT = 0, swOn = false;
+  // Veeg: het blad volgt de vinger. Naar rechts slaat het van links naar rechts om (volgend tabblad / blad),
+  // naar links andersom. Pas bij loslaten wordt de omslag afgemaakt of teruggedraaid.
+  // De luisteraars zitten op het aangeraakte element zelf: de pagina wordt tijdens de veeg opnieuw opgebouwd,
+  // en dan krijgt het element onder de vinger anders geen bewegingen meer.
+  var sw = null;
+  function onTouchMove(e) {
+    if (!sw || e.touches.length !== 1) return;
+    var dx = e.touches[0].clientX - sw.x0, dy = e.touches[0].clientY - sw.y0;
+    sw.dx = dx;
+    if (!sw.mode) {
+      if (Math.abs(dx) < 12 || Math.abs(dx) < 1.3 * Math.abs(dy)) return;
+      sw.dir = dx > 0 ? 1 : -1;
+      var nt = navTarget(sw.kind, sw.dir);
+      if (!nt) { sw.mode = "none"; return; }
+      sw.mode = "turn";
+      var snap = snapshot(nt.src);
+      nt.apply();
+      sw.t = flipSetup(snap, sw.dir);
+      sw.t.revert = nt.revert;
+    }
+    if (sw.mode === "turn" && sw.t) {
+      if (e.cancelable) e.preventDefault();
+      var along = Math.max(0, sw.dir * dx);
+      setTurn(sw.t, Math.min(1, along / (sw.t.W * 0.85)), 0);
+    }
+  }
+  function onTouchEnd(e) {
+    var s = sw;
+    sw = null;
+    if (!s) return;
+    s.el.removeEventListener("touchmove", onTouchMove);
+    s.el.removeEventListener("touchend", onTouchEnd);
+    s.el.removeEventListener("touchcancel", onTouchEnd);
+    if (!s.t) return;
+    var dt = Math.max(1, Date.now() - s.t0);
+    var v = Math.abs(s.dx) / dt;
+    var commit = e.type !== "touchcancel" && (s.t.p > 0.42 || (v > 0.6 && dt > 60 && s.t.p > 0.1));
+    endTurn(s.t, commit);
+  }
+  // Vangnet: sluit de veeg ook af als het loslaten niet bij het oorspronkelijke element aankomt
+  document.addEventListener("touchend", function (e) { if (sw) onTouchEnd(e); }, { passive: true });
+  document.addEventListener("touchcancel", function (e) { if (sw) onTouchEnd(e); }, { passive: true });
   document.addEventListener("touchstart", function (e) {
+    if (sw || e.touches.length !== 1) return;
     var t = e.target;
-    swOn = e.touches.length === 1 && !(t.closest && t.closest(".booklet, .carousel, nav, #navHandle, input, textarea, select, details"));
-    swX = e.touches[0].clientX; swY = e.touches[0].clientY; swT = Date.now();
-  }, { passive: true });
-  document.addEventListener("touchend", function (e) {
-    if (!swOn) return;
-    swOn = false;
-    var t = e.changedTouches[0];
-    var dx = t.clientX - swX, dy = t.clientY - swY;
-    if (Date.now() - swT > 700) return;
-    if (Math.abs(dx) < Math.max(120, window.innerWidth * 0.35)) return;
-    if (Math.abs(dx) < 2 * Math.abs(dy)) return;
-    // Zinnen en Gesprek staan niet in de veeg-volgorde: die bereik je met een tik
-    var k = SWIPE_TABS.indexOf(S.tab);
-    if (k < 0) return;
-    var i = k + (dx < 0 ? 1 : -1);
-    if (i < 0 || i >= SWIPE_TABS.length) return;
-    go(SWIPE_TABS[i]);
+    if (!t || !t.closest) return;
+    if (t.closest("nav, #navHandle, .dock, input, textarea, select, details, .carousel, .leafdots")) return;
+    var inBk = t.closest(".booklet");
+    if (inBk && !t.closest(".leaf-card")) return;
+    sw = { el: t, kind: inBk ? "leaf" : "tab", x0: e.touches[0].clientX, y0: e.touches[0].clientY, t0: Date.now(), dx: 0, mode: null, t: null, dir: 0 };
+    t.addEventListener("touchmove", onTouchMove, { passive: false });
+    t.addEventListener("touchend", onTouchEnd, { passive: true });
+    t.addEventListener("touchcancel", onTouchEnd, { passive: true });
   }, { passive: true });
   // Vier vaste tabbladen staan op een eigen plek: Zinnen links, Vastlopen boven, Gesprek rechts,
   // Info rechtsonder (boven de onderste balk). De rest blijft in de onderste balk.
@@ -1428,7 +1527,7 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "87";
+  var APP_VERSION = "88";
   var WH_LOG = [];
   function whLog(msg) {
     var d = new Date();
@@ -1878,105 +1977,131 @@
         m("De onderste balk verdwijnt na een paar seconden. Veeg omhoog vanaf de onderkant om hem terug te halen.", "The bottom bar disappears after a few seconds. Swipe up from the bottom to bring it back.", "Die untere Leiste verschwindet nach ein paar Sekunden. Wische vom unteren Rand nach oben, um sie zurückzuholen.", "La barre du bas disparaît après quelques secondes. Glisse vers le haut depuis le bas pour la faire revenir."),
         m("De uil in de koptekst reageert op het gesprek. Tik erop voor een sprong.", "The owl in the header reacts to the conversation. Tap it for a hop.", "Die Eule im Kopfbereich reagiert auf das Gespräch. Tippe darauf für einen Hüpfer.", "La chouette dans l'en-tête réagit à la conversation. Touche-la pour un petit saut."),
         m("Zinnen (links), Vastlopen (boven), Gesprek (rechts) en Info (rechtsonder) staan altijd op dezelfde plek.", "Sentences (left), Stuck (top), Conversation (right) and Info (bottom right) always stay in the same place.", "Sätze (links), Hängen (oben), Gespräch (rechts) und Info (rechts unten) bleiben immer an derselben Stelle.", "Phrases (à gauche), Bloqué (en haut), Conversation (à droite) et Info (en bas à droite) restent toujours à la même place.")] };
-  // Info als mini-boekje: de bladen omslaan met een veeg of de stipjes. Over, bronnen en versie blijven onderaan staan.
+  // Info als boekje: vaste bladgrootte, lange onderdelen verdeeld over meerdere bladen.
+  // Over de maker, bronnen en licenties en de versie blijven onderaan als vaste kaarten staan.
   function infoSec(title, body) {
     var b = el("div", "leafsec");
-    b.appendChild(el("div", "sec-title", title));
-    b.appendChild(typeof body === "string" ? el("div", "", body) : body);
+    b.appendChild(el("h4", "sec-title", title));
+    b.appendChild(typeof body === "string" ? el("p", "", body) : body);
     return b;
   }
   function goLeaf(i) {
     var bk = document.querySelector("#view .booklet");
-    if (bk) turnLeaf(bk, i > (S.infoLeaf || 0) ? 1 : -1);
-    S.infoLeaf = i; S.leafIn = true;
-    render();
+    if (!bk) return;
+    var cur = +bk.dataset.cur;
+    if (i === cur) return;
+    flipTo(bk.querySelector(".leaf-card"), i > cur ? 1 : -1, function () { S.infoLeaf = i; render(); });
+  }
+  // Verdeelt onderdelen over bladen op basis van hun lengte, zodat een blad niet te vol wordt
+  var TAB_BUDGET = 460;
+  function pack(items, weight, budget) {
+    var out = [], cur = [], sum = 0;
+    items.forEach(function (it) {
+      var wgt = weight(it);
+      if (cur.length && sum + wgt > budget) { out.push(cur); cur = []; sum = 0; }
+      cur.push(it);
+      sum += wgt;
+    });
+    if (cur.length) out.push(cur);
+    return out;
   }
   function viewInfo() {
     var w = el("div");
     // 1. Buiten de losse app (bijv. in Safari): eerst de stappen om de pagina op het beginscherm te zetten.
-    //    speels.js vult dit kaartje; op het beginscherm zelf blijft het leeg.
     var slot = el("div");
     slot.id = "installSlot";
     w.appendChild(slot);
 
-    var leaves = [];
+    // De bladen van het boekje
+    var pages = [];
+    function page(title, blocks) {
+      var p = el("div", "leafpage");
+      p.appendChild(el("h3", "leafhead", title));
+      blocks.forEach(function (b) { p.appendChild(b); });
+      pages.push(p);
+    }
 
-    // Blad 1: wat is het, en het gespreksmodel dat één keer gedownload wordt
-    var l0 = el("div");
-    l0.appendChild(infoSec(L(INFO_SECTIONS[0].t), L(INFO_SECTIONS[0].b)));
-    l0.appendChild(infoSec(
-      L(m("Gespreksmodel en offline gebruik", "Conversation model and offline use", "Gesprächsmodell und Offline-Nutzung", "Modèle de conversation et usage hors ligne")),
-      L(m(
-        "Voor de spraakherkenning heeft de app eenmalig een gespreksmodel nodig. Dat wordt op je toestel gedownload: ongeveer 40 MB voor de snelle versie of 80 MB voor de nauwkeurige. Daarna kun je de dienst offline gebruiken.",
-        "For speech recognition the app needs a conversation model once. It is downloaded to your device: about 40 MB for the fast version or 80 MB for the more accurate one. After that you can use the service offline.",
-        "Für die Spracherkennung braucht die App einmalig ein Gesprächsmodell. Es wird auf dein Gerät heruntergeladen: etwa 40 MB für die schnelle Version oder 80 MB für die genauere. Danach kannst du den Dienst offline nutzen.",
-        "Pour la reconnaissance vocale, l'application a besoin une fois d'un modèle de conversation. Il est téléchargé sur ton appareil : environ 40 Mo pour la version rapide ou 80 Mo pour la version plus précise. Ensuite, tu peux utiliser le service hors ligne."))));
-    leaves.push(l0);
+    // Blad: wat is het
+    page(L(INFO_SECTIONS[0].t), [infoSec(L(m("Waar het over gaat", "What it is about", "Worum es geht", "De quoi il s'agit")), L(INFO_SECTIONS[0].b))]);
 
-    // Blad 2: Help, het stappenplan per onderdeel (bron: HELP_GUIDE in content.js)
-    var l1 = el("div");
-    var hp = el("details", "card help");
-    hp.appendChild(el("summary", "sec-title", L(m("Help: stappenplan van alle mogelijkheden", "Help: step plan for all features", "Hilfe: Schritt-für-Schritt-Plan aller Funktionen", "Aide : plan pas à pas de toutes les fonctions"))));
-    HELP_GUIDE.forEach(function (sec) {
-      var d = el("details", "help-sec");
-      d.appendChild(el("summary", "", L(sec.t)));
-      var ol = el("ol", "help-steps");
-      sec.s.forEach(function (x) { ol.appendChild(el("li", "", L(x))); });
-      d.appendChild(ol);
-      hp.appendChild(d);
+    // Blad: het gespreksmodel dat één keer gedownload wordt
+    page(L(m("Gespreksmodel en offline gebruik", "Conversation model and offline use", "Gesprächsmodell und Offline-Nutzung", "Modèle de conversation et usage hors ligne")), [
+      infoSec(L(m("Eenmalige download", "One-time download", "Einmaliger Download", "Téléchargement unique")), L(m(
+        "Voor de spraakherkenning heeft de app eenmalig een gespreksmodel nodig. Dat wordt op je toestel gedownload: ongeveer 40 MB voor de snelle versie of 80 MB voor de nauwkeurige.",
+        "For speech recognition the app needs a conversation model once. It is downloaded to your device: about 40 MB for the fast version or 80 MB for the more accurate one.",
+        "Für die Spracherkennung braucht die App einmalig ein Gesprächsmodell. Es wird auf dein Gerät heruntergeladen: etwa 40 MB für die schnelle Version oder 80 MB für die genauere.",
+        "Pour la reconnaissance vocale, l'application a besoin une fois d'un modèle de conversation. Il est téléchargé sur ton appareil : environ 40 Mo pour la version rapide ou 80 Mo pour la version plus précise.")))
+      , infoSec(L(m("Offline gebruik", "Offline use", "Offline-Nutzung", "Usage hors ligne")), L(m(
+        "Daarna kun je de dienst offline gebruiken.",
+        "After that you can use the service offline.",
+        "Danach kannst du den Dienst offline nutzen.",
+        "Ensuite, tu peux utiliser le service hors ligne.")))
+    ]);
+
+    // Bladen: de Help, per vier onderdelen op één blad
+    var helpTitle = L(m("Help: stappenplan", "Help: step plan", "Hilfe: Schritt-für-Schritt-Plan", "Aide : plan pas à pas"));
+    pack(HELP_GUIDE, function () { return 130; }, 500).forEach(function (group) {
+      var blocks = [];
+      group.forEach(function (sec) {
+        var d = el("details", "help-sec");
+        d.appendChild(el("summary", "", L(sec.t)));
+        var ol = el("ol", "help-steps");
+        sec.s.forEach(function (x) { ol.appendChild(el("li", "", L(x))); });
+        d.appendChild(ol);
+        blocks.push(d);
+      });
+      page(helpTitle, blocks);
     });
-    l1.appendChild(hp);
-    leaves.push(l1);
 
-    // Blad 3: het overzicht per tabblad
-    var l2 = el("div");
-    l2.appendChild(el("h2", "", T("Tabbladen")));
-    TAB_GUIDE.forEach(function (tb) {
-      var sec = infoSec(L(tb.n), L(tb.w));
-      if (tb.k.length) {
-        var ul = el("ul", "guide-list");
-        tb.k.forEach(function (k) { ul.appendChild(el("li", "", L(k))); });
-        sec.appendChild(ul);
-      }
-      l2.appendChild(sec);
+    // Bladen: het overzicht per tabblad, twee per blad
+    pack(TAB_GUIDE, function (tb) {
+      return 80 + L(tb.w).length + tb.k.reduce(function (a, k) { return a + L(k).length + 25; }, 0);
+    }, TAB_BUDGET).forEach(function (group) {
+      var tblocks = [];
+      group.forEach(function (tb) {
+        var sec = infoSec(L(tb.n), L(tb.w));
+        if (tb.k.length) {
+          var ul = el("ul", "guide-list");
+          tb.k.forEach(function (k) { ul.appendChild(el("li", "", L(k))); });
+          sec.appendChild(ul);
+        }
+        tblocks.push(sec);
+      });
+      page(T("Tabbladen"), tblocks);
     });
-    leaves.push(l2);
 
-    // Blad 4: instellingen en extra's, spreken op de iPhone en aanleren
-    var l3 = el("div");
-    var exl = el("ul", "guide-list");
-    EXTRA_GUIDE.k.forEach(function (k) { exl.appendChild(el("li", "", L(k))); });
-    l3.appendChild(infoSec(L(EXTRA_GUIDE.n), exl));
-    l3.appendChild(infoSec(L(INFO_SECTIONS[2].t), L(INFO_SECTIONS[2].b)));
-    l3.appendChild(infoSec(L(INFO_SECTIONS[3].t), L(INFO_SECTIONS[3].b)));
-    leaves.push(l3);
+    // Blad: instellingen en extra's
+    pack(EXTRA_GUIDE.k, function (k) { return L(k).length + 25; }, TAB_BUDGET).forEach(function (group, gi) {
+      var exl = el("ul", "guide-list");
+      group.forEach(function (k) { exl.appendChild(el("li", "", L(k))); });
+      page(L(EXTRA_GUIDE.n), [exl]);
+    });
 
-    // Het boekje zelf: één blad tegelijk, met stipjes en een veeg om te wisselen
-    var n = leaves.length;
+    // Blad: spreken op de iPhone
+    page(L(INFO_SECTIONS[2].t), [el("p", "", L(INFO_SECTIONS[2].b))]);
+
+    // Blad: aanleren
+    page(L(INFO_SECTIONS[3].t), [el("p", "", L(INFO_SECTIONS[3].b))]);
+
+    // Het boekje zelf: één blad tegelijk, een vaste grootte, stipjes onderaan
+    var n = pages.length;
     var cur = Math.min(S.infoLeaf || 0, n - 1);
     var bk = el("div", "booklet");
-    var leaf = el("div", "card leaf-card" + (S.leafIn ? " page-in" : ""));
-    S.leafIn = false;
-    leaf.appendChild(leaves[cur]);
-    bk.appendChild(leaf);
+    bk.dataset.n = String(n);
+    bk.dataset.cur = String(cur);
+    var card = el("div", "card leaf-card");
+    card.appendChild(pages[cur]);
+    card.appendChild(el("div", "leafnum", (cur + 1) + " / " + n));
+    bk.appendChild(card);
     var dots = el("div", "leafdots");
-    leaves.forEach(function (_, i) {
+    pages.forEach(function (_, i) {
       var d = el("button", "leafdot" + (i === cur ? " on" : ""));
       d.type = "button";
       d.setAttribute("aria-label", String(i + 1));
-      d.onclick = function () { if (i !== cur) goLeaf(i); };
+      d.onclick = function () { goLeaf(i); };
       dots.appendChild(d);
     });
     bk.appendChild(dots);
-    var sx = 0, sy = 0, st = 0;
-    bk.addEventListener("touchstart", function (e) { sx = e.touches[0].clientX; sy = e.touches[0].clientY; st = Date.now(); }, { passive: true });
-    bk.addEventListener("touchend", function (e) {
-      var t = e.changedTouches[0];
-      var dx = t.clientX - sx, dy = t.clientY - sy;
-      if (Date.now() - st > 700 || Math.abs(dx) < 60 || Math.abs(dx) < 1.5 * Math.abs(dy)) return;
-      var j = cur + (dx < 0 ? 1 : -1);
-      if (j >= 0 && j < n) goLeaf(j);
-    }, { passive: true });
     w.appendChild(bk);
 
     // Vaste kaarten onderaan: over de maker, bronnen en licenties, en de versie
@@ -2566,12 +2691,6 @@
     var view = document.getElementById("view");
     view.innerHTML = "";
     view.appendChild(S.build ? viewBuilder() : VIEWS[S.tab]());
-    if (pageTurnNext) {
-      pageTurnNext = false;
-      view.classList.remove("page-in"); void view.offsetWidth;
-      view.classList.add("page-in");
-      view.addEventListener("animationend", function () { view.classList.remove("page-in"); }, { once: true });
-    }
     updateMic();
   }
 
