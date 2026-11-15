@@ -126,14 +126,21 @@
   // Verdwijnen bij een paginawissel, bij een tik op een leeg stuk van de pagina en bij scrollen.
   // Komen terug als je onderaan de pagina bent, of met een tik op het belletje.
   // Het belletje blijft altijd zichtbaar, ook over de pagina's heen.
+  // Knop links van het belletje: toont de pagina waar je op zit (alleen ter info, niet aan te tikken)
+  var pageInfo = document.createElement("div");
+  pageInfo.id = "pageInfo";
+  pageInfo.setAttribute("aria-hidden", "true");
+  document.body.appendChild(pageInfo);
   var handle = document.createElement("button");
   handle.id = "navHandle";
   handle.type = "button";
   handle.setAttribute("aria-label", "Menu tonen");
   document.body.appendChild(handle);
 
-  function hideChrome() { document.body.classList.add("nav-away"); }
-  function showChrome() { document.body.classList.remove("nav-away"); }
+  // Drie standen: alles zichtbaar; alleen de onderste rij (aan het einde van de pagina); alles verborgen
+  function hideChrome() { document.body.classList.remove("nav-end"); document.body.classList.add("nav-away"); }
+  function showEnd() { document.body.classList.remove("nav-away"); document.body.classList.add("nav-end"); }
+  function showChrome() { document.body.classList.remove("nav-away", "nav-end"); }
   window.speelsHideChrome = hideChrome;   // app.js roept dit aan bij paginawissel en bij een tik op de pagina
   // Scrollen verbergt de knoppen; alleen onderaan de pagina komen ze terug
   var lastScrollY = window.scrollY;
@@ -142,7 +149,7 @@
     if (Math.abs(y - lastScrollY) < 4) return;
     lastScrollY = y;
     var atEnd = y + window.innerHeight >= document.documentElement.scrollHeight - 8;
-    if (atEnd) showChrome(); else hideChrome();
+    if (atEnd) showEnd(); else hideChrome();
   }, { passive: true });
   handle.addEventListener("click", showChrome);
 })();
