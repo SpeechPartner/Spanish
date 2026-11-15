@@ -78,15 +78,14 @@ body.speels nav.bottomnav .btn { transition: transform .32s cubic-bezier(.2,.9,.
 /* Veeg omhoog op het handvat: de balk zelf blijft weg, alleen de knoppen schuiven omhoog */
 body.speels.nav-away nav.bottomnav { background: var(--paper) !important; border-top: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
 body.speels.nav-away nav.bottomnav .btn, body.speels.nav-away nav.bottomnav .btn.active, body.speels.nav-away nav.bottomnav .btn.primary { transform: translateY(calc(100% + 40px)); opacity: 0; pointer-events: none; }
-body.speels.nav-away { padding-bottom: 28px; }
 #navHandle {
-  position: fixed; left: 50%; bottom: 8px; transform: translateX(-50%); z-index: 7;
+  position: fixed; left: 50%; bottom: calc(var(--navh) + 6px); transform: translateX(-50%); z-index: 95;
   width: 84px; height: 26px; border-radius: 999px; border: 3px solid var(--ink-k); background: var(--card);
   box-shadow: var(--hard); padding: 0; cursor: pointer;
-  opacity: 0; pointer-events: none; transition: opacity .25s ease;
+  opacity: 1; pointer-events: auto; transition: bottom .35s cubic-bezier(.2,.9,.3,1);
 }
+body.speels.nav-away #navHandle { bottom: 8px; }
 #navHandle::before { content: ""; display: block; width: 36px; height: 5px; margin: 7px auto 0; border-radius: 3px; background: var(--ink-k); }
-body.speels.nav-away #navHandle { opacity: 1; pointer-events: auto; }
 
 /* ---------- Thema's: IJs, Jungle, Ruimte (naast Standaard en Café) ---------- */
 body.speels.th-ijs[data-lang] {
@@ -245,12 +244,13 @@ body.speels .dock-l, body.speels .dock-r {
   top: 50%; transform: translateY(-50%); width: 28px; height: auto; padding: 16px 3px;
   writing-mode: vertical-rl; text-orientation: upright; text-align: center; line-height: 1.05; letter-spacing: 0;
 }
-body.speels .dock-l { left: 0; border-left: none; border-radius: 0 14px 14px 0; }
+body.speels .dock-l { left: 0; border-left: none; border-radius: 0 14px 14px 0; transition: transform .35s cubic-bezier(.2,.9,.3,1); }
 body.speels .dock-l:active { filter: brightness(.94); }
-body.speels .dock-r { right: 0; border-right: none; border-radius: 14px 0 0 14px; }
+body.speels .dock-r { right: 0; border-right: none; border-radius: 14px 0 0 14px; transition: transform .35s cubic-bezier(.2,.9,.3,1); }
 
 /* Boven: lipje dat aan de onderrand van de koptekst hangt; verdwijnt als de instellingen open staan */
 body.speels .dock-t {
+  transition: transform .35s cubic-bezier(.2,.9,.3,1);
   top: calc(var(--hh) - 6px); left: 50%; transform: translateX(-50%);
   height: 30px; padding: 0 16px; border-top: none; border-radius: 0 0 14px 14px;
 }
@@ -260,9 +260,13 @@ body:has(#settings.open) .dock-t { display: none; }
 /* Rechtsonder: boven de onderste balk; zakt naar beneden als de balk verborgen is */
 body.speels .dock-br {
   right: 12px; bottom: calc(var(--navh) + 10px); height: 40px; padding: 0 16px; border-radius: 999px;
-  transition: bottom .32s cubic-bezier(.2,.9,.3,1), box-shadow .06s ease, filter .06s ease;
+  transition: bottom .32s cubic-bezier(.2,.9,.3,1), transform .35s cubic-bezier(.2,.9,.3,1), box-shadow .06s ease, filter .06s ease;
 }
-body.speels.nav-away .dock-br { bottom: 14px; }
+/* Bij een paginawissel verdwijnen Vastlopen (omhoog), Zinnen (links), Gesprek (rechts) en Info (omlaag) */
+body.speels.nav-away .dock-t { transform: translate(-50%, calc(-100% - 24px)); pointer-events: none; }
+body.speels.nav-away .dock-l { transform: translate(calc(-100% - 24px), -50%); pointer-events: none; }
+body.speels.nav-away .dock-r { transform: translate(calc(100% + 24px), -50%); pointer-events: none; }
+body.speels.nav-away .dock-br { transform: translateY(calc(100% + 40px)); pointer-events: none; }
 
 /* Ruimte rond de inhoud: de vaste tabbladen en de onderste balk gaan niet over antwoorden heen */
 body.speels main#view { padding: 36px 44px calc(var(--navh) + 36px); }
@@ -387,12 +391,6 @@ body.speels nav.bottomnav, body.speels.nav-away nav.bottomnav, body.speels:not(.
    en een schaduw op de pagina eronder die met de rand meebeweegt. */
 body.speels .page-leaf { position: fixed; z-index: 60; margin: 0 !important; pointer-events: none; overflow: hidden; box-shadow: 0 0 22px rgba(0,0,0,.28); animation: none !important; }
 body.speels .page-leaf.tab-leaf { background: var(--paper); }
-/* Gebogen blad: smalle stroken die elk onder een eigen hoek staan */
-body.speels .curl { position: fixed; z-index: 60; pointer-events: none; perspective: 1400px; }
-body.speels .curl-strip { position: absolute; left: 0; top: 0; overflow: hidden; transform-origin: 0 50%; backface-visibility: visible; }
-body.speels .curl-page { position: absolute; left: 0; top: 0; margin: 0 !important; transform-origin: 0 0; animation: none !important; pointer-events: none; box-shadow: none !important; border-radius: 0; }
-body.speels .curl-page.tab-leaf { background: var(--paper); }
-body.speels .curl-strip .leaf-shade { background: linear-gradient(90deg, rgba(0,0,0,.08), rgba(0,0,0,.6)); }
 body.speels .page-leaf .leaf-shade { position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0;
   background: linear-gradient(90deg, rgba(0,0,0,.05), rgba(0,0,0,.55)); }
 body.speels .turn-cast { position: fixed; z-index: 59; width: 56px; pointer-events: none; opacity: 0;
