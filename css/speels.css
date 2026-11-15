@@ -333,7 +333,7 @@ body.speels.th-donker[data-lang] { --bt1: #6e52b8; --bt2: #2f2857; --bt3: #ff7ad
 /* De drie kleuren-balk onder de banner: vaste vlagvolgorde per taal (los van de knopkleuren) */
 body.speels:not(.cafe)[data-lang="nl"] { --f1: #AE1C28; --f2: #FFFFFF; --f3: #21468B; }
 body.speels:not(.cafe)[data-lang="en"] { --f1: #012169; --f2: #C8102E; --f3: #FFFFFF; }
-body.speels:not(.cafe)[data-lang="de"] { --f1: #DD0000; --f2: #FFCE00; --f3: #FF7A3D; }
+body.speels:not(.cafe)[data-lang="de"] { --f1: #000000; --f2: #DD0000; --f3: #FFCE00; }
 body.speels:not(.cafe)[data-lang="fr"] { --f1: #002395; --f2: #FFFFFF; --f3: #ED2939; }
 body.speels:not(.cafe) header.top::after {
   background: linear-gradient(90deg, var(--f1) 0 33.33%, var(--f2) 33.33% 66.66%, var(--f3) 66.66% 100%);

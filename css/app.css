@@ -150,7 +150,6 @@ body:not(.cafe)[data-lang] h1 { color: var(--accent); }
 body:not(.cafe)[data-lang] h2 { color: var(--accent); }
 body:not(.cafe)[data-lang] .card { border-top: 3px solid var(--c1, var(--accent)); }
 body:not(.cafe)[data-lang="de"] h1, body:not(.cafe)[data-lang="de"] h2 { color: #000000; }
-body:not(.cafe)[data-lang="de"] h1 { border-bottom: 4px solid #FFCE00; padding-bottom: 2px; }
 
 /* ---------- Uitstraling per land (aantrekkelijker, het café-thema blijft apart) ---------- */
 body:not(.cafe)[data-lang] {
