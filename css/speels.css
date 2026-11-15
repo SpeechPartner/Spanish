@@ -310,3 +310,62 @@ body.speels:not(.cafe) nav.bottomnav .btn, body.speels:not(.cafe) nav.bottomnav 
 body.speels:not(.cafe) .dock-l, body.speels:not(.cafe) .dock-r, body.speels:not(.cafe) .dock-l.active, body.speels:not(.cafe) .dock-r.active {
   background-image: linear-gradient(90deg, var(--gl-hi) 0%, var(--gl-mid) 42%, rgba(0,0,0,0) 44%, rgba(0,0,0,0) 60%, var(--gl-lo) 100%);
 }
+
+/* ===== v82: knoppen in het ontwerp (kleurverloop per taal en thema), glans die meebeweegt, paginawissel ===== */
+/* Kleuren per taal (landen) */
+body.speels:not(.cafe)[data-lang="nl"] { --bt1: #E0303F; --bt2: #2F5FC4; --bt3: #FF9CC0; }
+body.speels:not(.cafe)[data-lang="en"] { --bt1: #C8102E; --bt2: #1F3F9E; --bt3: #7FB8FF; }
+body.speels:not(.cafe)[data-lang="de"] { --bt1: #DD0000; --bt2: #FFCE00; --bt3: #FF7A3D; }
+body.speels:not(.cafe)[data-lang="fr"] { --bt1: #ED2939; --bt2: #002395; --bt3: #F4F6FF; }
+/* Kleuren per thema (overschrijven de taalkleuren) */
+body.speels.th-ijs[data-lang] { --bt1: #2a7fd4; --bt2: #8fd3f4; --bt3: #d4f0ff; }
+body.speels.th-jungle[data-lang] { --bt1: #2f7d32; --bt2: #e4572e; --bt3: #f6c744; }
+body.speels.th-ruimte[data-lang] { --bt1: #ff5d8f; --bt2: #6e52b8; --bt3: #2be4ff; }
+body.speels.th-donker[data-lang] { --bt1: #6e52b8; --bt2: #2f2857; --bt3: #ff7ad9; }
+
+/* Vorm en kleur: pil met zacht kleurverloop, witte tekst, zachte schaduw */
+body.speels:not(.cafe)[data-lang] .btn:not(.dock-btn), body.speels:not(.cafe)[data-lang] .speak, body.speels:not(.cafe)[data-lang] nav.bottomnav .btn {
+  position: relative; overflow: hidden; border: none !important; border-radius: 999px !important;
+  color: #fff !important; text-shadow: 0 1px 2px rgba(0,0,0,.28);
+  background: radial-gradient(120% 140% at 12% 18%, var(--bt3) 0%, rgba(255,255,255,0) 55%), radial-gradient(130% 150% at 88% 88%, var(--bt2) 0%, rgba(255,255,255,0) 60%), linear-gradient(115deg, var(--bt1) 0%, var(--bt2) 100%) !important;
+  box-shadow: 0 6px 12px -6px rgba(28,20,16,.55) !important;
+}
+/* Vaste tabbladen en het handvat: zelfde kleuren, hun eigen vorm blijft */
+body.speels:not(.cafe)[data-lang] .dock-btn, body.speels:not(.cafe)[data-lang] #navHandle {
+  overflow: hidden; border: none !important; color: #fff !important; text-shadow: 0 1px 2px rgba(0,0,0,.28);
+  background: radial-gradient(120% 140% at 12% 18%, var(--bt3) 0%, rgba(255,255,255,0) 55%), radial-gradient(130% 150% at 88% 88%, var(--bt2) 0%, rgba(255,255,255,0) 60%), linear-gradient(115deg, var(--bt1) 0%, var(--bt2) 100%) !important;
+  box-shadow: 0 6px 12px -6px rgba(28,20,16,.55) !important;
+}
+body.speels:not(.cafe)[data-lang] .dock-btn.active { box-shadow: 0 6px 12px -6px rgba(28,20,16,.55) !important; }
+/* Passen om de tekst: minder lucht */
+body.speels:not(.cafe)[data-lang] .btn:not(.dock-btn) { padding: 6px 12px; min-height: 34px; line-height: 1.15; }
+body.speels:not(.cafe)[data-lang] .dock-t { height: 34px; padding: 0 12px; }
+body.speels:not(.cafe)[data-lang] .dock-br { height: 36px; padding: 0 12px; }
+body.speels:not(.cafe)[data-lang] nav.bottomnav .btn { padding: 6px 12px; min-height: 36px; }
+
+/* Glans: een lichtvlek die bij aanraking van hoek verspringt */
+body.speels:not(.cafe)[data-lang] .btn:not(.dock-btn)::after, body.speels:not(.cafe)[data-lang] .dock-btn::after, body.speels:not(.cafe)[data-lang] .speak::after,
+body.speels:not(.cafe)[data-lang] nav.bottomnav .btn::after, body.speels:not(.cafe)[data-lang] #navHandle::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 0;
+  background: linear-gradient(160deg, rgba(255,255,255,.5) 0%, rgba(255,255,255,.1) 38%, rgba(255,255,255,0) 50%);
+  background-size: 220% 220%; background-position: 0% 0%;
+  transition: background-position .35s ease;
+}
+body.speels:not(.cafe)[data-lang] .btn:not(.dock-btn):active::after, body.speels:not(.cafe)[data-lang] .dock-btn:active::after, body.speels:not(.cafe)[data-lang] .speak:active::after,
+body.speels:not(.cafe)[data-lang] nav.bottomnav .btn:active::after {
+  background-position: 100% 100%;
+  background-image: linear-gradient(330deg, rgba(255,255,255,.5) 0%, rgba(255,255,255,.1) 38%, rgba(255,255,255,0) 50%);
+}
+
+/* Onderbalk: nooit een achtergrond of rand, ook niet als hij verborgen is */
+body.speels:not(.cafe)[data-lang] nav.bottomnav, body.speels.nav-away:not(.cafe)[data-lang] nav.bottomnav {
+  background: transparent !important; border: none !important; box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+}
+
+/* Paginawissel: de nieuwe pagina draait in als een bladzijde */
+body.speels main#view.page-turn { transform-origin: left center; animation: pageTurn .5s cubic-bezier(.2,.7,.2,1) both; backface-visibility: hidden; }
+@keyframes pageTurn {
+  0% { transform: perspective(1200px) rotateY(-70deg); opacity: .2; }
+  60% { opacity: 1; }
+  100% { transform: perspective(1200px) rotateY(0deg); opacity: 1; }
+}
