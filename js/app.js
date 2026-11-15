@@ -397,6 +397,7 @@
     nav.innerHTML = "";
     dock.innerHTML = "";
     TABS.forEach(function (t) {
+      if (t[0] === "info") return;   // Info staat niet meer onderaan: die opent u via het ?-knopje in de banner
       var where = DOCK_POS[t[0]] && dockOk ? dock : nav;
       var cls = DOCK_POS[t[0]] && dockOk ? "dock-btn " + DOCK_POS[t[0]] + (S.tab === t[0] ? " active" : "") : (S.tab === t[0] ? "active small" : "small");
       var b = btn(T(t[1]), cls, function () { go(t[0]); });
@@ -408,7 +409,7 @@
     var h = document.getElementById("navHandle");
     if (!h) { h = document.createElement("button"); h.id = "navHandle"; h.type = "button"; h.setAttribute("aria-label", "Menu tonen"); document.body.appendChild(h); }
     var cur = TABS.filter(function (t) { return t[0] === S.tab; })[0];
-    h.textContent = cur ? T(cur[1]) : "";
+    h.textContent = S.tab === "info" ? T("Info") : (cur ? T(cur[1]) : "");
     h.classList.add("active");
   }
 
@@ -1467,7 +1468,7 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "1.10";
+  var APP_VERSION = "1.11";
   // Versies waarvoor gebruikers de app opnieuw op hun beginscherm moeten zetten (oude icoon weg, nieuwe erop).
   // Bij zo'n update verschijnt eenmalig een melding met uitleg.
   var REINSTALL_VERSIONS = ["1.8"];
@@ -2709,6 +2710,8 @@
       p.setAttribute("aria-hidden", open ? "false" : "true");
     }
     document.getElementById("setBtn").onclick = toggleSettings;
+    // Het ?-knopje in de banner opent Info; nog eens tikken brengt je terug naar de vorige pagina
+    document.getElementById("infoBtn").onclick = function () { go("info"); };
     // Tik op de titel: terug naar het begin (Zinnen, met de hoofdcategorie open).
     var ttl = document.querySelector("header.top h1");
     if (ttl) {
