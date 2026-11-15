@@ -1460,7 +1460,10 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "96";
+  var APP_VERSION = "97";
+  // Versies waarvoor gebruikers de app opnieuw op hun beginscherm moeten zetten (oude icoon weg, nieuwe erop).
+  // Bij zo'n update verschijnt eenmalig een melding met uitleg.
+  var REINSTALL_VERSIONS = ["97"];
   var WH_LOG = [];
   function whLog(msg) {
     var d = new Date();
@@ -2751,6 +2754,27 @@
     };
 
     render();
+    showReinstallNotice();
+  }
+
+  // Eenmalige melding bij een update waarvoor de app opnieuw op het beginscherm moet
+  function showReinstallNotice() {
+    if (REINSTALL_VERSIONS.indexOf(APP_VERSION) < 0) return;
+    var key = "reinstall-" + APP_VERSION;
+    if (store.get(key, false)) return;
+    var box = el("div", "card reinstall-note");
+    box.setAttribute("role", "dialog");
+    box.appendChild(el("div", "sec-title", L(m("Nieuwe versie: zet de app opnieuw op je beginscherm", "New version: put the app on your home screen again", "Neue Version: lege die App erneut auf deinen Startbildschirm", "Nouvelle version : remets l'app sur ton écran d'accueil"))));
+    box.appendChild(el("div", "", L(m(
+      "Verwijder het oude icoon: houd het ingedrukt en kies 'App verwijderen'. Open daarna deze pagina in Safari, tik op Deel en kies 'Zet op beginscherm'. Zo heb je de nieuwste versie.",
+      "Remove the old icon: press and hold it and choose 'Remove App'. Then open this page in Safari, tap Share and choose 'Add to Home Screen'. That gives you the latest version.",
+      "Entferne das alte Symbol: halte es gedrückt und wähle 'App entfernen'. Öffne dann diese Seite in Safari, tippe auf Teilen und wähle 'Zum Home-Bildschirm'. So hast du die neueste Version.",
+      "Supprime l'ancienne icône : maintiens-la appuyée et choisis « Supprimer l'app ». Ouvre ensuite cette page dans Safari, touche Partager et choisis « Sur l'écran d'accueil ». Tu auras ainsi la dernière version."))));
+    var ok = el("button", "btn primary", L(m("Begrepen", "Got it", "Verstanden", "Compris")));
+    ok.type = "button";
+    ok.onclick = function () { store.set(key, true); box.parentNode && box.parentNode.removeChild(box); };
+    box.appendChild(ok);
+    document.body.appendChild(box);
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", setup);
