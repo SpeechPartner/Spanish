@@ -1467,10 +1467,10 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "1.8";
+  var APP_VERSION = "1.10";
   // Versies waarvoor gebruikers de app opnieuw op hun beginscherm moeten zetten (oude icoon weg, nieuwe erop).
   // Bij zo'n update verschijnt eenmalig een melding met uitleg.
-  var REINSTALL_VERSIONS = ["97", "1.6", "1.8"];
+  var REINSTALL_VERSIONS = ["1.8"];
   var WH_LOG = [];
   function whLog(msg) {
     var d = new Date();
@@ -2765,10 +2765,28 @@
   }
 
   // Eenmalige melding bij een update waarvoor de app opnieuw op het beginscherm moet
+  // Versie waarin de app opnieuw op het beginscherm moet (icoon of naam veranderd)
+  function verNum(v) { var p = String(v).split("."); return parseInt(p[0], 10) * 1000 + (parseInt(p[1] || "0", 10)); }
+  // Een kopie die net is toegevoegd heeft nog geen eigen gegevens: die is al de nieuwste.
+  // Onthoud daarom bij de eerste start de versie waarmee de kopie is toegevoegd.
+  function isFreshCopy() {
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i);
+      if (k.indexOf("gg_") !== 0) continue;
+      if (k === "gg_bezocht_web" || k.indexOf("gg_nieuw-") === 0 || k === "gg_toegevoegd") continue;
+      return false;
+    }
+    return true;
+  }
+  // Melding alleen voor kopieën die ouder zijn dan een versie waarvoor opnieuw toevoegen nodig is; eenmalig per versie
   function showReinstallNotice() {
-    if (REINSTALL_VERSIONS.indexOf(APP_VERSION) < 0) return;
-    var key = "reinstall-" + APP_VERSION;
-    if (store.get(key, false)) return;
+    var added = store.get("toegevoegd", null);
+    if (added === null) {
+      if (!isFreshCopy()) added = "0.0";            // oude kopie zonder vastgelegde versie
+      else { store.set("toegevoegd", APP_VERSION); return; }
+    }
+    var pending = REINSTALL_VERSIONS.filter(function (v) { return verNum(v) > verNum(added) && !store.get("nieuw-" + v, false); });
+    if (!pending.length) return;
     var box = el("div", "card reinstall-note");
     box.setAttribute("role", "dialog");
     box.appendChild(el("div", "sec-title", L(m("Nieuwe versie: zet de app opnieuw op je beginscherm", "New version: put the app on your home screen again", "Neue Version: lege die App erneut auf deinen Startbildschirm", "Nouvelle version : remets l'app sur ton écran d'accueil"))));
@@ -2779,7 +2797,7 @@
       "Supprime l'ancienne icône : maintiens-la appuyée et choisis « Supprimer l'app ». Ouvre ensuite cette page dans Safari, touche Partager et choisis « Sur l'écran d'accueil ». Tu auras ainsi la dernière version."))));
     var ok = el("button", "btn primary", L(m("Begrepen", "Got it", "Verstanden", "Compris")));
     ok.type = "button";
-    ok.onclick = function () { store.set(key, true); box.parentNode && box.parentNode.removeChild(box); };
+    ok.onclick = function () { pending.forEach(function (v) { store.set("nieuw-" + v, true); }); box.parentNode && box.parentNode.removeChild(box); };
     box.appendChild(ok);
     document.body.appendChild(box);
   }
