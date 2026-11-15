@@ -206,3 +206,6 @@ h1 { font-size: 17px; }
 a.btn { text-decoration: none; display: inline-flex; align-items: center; }
 
 .diag { white-space: pre-wrap; word-break: break-word; font-size: 12px; line-height: 1.4; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px; margin: 8px 0; }
+
+/* Het ?-knopje krimpt niet kleiner dan het instellingenwiel */
+#infoBtn, #setBtn { flex-shrink: 0; }
