@@ -69,15 +69,14 @@ body.speels:not(.cafe) .transout, body.speels:not(.cafe) .settings.open, body.sp
 body.speels:not(.cafe) .note { background: var(--t2); color: var(--ink-k); border: 3px solid var(--ink-k); border-radius: 12px; font-weight: 700; }
 
 /* Onderste navigatie: losse blokjes op een achtergrond in de landskleur */
-body.speels:not(.cafe) nav.bottomnav { background: var(--paper) !important; border-top: 4px solid var(--ink-k) !important; box-shadow: none !important; }
+body.speels:not(.cafe) nav.bottomnav { background: transparent !important; border-top: none !important; box-shadow: none !important; }
 body.speels:not(.cafe) nav.bottomnav .btn { border-radius: 12px; font-size: 14px; }
 body.speels:not(.cafe) nav.bottomnav .btn.active { transform: none; }
 
 /* ---------- App-gedrag: onderste balk verdwijnt en komt terug met een veeg omhoog ---------- */
-body.speels nav.bottomnav { transition: background-color .3s ease, border-color .3s ease; }
 body.speels nav.bottomnav .btn { transition: transform .32s cubic-bezier(.2,.9,.3,1), opacity .25s ease, box-shadow .06s ease, filter .06s ease; }
 /* Veeg omhoog op het handvat: de balk zelf blijft weg, alleen de knoppen schuiven omhoog */
-body.speels.nav-away nav.bottomnav { background: transparent !important; border-top-color: transparent !important; }
+body.speels.nav-away nav.bottomnav { background: var(--paper) !important; border-top: none !important; }
 body.speels.nav-away nav.bottomnav .btn, body.speels.nav-away nav.bottomnav .btn.active, body.speels.nav-away nav.bottomnav .btn.primary { transform: translateY(calc(100% + 40px)); opacity: 0; pointer-events: none; }
 body.speels.nav-away { padding-bottom: 28px; }
 #navHandle {
@@ -179,7 +178,6 @@ body.speels.th-donker[data-lang] .speak, body.speels.th-nacht[data-lang] .speak 
 body.speels.th-donker[data-lang] .dock-btn, body.speels.th-nacht[data-lang] .dock-btn { background: #1d1838; color: #cfc6ee; border: 1px solid #352d5c; box-shadow: 0 1px 6px rgba(0,0,0,.4); }
 body.speels.th-donker[data-lang] .dock-btn.active, body.speels.th-nacht[data-lang] .dock-btn.active { background: #2d2656; color: #f1ecff; border-color: #7f67d6; }
 body.speels.th-donker[data-lang] .iconbtn, body.speels.th-nacht[data-lang] .iconbtn { background: var(--card); border: 1px solid var(--line); box-shadow: none; color: #d8d0f0; }
-body.speels.th-donker[data-lang] nav.bottomnav, body.speels.th-nacht[data-lang] nav.bottomnav { background: var(--head) !important; border-top: 1px solid var(--line) !important; }
 body.speels.th-donker[data-lang] .transbar input, body.speels.th-donker[data-lang] textarea.big-input, body.speels.th-donker[data-lang] .teach-input,
 body.speels.th-nacht[data-lang] .transbar input, body.speels.th-nacht[data-lang] textarea.big-input, body.speels.th-nacht[data-lang] .teach-input {
   background: #120f24; border: 1px solid #352d5c; box-shadow: none; color: #e4def3;
@@ -298,10 +296,10 @@ body.speels ol.help-steps li { margin: 4px 0; line-height: 1.45; }
 /* Glans van knoppen en handvat: per thema een eigen licht (hi) en schaduw (lo) */
 :root { --gl-hi: #ffffff; --gl-mid: rgba(255,255,255,.4); --gl-lo: rgba(28,20,16,.16); }
 /* Standaard: het licht heeft de kleur van de taal (NL roze, EN blauw, DE geel, FR blauw) */
-body.speels:not(.cafe)[data-lang] { --gl-hi: color-mix(in srgb, var(--hi) 85%, transparent); --gl-mid: color-mix(in srgb, var(--t2) 45%, transparent); --gl-lo: rgba(28,20,16,.16); }
-body.speels.th-ijs[data-lang] { --gl-hi: color-mix(in srgb, var(--hi) 85%, transparent); --gl-mid: rgba(255,255,255,.45); --gl-lo: rgba(13,43,69,.2); }
-body.speels.th-jungle[data-lang] { --gl-hi: color-mix(in srgb, var(--hi) 85%, transparent); --gl-mid: rgba(255,251,232,.45); --gl-lo: rgba(23,58,31,.22); }
-body.speels.th-ruimte[data-lang], body.speels.th-donker[data-lang] { --gl-hi: rgba(200,190,255,.6); --gl-mid: rgba(200,190,255,.14); --gl-lo: rgba(0,0,0,.4); }
+body.speels:not(.cafe)[data-lang] { --gl-hi: color-mix(in srgb, var(--hi) 60%, transparent); --gl-mid: color-mix(in srgb, var(--t2) 25%, transparent); --gl-lo: rgba(28,20,16,.1); }
+body.speels.th-ijs[data-lang] { --gl-hi: color-mix(in srgb, var(--hi) 60%, transparent); --gl-mid: rgba(255,255,255,.25); --gl-lo: rgba(13,43,69,.12); }
+body.speels.th-jungle[data-lang] { --gl-hi: color-mix(in srgb, var(--hi) 60%, transparent); --gl-mid: rgba(255,251,232,.25); --gl-lo: rgba(23,58,31,.12); }
+body.speels.th-ruimte[data-lang], body.speels.th-donker[data-lang] { --gl-hi: rgba(200,190,255,.35); --gl-mid: rgba(200,190,255,.08); --gl-lo: rgba(0,0,0,.25); }
 body.speels.th-donker[data-lang] .dock-btn, body.speels.th-ruimte[data-lang] .dock-btn { box-shadow: var(--hard); }
 
 body.speels:not(.cafe) .dock-btn, body.speels:not(.cafe) .dock-btn.active, body.speels #navHandle,
