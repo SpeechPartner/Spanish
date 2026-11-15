@@ -295,64 +295,102 @@
   // Zinnen en Gesprek staan niet in de veeg-volgorde: die bereik je met een tik
   var SWIPE_TABS = ["onderwerpen", "vastlopen", "bouwen", "reageren", "leren", "regels", "uitspraak", "info"];
   function tabIdx(t) { return TAB_ORDER.indexOf(t); }
-  // Het blad scharniert: dir > 0 aan de rechterrand (het slaat van links naar rechts om), dir < 0 aan de linkerrand
+  // Een momentopname van de pagina zoals die nu op het scherm staat
   function snapshot(src) {
     return { el: src.cloneNode(true), rect: src.getBoundingClientRect() };
   }
+  // Het blad buigt: het is opgedeeld in smalle stroken. Die staan elk onder een eigen hoek; bij het scharnier
+  // blijft het blad vlakker en aan de vrije rand krult het het meest, zoals echt papier.
+  var CURL_N = 10, CURL_BEND = 0.5;
   function flipSetup(snap, dir) {
-    var r = snap.rect, leaf = snap.el;
-    leaf.removeAttribute("id");
-    leaf.classList.remove("page-in");
-    leaf.classList.add("page-leaf");
-    if (leaf.tagName === "MAIN") leaf.classList.add("tab-leaf");
-    leaf.setAttribute("aria-hidden", "true");
-    leaf.style.left = r.left + "px"; leaf.style.top = r.top + "px";
-    leaf.style.width = r.width + "px"; leaf.style.height = r.height + "px";
-    leaf.style.transformOrigin = dir > 0 ? "100% 50%" : "0% 50%";
-    var shade = document.createElement("div");
-    shade.className = "leaf-shade";
-    leaf.appendChild(shade);
+    var r = snap.rect, W = r.width, H = r.height;
+    var stage = document.createElement("div");
+    stage.className = "curl";
+    stage.style.left = r.left + "px"; stage.style.top = r.top + "px";
+    stage.style.width = W + "px"; stage.style.height = H + "px";
+    var ds = W / CURL_N, strips = [];
+    for (var i = 0; i < CURL_N; i++) {
+      var st = document.createElement("div");
+      st.className = "curl-strip";
+      st.style.width = ds + "px"; st.style.height = H + "px";
+      var inner = snap.el.cloneNode(true);
+      inner.removeAttribute("id");
+      inner.classList.remove("page-in", "leaf-card");
+      inner.classList.add("curl-page");
+      if (inner.tagName === "MAIN") inner.classList.add("tab-leaf");
+      inner.setAttribute("aria-hidden", "true");
+      inner.style.width = W + "px"; inner.style.height = H + "px";
+      // vooruit (scharnier rechts): de pagina is gespiegeld; terug (scharnier links): gewoon
+      inner.style.transform = dir > 0 ? "translateX(" + ((i + 1) * ds) + "px) scaleX(-1)" : "translateX(" + (-i * ds) + "px)";
+      st.appendChild(inner);
+      var sh = document.createElement("div");
+      sh.className = "leaf-shade";
+      st.appendChild(sh);
+      stage.appendChild(st);
+      strips.push({ el: st, shade: sh, i: i });
+    }
     var cast = document.createElement("div");
     cast.className = "turn-cast";
-    cast.style.top = r.top + "px"; cast.style.height = r.height + "px";
+    cast.style.top = r.top + "px"; cast.style.height = H + "px";
+    // Het gebogen blad blijft binnen het gebied tussen de koptekst (incl. Vastlopen) en de knoppen, met een marge
+    var hb = 0, hdr = document.querySelector("header.top");
+    if (hdr) hb = hdr.getBoundingClientRect().bottom;
+    var dtop = document.querySelector(".dock-t");
+    if (dtop && dtop.offsetParent !== null) hb = Math.max(hb, dtop.getBoundingClientRect().bottom);
+    var nb = window.innerHeight, nav = document.getElementById("nav");
+    if (nav) nb = Math.min(nb, nav.getBoundingClientRect().top);
+    var dbr = document.querySelector(".dock-br");
+    if (dbr && dbr.offsetParent !== null) nb = Math.min(nb, dbr.getBoundingClientRect().top);
+    var clipT = Math.max(r.top, hb + 8), clipB = Math.min(r.bottom, nb - 8);
+    stage.style.clipPath = "inset(" + Math.max(0, clipT - r.top) + "px 0px " + Math.max(0, r.bottom - clipB) + "px 0px)";
+    document.body.appendChild(stage);
     document.body.appendChild(cast);
-    document.body.appendChild(leaf);
-    return { leaf: leaf, shade: shade, cast: cast, dir: dir, W: r.width, L: r.left, R: r.right, p: 0, revert: null };
+    return { stage: stage, cast: cast, strips: strips, dir: dir, W: W, L: r.left, R: r.right, H: H, ds: ds, p: 0, revert: null };
   }
   // p = 0: het blad ligt nog op de oude pagina; p = 1: het blad ligt op de andere kant
-  function setTurn(t, p, ms) {
+  function setTurn(t, p) {
     t.p = p;
-    var deg = (t.dir > 0 ? -180 : 180) * p;
-    var rad = Math.abs(deg) * Math.PI / 180;
-    var edge = t.dir > 0 ? t.R - t.W * Math.cos(rad) : t.L + t.W * Math.cos(rad);
-    var s = Math.sin(p * Math.PI);
-    var tm = ms ? " " + ms + "ms cubic-bezier(.3,.6,.2,1)" : " 0ms";
-    t.leaf.style.transition = "transform" + tm;
-    t.leaf.style.transform = "perspective(1400px) rotateY(" + deg.toFixed(2) + "deg)";
-    t.shade.style.transition = "opacity" + tm;
-    t.shade.style.opacity = (s * 0.5).toFixed(3);
-    t.cast.style.transition = "left" + tm + ", opacity" + tm;
-    t.cast.style.left = (edge - 28) + "px";
-    t.cast.style.opacity = (s * 0.8).toFixed(3);
+    var n = t.strips.length, fwd = t.dir > 0;
+    var X = fwd ? t.W : 0, Z = 0;   // het scharnier: rechts bij vooruit, links bij terug
+    // van het scharnier naar de vrije rand: elke strook krijgt zijn hoek
+    for (var j = 0; j < n; j++) {
+      var s = t.strips[fwd ? n - 1 - j : j];
+      var from = (j + 0.5) / n;      // 0 bij het scharnier, 1 bij de vrije rand
+      var b = Math.max(0, Math.min(1, p * (1 + CURL_BEND) - CURL_BEND * (1 - from))) * 180;
+      var rad = b * Math.PI / 180;
+      var rot = fwd ? 180 + b : -b;
+      s.el.style.transform = "translate3d(" + X.toFixed(2) + "px," + (-Z).toFixed(2) + "px,0) rotateY(" + rot.toFixed(2) + "deg)";
+      s.shade.style.opacity = (Math.sin(rad) * 0.5).toFixed(3);
+      X += (fwd ? -1 : 1) * t.ds * Math.cos(rad);
+      Z += t.ds * Math.sin(rad);
+    }
+    t.cast.style.left = (t.L + X - 28) + "px";
+    t.cast.style.opacity = (Math.sin(p * Math.PI) * 0.8).toFixed(3);
+  }
+  // Tween van de huidige stand naar het doel
+  function tweenTurn(t, to, ms, done) {
+    var from = t.p, t0 = performance.now();
+    function step(now) {
+      var k = Math.min(1, (now - t0) / ms);
+      var e = 1 - Math.pow(1 - k, 3);
+      setTurn(t, from + (to - from) * e);
+      if (k < 1) requestAnimationFrame(step); else done();
+    }
+    requestAnimationFrame(step);
   }
   // Maakt het blad af: commit = de nieuwe pagina blijft; anders keert het blad terug naar de oude pagina
   function endTurn(t, commit) {
-    var ms = 360;
-    setTurn(t, commit ? 1 : 0, ms);
-    var done = false;
-    setTimeout(function () {
-      if (done) return;
-      done = true;
-      [t.leaf, t.cast].forEach(function (x) { if (x.parentNode) x.parentNode.removeChild(x); });
+    tweenTurn(t, commit ? 1 : 0, 380, function () {
+      [t.stage, t.cast].forEach(function (x) { if (x.parentNode) x.parentNode.removeChild(x); });
       if (!commit && t.revert) t.revert();
-    }, ms + 60);
+    });
   }
   // Een knop of stip: het blad slaat direct om
   function flipTo(src, dir, apply) {
     var snap = snapshot(src);
     apply();
     var t = flipSetup(snap, dir);
-    setTurn(t, 0, 0);
+    setTurn(t, 0);
     requestAnimationFrame(function () { endTurn(t, true); });
   }
   // Doel van een veeg: het tabblad (kind "tab") of het volgende blad van het boekje (kind "leaf")
@@ -375,7 +413,7 @@
     var prev = S.tab;
     return {
       src: document.getElementById("view"),
-      apply: function () { S.tab = nt; S.build = null; render(); },
+      apply: function () { S.tab = nt; S.build = null; render(); window.scrollTo(0, 0); },
       revert: function () { S.tab = prev; S.build = null; render(); }
     };
   }
@@ -419,7 +457,7 @@
     if (sw.mode === "turn" && sw.t) {
       if (e.cancelable) e.preventDefault();
       var along = Math.max(0, sw.dir * dx);
-      setTurn(sw.t, Math.min(1, along / (sw.t.W * 0.85)), 0);
+      setTurn(sw.t, Math.min(1, along / (sw.t.W * 0.85)));
     }
   }
   function onTouchEnd(e) {
@@ -1527,7 +1565,7 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "88";
+  var APP_VERSION = "89";
   var WH_LOG = [];
   function whLog(msg) {
     var d = new Date();
