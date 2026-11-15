@@ -72,16 +72,13 @@ body.speels:not(.cafe) .note { background: var(--t2); color: var(--ink-k); borde
 body.speels:not(.cafe) nav.bottomnav { background: var(--paper) !important; border-top: 4px solid var(--ink-k) !important; box-shadow: none !important; }
 body.speels:not(.cafe) nav.bottomnav .btn { border-radius: 12px; font-size: 14px; }
 body.speels:not(.cafe) nav.bottomnav .btn.active { transform: none; }
-/* Glanzend, weerspiegelend effect op de knoppen aan de onderkant */
-body.speels:not(.cafe) nav.bottomnav .btn,
-body.speels:not(.cafe) nav.bottomnav .btn.active,
-body.speels:not(.cafe) nav.bottomnav .btn.primary {
-  background-image: linear-gradient(180deg, rgba(255,255,255,.8) 0%, rgba(255,255,255,.22) 46%, rgba(255,255,255,0) 50%, rgba(28,20,16,.08) 100%);
-}
 
 /* ---------- App-gedrag: onderste balk verdwijnt en komt terug met een veeg omhoog ---------- */
-body.speels nav.bottomnav { transition: transform .32s cubic-bezier(.2,.9,.3,1); }
-body.speels.nav-away nav.bottomnav { transform: translateY(calc(100% + 30px)); }
+body.speels nav.bottomnav { transition: background-color .3s ease, border-color .3s ease; }
+body.speels nav.bottomnav .btn { transition: transform .32s cubic-bezier(.2,.9,.3,1), opacity .25s ease, box-shadow .06s ease, filter .06s ease; }
+/* Veeg omhoog op het handvat: de balk zelf blijft weg, alleen de knoppen schuiven omhoog */
+body.speels.nav-away nav.bottomnav { background: transparent !important; border-top-color: transparent !important; }
+body.speels.nav-away nav.bottomnav .btn, body.speels.nav-away nav.bottomnav .btn.active, body.speels.nav-away nav.bottomnav .btn.primary { transform: translateY(calc(100% + 40px)); opacity: 0; pointer-events: none; }
 body.speels.nav-away { padding-bottom: 28px; }
 #navHandle {
   position: fixed; left: 50%; bottom: 8px; transform: translateX(-50%); z-index: 7;
@@ -237,7 +234,7 @@ body.speels.th-nacht[data-lang] header.top::after {
 :root { --navh: 66px; --hh: 200px; }
 #dock { position: fixed; left: 0; top: 0; width: 0; height: 0; z-index: 8; }
 body.speels .dock-btn {
-  position: fixed; z-index: 8; margin: 0; padding: 0 10px;
+  position: fixed; z-index: 8; margin: 0; padding: 0 10px; text-transform: uppercase;
   border: 3px solid var(--ink-k); background: var(--card); color: var(--ink-k);
   font-weight: 900; font-size: 13px; line-height: 1; cursor: pointer;
   box-shadow: var(--hard); transition: box-shadow .06s ease, filter .06s ease;
@@ -247,8 +244,8 @@ body.speels .dock-btn.active { background: var(--s); color: var(--sInk); }
 
 /* Links en rechts: smalle verticale lipjes tegen de rand, halverwege de hoogte */
 body.speels .dock-l, body.speels .dock-r {
-  top: calc(50% - 60px); width: 34px; height: 120px; padding: 10px 0;
-  writing-mode: vertical-rl; text-align: center;
+  top: calc(50% - 95px); width: 34px; height: 190px; padding: 10px 0;
+  writing-mode: vertical-rl; text-orientation: upright; text-align: center; line-height: 1.05; letter-spacing: 0;
 }
 body.speels .dock-l { left: 0; border-left: none; border-radius: 0 14px 14px 0; }
 body.speels .dock-l:active { filter: brightness(.94); }
@@ -268,10 +265,6 @@ body.speels .dock-br {
   transition: bottom .32s cubic-bezier(.2,.9,.3,1), box-shadow .06s ease, filter .06s ease;
 }
 body.speels.nav-away .dock-br { bottom: 14px; }
-/* Glanzend effect op Info (rechtsonder), net als de onderste balk */
-body.speels .dock-br {
-  background-image: linear-gradient(180deg, rgba(255,255,255,.8) 0%, rgba(255,255,255,.22) 46%, rgba(255,255,255,0) 50%, rgba(28,20,16,.08) 100%);
-}
 
 /* Ruimte rond de inhoud: de vaste tabbladen en de onderste balk gaan niet over antwoorden heen */
 body.speels main#view { padding: 36px 44px calc(var(--navh) + 36px); }
@@ -301,3 +294,21 @@ body.speels details.help-sec > summary::before { content: "▸ "; }
 body.speels details.help-sec[open] > summary::before { content: "▾ "; }
 body.speels ol.help-steps { margin: 6px 0 0 18px; padding: 0; }
 body.speels ol.help-steps li { margin: 4px 0; line-height: 1.45; }
+
+/* Glans van knoppen en handvat: per thema een eigen licht (hi) en schaduw (lo) */
+:root { --gl-hi: #ffffff; --gl-mid: rgba(255,255,255,.4); --gl-lo: rgba(28,20,16,.16); }
+/* Standaard: het licht heeft de kleur van de taal (NL roze, EN blauw, DE geel, FR blauw) */
+body.speels:not(.cafe)[data-lang] { --gl-hi: color-mix(in srgb, var(--hi) 85%, transparent); --gl-mid: color-mix(in srgb, var(--t2) 45%, transparent); --gl-lo: rgba(28,20,16,.16); }
+body.speels.th-ijs[data-lang] { --gl-hi: color-mix(in srgb, var(--hi) 85%, transparent); --gl-mid: rgba(255,255,255,.45); --gl-lo: rgba(13,43,69,.2); }
+body.speels.th-jungle[data-lang] { --gl-hi: color-mix(in srgb, var(--hi) 85%, transparent); --gl-mid: rgba(255,251,232,.45); --gl-lo: rgba(23,58,31,.22); }
+body.speels.th-ruimte[data-lang], body.speels.th-donker[data-lang] { --gl-hi: rgba(200,190,255,.6); --gl-mid: rgba(200,190,255,.14); --gl-lo: rgba(0,0,0,.4); }
+body.speels.th-donker[data-lang] .dock-btn, body.speels.th-ruimte[data-lang] .dock-btn { box-shadow: var(--hard); }
+
+body.speels:not(.cafe) .dock-btn, body.speels:not(.cafe) .dock-btn.active, body.speels #navHandle,
+body.speels:not(.cafe) nav.bottomnav .btn, body.speels:not(.cafe) nav.bottomnav .btn.active, body.speels:not(.cafe) nav.bottomnav .btn.primary {
+  background-image: linear-gradient(180deg, var(--gl-hi) 0%, var(--gl-mid) 42%, rgba(0,0,0,0) 44%, rgba(0,0,0,0) 60%, var(--gl-lo) 100%);
+}
+/* Vertikale tabbladen: het licht van links naar rechts */
+body.speels:not(.cafe) .dock-l, body.speels:not(.cafe) .dock-r, body.speels:not(.cafe) .dock-l.active, body.speels:not(.cafe) .dock-r.active {
+  background-image: linear-gradient(90deg, var(--gl-hi) 0%, var(--gl-mid) 42%, rgba(0,0,0,0) 44%, rgba(0,0,0,0) 60%, var(--gl-lo) 100%);
+}
