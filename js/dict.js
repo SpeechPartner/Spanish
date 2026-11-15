@@ -37,6 +37,7 @@ if (typeof DICT_EXTRA !== "undefined") {
     if (DICT_EXTRA._more2 && DICT_EXTRA._more2[l]) DICT_RAW[l] += "|" + DICT_EXTRA._more2[l];
     if (DICT_EXTRA._adj && DICT_EXTRA._adj[l]) DICT_RAW[l] += "|" + DICT_EXTRA._adj[l];
     if (typeof DICT_WIKI !== "undefined" && DICT_WIKI[l]) DICT_RAW[l] += "|" + DICT_WIKI[l];
+    if (typeof DICT_PDF !== "undefined" && DICT_PDF[l]) DICT_RAW[l] += "|" + DICT_PDF[l];
   });
 }
 var DICTS = {}, PHRASES_BY_LANG = {}, REVS = {};
