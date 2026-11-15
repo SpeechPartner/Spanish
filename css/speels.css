@@ -52,11 +52,11 @@ body.speels:not(.cafe) .btn {
   box-shadow: var(--hard); font-weight: 900;
   transition: transform .06s ease, box-shadow .06s ease;
 }
-body.speels:not(.cafe) .btn:active { transform: translate(4px, 4px); box-shadow: 0 0 0 var(--ink-k); }
+body.speels:not(.cafe) .btn:active { transform: none; box-shadow: var(--hard); filter: brightness(.94); }
 body.speels:not(.cafe) .btn.primary { background: var(--p); color: #fff; }
 body.speels:not(.cafe) .btn.active { background: var(--s); color: var(--sInk); }
 body.speels:not(.cafe) .speak { border: 3px solid var(--ink-k); border-radius: 12px; box-shadow: var(--hard); background: var(--s); color: var(--sInk); width: 46px; height: 46px; }
-body.speels:not(.cafe) .speak:active { transform: translate(3px, 3px); box-shadow: none; }
+body.speels:not(.cafe) .speak:active { transform: none; box-shadow: var(--hard); filter: brightness(.94); }
 body.speels:not(.cafe) .chips .btn { border-radius: 999px; }
 body.speels:not(.cafe) .btn.mic.rec { background: var(--p); color: #fff; }
 
@@ -71,7 +71,13 @@ body.speels:not(.cafe) .note { background: var(--t2); color: var(--ink-k); borde
 /* Onderste navigatie: losse blokjes op een achtergrond in de landskleur */
 body.speels:not(.cafe) nav.bottomnav { background: var(--paper) !important; border-top: 4px solid var(--ink-k) !important; box-shadow: none !important; }
 body.speels:not(.cafe) nav.bottomnav .btn { border-radius: 12px; font-size: 14px; }
-body.speels:not(.cafe) nav.bottomnav .btn.active { transform: translateY(-3px); }
+body.speels:not(.cafe) nav.bottomnav .btn.active { transform: none; }
+/* Glanzend, weerspiegelend effect op de knoppen aan de onderkant */
+body.speels:not(.cafe) nav.bottomnav .btn,
+body.speels:not(.cafe) nav.bottomnav .btn.active,
+body.speels:not(.cafe) nav.bottomnav .btn.primary {
+  background-image: linear-gradient(180deg, rgba(255,255,255,.8) 0%, rgba(255,255,255,.22) 46%, rgba(255,255,255,0) 50%, rgba(28,20,16,.08) 100%);
+}
 
 /* ---------- App-gedrag: onderste balk verdwijnt en komt terug met een veeg omhoog ---------- */
 body.speels nav.bottomnav { transition: transform .32s cubic-bezier(.2,.9,.3,1); }
@@ -80,7 +86,7 @@ body.speels.nav-away { padding-bottom: 28px; }
 #navHandle {
   position: fixed; left: 50%; bottom: 8px; transform: translateX(-50%); z-index: 7;
   width: 84px; height: 26px; border-radius: 999px; border: 3px solid var(--ink-k); background: var(--card);
-  box-shadow: 3px 3px 0 var(--ink-k); padding: 0; cursor: pointer;
+  box-shadow: var(--hard); padding: 0; cursor: pointer;
   opacity: 0; pointer-events: none; transition: opacity .25s ease;
 }
 #navHandle::before { content: ""; display: block; width: 36px; height: 5px; margin: 7px auto 0; border-radius: 3px; background: var(--ink-k); }
@@ -234,9 +240,9 @@ body.speels .dock-btn {
   position: fixed; z-index: 8; margin: 0; padding: 0 10px;
   border: 3px solid var(--ink-k); background: var(--card); color: var(--ink-k);
   font-weight: 900; font-size: 13px; line-height: 1; cursor: pointer;
-  box-shadow: 3px 3px 0 var(--ink-k); transition: transform .06s ease, box-shadow .06s ease;
+  box-shadow: var(--hard); transition: box-shadow .06s ease, filter .06s ease;
 }
-body.speels .dock-btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink-k); }
+body.speels .dock-btn:active { transform: none; box-shadow: var(--hard); filter: brightness(.94); }
 body.speels .dock-btn.active { background: var(--s); color: var(--sInk); }
 
 /* Links en rechts: smalle verticale lipjes tegen de rand, halverwege de hoogte */
@@ -244,8 +250,8 @@ body.speels .dock-l, body.speels .dock-r {
   top: calc(50% - 60px); width: 34px; height: 120px; padding: 10px 0;
   writing-mode: vertical-rl; text-align: center;
 }
-body.speels .dock-l { left: 0; border-left: none; border-radius: 0 14px 14px 0; transform: rotate(180deg); }
-body.speels .dock-l:active { transform: rotate(180deg) translate(2px, 2px); }
+body.speels .dock-l { left: 0; border-left: none; border-radius: 0 14px 14px 0; }
+body.speels .dock-l:active { filter: brightness(.94); }
 body.speels .dock-r { right: 0; border-right: none; border-radius: 14px 0 0 14px; }
 
 /* Boven: lipje dat aan de onderrand van de koptekst hangt; verdwijnt als de instellingen open staan */
@@ -253,15 +259,19 @@ body.speels .dock-t {
   top: calc(var(--hh) - 6px); left: 50%; transform: translateX(-50%);
   height: 30px; padding: 0 16px; border-top: none; border-radius: 0 0 14px 14px;
 }
-body.speels .dock-t:active { transform: translate(calc(-50% + 2px), 2px); }
+body.speels .dock-t:active { transform: translateX(-50%); box-shadow: var(--hard); filter: brightness(.94); }
 body:has(#settings.open) .dock-t { display: none; }
 
 /* Rechtsonder: boven de onderste balk; zakt naar beneden als de balk verborgen is */
 body.speels .dock-br {
   right: 12px; bottom: calc(var(--navh) + 10px); height: 40px; padding: 0 16px; border-radius: 999px;
-  transition: bottom .32s cubic-bezier(.2,.9,.3,1), transform .06s ease, box-shadow .06s ease;
+  transition: bottom .32s cubic-bezier(.2,.9,.3,1), box-shadow .06s ease, filter .06s ease;
 }
 body.speels.nav-away .dock-br { bottom: 14px; }
+/* Glanzend effect op Info (rechtsonder), net als de onderste balk */
+body.speels .dock-br {
+  background-image: linear-gradient(180deg, rgba(255,255,255,.8) 0%, rgba(255,255,255,.22) 46%, rgba(255,255,255,0) 50%, rgba(28,20,16,.08) 100%);
+}
 
 /* Ruimte rond de inhoud: de vaste tabbladen en de onderste balk gaan niet over antwoorden heen */
 body.speels main#view { padding: 36px 44px calc(var(--navh) + 36px); }
