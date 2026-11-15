@@ -81,15 +81,17 @@ body.speels.nav-away nav.bottomnav { background: var(--paper) !important; border
 body.speels.nav-away nav.bottomnav .btn, body.speels.nav-away nav.bottomnav .btn.active, body.speels.nav-away nav.bottomnav .btn.primary { transform: translateY(calc(100% + 40px)); opacity: 0; pointer-events: none; }
 #navHandle {
   position: fixed; left: 50%; bottom: calc(var(--navh) + 6px); transform: translateX(-50%); z-index: 95;
-  width: 84px; height: 26px; border-radius: 999px; border: 3px solid var(--ink-k); background: var(--card);
-  box-shadow: var(--hard); padding: 0; cursor: pointer;
+  min-width: 84px; height: 34px; border-radius: 999px; border: none; background: var(--card);
+  box-shadow: var(--hard); padding: 0 16px; cursor: pointer; white-space: nowrap; font-weight: 900; font-size: 15px; line-height: 1;
   opacity: 1; pointer-events: auto; transition: bottom .35s cubic-bezier(.2,.9,.3,1);
 }
 body.speels.nav-away #navHandle { bottom: 8px; }
+/* Zolang de knoppen omhoog staan, is er geen belletje: de actieve knop in de balk is de aanduiding */
+body.speels:not(.nav-away) #navHandle { opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; transition: opacity .25s ease, visibility .25s; }
 /* Aan het einde van de pagina: alleen de onderste rij, Zinnen en Gesprek; Vastlopen blijft weg tot je het belletje gebruikt */
 body.speels.nav-end .dock-t { transform: translate(-50%, calc(-100% - 6px)); opacity: 0; visibility: hidden; pointer-events: none; transition: transform .5s cubic-bezier(.22,.8,.25,1), opacity .3s ease, visibility .5s; }
-/* Drie puntjes in het belletje */
-#navHandle::before { content: ""; display: block; width: 30px; height: 6px; margin: 4px auto 0; background: radial-gradient(circle, var(--ink-k) 2.6px, transparent 3px) 0 0 / 10px 6px repeat-x; }
+/* Het belletje is de knop van de geselecteerde pagina: geen puntjes meer */
+#navHandle::before { content: none; }
 /* ---------- Thema's: IJs, Jungle, Ruimte (naast Standaard en Café) ---------- */
 body.speels.th-ijs[data-lang] {
   --card:#ffffff; --ink-k:#0d2b45; --ink-soft:#33607f; --paper:#e9f6ff; --dots:rgba(42,127,212,.28);
@@ -364,7 +366,7 @@ body.speels:not(.cafe)[data-lang] #navHandle {
 body.speels:not(.cafe)[data-lang] nav.bottomnav .btn, body.speels:not(.cafe)[data-lang] #vbtn { border-radius: 999px !important; }
 /* De knop is zelf het ankerpunt van het bandje: dat blijft binnen de pil */
 body.speels:not(.cafe)[data-lang] nav.bottomnav .btn, body.speels:not(.cafe)[data-lang] #vbtn { position: relative !important; }
-body.speels:not(.cafe)[data-lang] #navHandle::before { background: radial-gradient(circle, #111111 2.6px, transparent 3px) 0 0 / 10px 6px repeat-x; }
+body.speels:not(.cafe)[data-lang] #navHandle::before { content: none; }
 /* Golfband bovenaan, zoals de lichte lint op de foto */
 body.speels:not(.cafe)[data-lang] nav.bottomnav .btn::before, body.speels:not(.cafe)[data-lang] #vbtn::before,
 body.speels:not(.cafe)[data-lang] .dock-l::before, body.speels:not(.cafe)[data-lang] .dock-r::before,
@@ -435,14 +437,10 @@ body.speels:not(.cafe)[data-lang] .dock-br { text-shadow: 0 1px 2px rgba(0,0,0,.
 /* Paginatitel bovenaan de pagina */
 body.speels .page-title { font-size: 26px; font-weight: 900; line-height: 1.2; letter-spacing: -.3px; margin: 0 0 14px; color: var(--ink-k); }
 
-/* Actieve pagina: de knop is iets groter en een glans schittert er langs */
-body.speels .dock-btn.active { font-size: 16px; }
+body.speels .dock-btn.active, body.speels #navHandle.active { font-size: 16px; }
 body.speels .dock-t.active { height: 34px; }
 body.speels nav.bottomnav .btn.active { font-size: 16px; }
-body.speels:not(.cafe)[data-lang] .dock-btn.active::after, body.speels:not(.cafe)[data-lang] nav.bottomnav .btn.active::after {
-  animation: sheen 2.4s ease-in-out infinite; background-size: 260% 260%;
-}
-@keyframes sheen { 0%, 100% { background-position: 0% 0%; } 50% { background-position: 100% 100%; } }
-@media (prefers-reduced-motion: reduce) {
-  body.speels .dock-btn.active::after, body.speels nav.bottomnav .btn.active::after { animation: none; }
+/* Actieve pagina: de knop is iets groter en heeft een vaste glans (geen beweging) */
+body.speels:not(.cafe)[data-lang] .dock-btn.active::after, body.speels:not(.cafe)[data-lang] nav.bottomnav .btn.active::after, body.speels:not(.cafe)[data-lang] #navHandle.active::after {
+  background-size: 260% 260%; background-position: 0% 0%; transition: none;
 }
