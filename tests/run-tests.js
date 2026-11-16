@@ -81,5 +81,15 @@ for (const [l, txt, exp] of toCases) { const r = ZIN.toEs(txt, l, "m"); check(`z
 // Onzekere zinnen geven geen zin (alleen woorden): "lo" kan hem of het zijn
 check("onzeker: 'Lo veo.' geeft in het Engels geen zin", ZIN.fromEs("Lo veo.", "en") === null, `kreeg ${ZIN.fromEs("Lo veo.", "en")}`);
 
+// 7. Uitspraak: klankvergelijking
+vm.runInContext(read("js/klank.js"), ctx, { filename: "js/klank.js" });
+const KLANK = vm.runInContext("KLANK", ctx);
+const k1 = KLANK.compare("perro", "pero", "nl");
+check("klank: 'pero' voor 'perro' wordt herkend als enkele r", k1.score < 100 && /getrilde rr/.test(k1.msgs[0]), JSON.stringify(k1));
+const k2 = KLANK.compare("vaca", "baca", "nl");
+check("klank: b en v klinken hetzelfde", k2.score === 100, JSON.stringify(k2));
+const k3 = KLANK.compare("¿Dónde está la estación?", "donde esta la estacion", "en");
+check("klank: accenten en leestekens tellen niet mee", k3.score === 100 && k3.words[3].w === "estación", JSON.stringify(k3));
+
 console.log(failures === 0 ? "\nAlles geslaagd." : `\n${failures} controle(s) mislukt.`);
 process.exit(failures === 0 ? 0 : 1);

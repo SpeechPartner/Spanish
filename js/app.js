@@ -1593,7 +1593,7 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "1.27";
+  var APP_VERSION = "1.28";
   // Versies waarvoor gebruikers de app opnieuw op hun beginscherm moeten zetten (oude icoon weg, nieuwe erop).
   // Bij zo'n update verschijnt eenmalig een melding met uitleg.
   var REINSTALL_VERSIONS = ["1.8"];
@@ -1955,19 +1955,19 @@
     { t: m("Zo gebruik je de tabbladen", "How to use the tabs", "So benutzt du die Reiter", "Comment utiliser les onglets"),
       b: m("Zinnen: kant-en-klare zinnen per situatie, met de vertaling en een uitleg. Onderwerpen: zinnen per onderwerp. Vastlopen: wat je zegt als je even niets weet. Zin bouwen: maak zelf zinnen met een patroon. Reageren: antwoorden op wat je gesprekspartner zegt. Leren: korte lessen en oefeningen. Regels: grammatica in het kort, met een test. Gesprek: je gesprekspartner spreekt in, de app vertaalt en geeft antwoorden. Uitspraak: oefen je uitspraak met opnemen. Info: deze pagina.",
            "Sentences: ready-made sentences per situation, with translation and explanation. Topics: sentences per topic. Stuck: what to say when you don't know what to say. Build a sentence: make your own sentences with a pattern. React: answers to what your conversation partner says. Learn: short lessons and exercises. Rules: grammar in brief, with a test. Conversation: your partner speaks, the app translates and suggests answers. Pronunciation: practise your pronunciation by recording. Info: this page.",
-           "Sätze: fertige Sätze pro Situation, mit Übersetzung und Erklärung. Themen: Sätze pro Thema. Hängen: was du sagst, wenn dir nichts einfällt. Satz bauen: eigene Sätze mit einem Muster. Reagieren: Antworten auf das, was dein Gesprächspartner sagt. Lernen: kurze Lektionen und Übungen. Regeln: Grammatik kurz gefasst, mit einem Test. Gespräch: dein Gesprächspartner spricht, die App übersetzt und schlägt Antworten vor. Aussprache: übe deine Aussprache mit Aufnehmen. Info: diese Seite.",
+           "Sätze: fertige Sätze pro Situation, mit Übersetzung und Erklärung. Themen: Sätze pro Thema. Hänger: was du sagst, wenn dir nichts einfällt. Satz bauen: eigene Sätze mit einem Muster. Reagieren: Antworten auf das, was dein Gesprächspartner sagt. Lernen: kurze Lektionen und Übungen. Regeln: Grammatik kurz gefasst, mit einem Test. Gespräch: dein Gesprächspartner spricht, die App übersetzt und schlägt Antworten vor. Aussprache: übe deine Aussprache mit Aufnehmen. Info: diese Seite.",
            "Phrases : phrases toutes prêtes par situation, avec traduction et explication. Sujets : phrases par sujet. Bloqué : que dire quand tu ne sais plus quoi dire. Construire une phrase : tes propres phrases avec un modèle. Réagir : réponses à ce que dit ton interlocuteur. Apprendre : courtes leçons et exercices. Règles : grammaire en bref, avec un test. Conversation : ton interlocuteur parle, l'application traduit et propose des réponses. Prononciation : entraîne ta prononciation en enregistrant. Info : cette page.") },
     { t: m("Spreken op de iPhone", "Speaking on iPhone", "Sprechen auf dem iPhone", "Parler sur iPhone"),
-      b: m("Op de iPhone herkent de app spraak met een spraakmodel dat op je telefoon draait. Het model wordt één keer gedownload (ongeveer 40 of 80 MB; bij voorkeur via wifi). Daarna werkt het ook zonder internet. Tik op de microfoon, spreek de Spaanse zin en tik op Stop. Werkt spraak niet goed, typ dan de zin in het typvak.",
-           "On iPhone the app recognises speech with a speech model that runs on your phone. The model is downloaded once (about 40 or 80 MB; preferably over Wi-Fi). After that it also works without internet. Tap the microphone, say the Spanish sentence and tap Stop. If speech doesn't work well, type the sentence in the text box.",
-           "Auf dem iPhone erkennt die App Sprache mit einem Sprachmodell, das auf deinem Telefon läuft. Das Modell wird einmal heruntergeladen (etwa 40 oder 80 MB; am besten über WLAN). Danach funktioniert es auch ohne Internet. Tippe auf das Mikrofon, sprich den spanischen Satz und tippe auf Stopp. Funktioniert Sprache nicht gut, tippe den Satz in das Eingabefeld.",
-           "Sur iPhone, l'application reconnaît la voix grâce à un modèle vocal qui tourne sur ton téléphone. Le modèle se télécharge une fois (environ 40 ou 80 Mo ; de préférence en Wi-Fi). Ensuite il fonctionne aussi hors ligne. Appuie sur le micro, dis la phrase espagnole puis appuie sur Stop. Si la voix ne marche pas bien, tape la phrase dans la zone de saisie.") },
+      b: m("Op de iPhone herkent de app spraak met een spraakmodel dat op je telefoon draait. Het model wordt één keer gedownload (ongeveer 40 of 80 MB; bij voorkeur via wifi). Daarna werkt het ook zonder internet. Tik op de microfoon, spreek de Spaanse zin en tik op Stop. Werkt de spraakherkenning niet goed, typ de zin dan in het typvak.",
+           "On iPhone the app recognises speech with a speech model that runs on your phone. The model is downloaded once (about 40 or 80 MB; preferably over Wi-Fi). After that it also works without internet. Tap the microphone, say the Spanish sentence and tap Stop. If speech recognition doesn't work well, type the sentence in the text box.",
+           "Auf dem iPhone erkennt die App Sprache mit einem Sprachmodell, das auf deinem Telefon läuft. Das Modell wird einmal heruntergeladen (etwa 40 oder 80 MB; am besten über WLAN). Danach funktioniert es auch ohne Internet. Tippe auf das Mikrofon, sprich den spanischen Satz und tippe auf Stopp. Funktioniert die Spracherkennung nicht gut, tippe den Satz in das Eingabefeld.",
+           "Sur iPhone, l'application reconnaît la voix grâce à un modèle vocal qui tourne sur ton téléphone. Le modèle se télécharge une fois (environ 40 ou 80 Mo ; de préférence en Wi-Fi). Ensuite il fonctionne aussi hors ligne. Appuie sur le micro, dis la phrase espagnole puis appuie sur « Arrêter ». Si la reconnaissance vocale ne marche pas bien, tape la phrase dans la zone de saisie.") },
     { t: m("Aanleren", "Teaching the app", "Der App etwas beibringen", "Enseigner à l'application"),
       b: m("Herkent de app een zin of woord niet? Dan kun je het zelf aanleren. Doe dat alleen als je de betekenis zeker weet; de app geeft je daarvoor een controleknop (vraag het na of controleer online). Wat je aanleert, blijft op je eigen toestel.",
            "If the app doesn't recognise a sentence or word, you can teach it yourself. Only do this if you are sure of the meaning; the app gives you a check button for that (ask or check online). What you teach stays on your own device.",
-           "Erkennt die App einen Satz oder ein Wort nicht, kannst du es ihr selbst beibringen. Tu das nur, wenn du die Bedeutung sicher kennst; dafür gibt es eine Prüfknopf (nachfragen oder online prüfen). Was du beibringst, bleibt auf deinem eigenen Gerät.",
+           "Erkennt die App einen Satz oder ein Wort nicht, kannst du es ihr selbst beibringen. Tu das nur, wenn du die Bedeutung sicher kennst; dafür gibt es einen Prüfknopf (nachfragen oder online prüfen). Was du beibringst, bleibt auf deinem eigenen Gerät.",
            "Si l'application ne reconnaît pas une phrase ou un mot, tu peux le lui apprendre. Fais-le seulement si tu es sûr du sens ; un bouton de vérification t'aide (demander ou vérifier en ligne). Ce que tu enseignes reste sur ton propre appareil.") },
-    { t: m("Over de maker", "About the maker", "Über den Macher", "À propos de l'auteur"),
+    { t: m("Over de maker", "About the maker", "Über den Entwickler", "À propos de l'auteur"),
       b: m("Speech Partner.Spanish is ontworpen en gemaakt door Abel, in samenwerking met Claude (Anthropic). Abel bedacht de opzet, de inhoud en de werkwijze; Claude heeft de code en de teksten uitgewerkt en getest.",
            "Speech Partner.Spanish was designed and created by Abel, in collaboration with Claude (Anthropic). Abel devised the concept, content and approach; Claude developed and tested the code and texts.",
            "Speech Partner.Spanish wurde von Abel entworfen und erstellt, in Zusammenarbeit mit Claude (Anthropic). Abel hat das Konzept, den Inhalt und die Herangehensweise entwickelt; Claude hat den Code und die Texte ausgearbeitet und getestet.",
@@ -1987,7 +1987,7 @@
            "Phrases toutes prêtes par situation, comme saluer, manger, le travail et les vacances, avec traduction et explication."),
       k: [m("Kies bovenaan een groep.", "Choose a group at the top.", "Wähle oben eine Gruppe.", "Choisis un groupe en haut."),
           m("Tik op het luidsprekertje om een zin te horen.", "Tap the speaker icon to hear a sentence.", "Tippe auf das Lautsprechersymbol, um einen Satz zu hören.", "Touche le haut-parleur pour entendre une phrase."),
-          m("Bij sommige zinnen kun je met 'Bouw verder' zelf een zin maken.", "For some sentences, 'Build further' lets you make your own sentence.", "Bei manchen Sätzen kannst du mit 'Weiterbauen' deinen eigenen Satz machen.", "Pour certaines phrases, « Continuer » te permet de faire ta propre phrase."),
+          m("Bij sommige zinnen kun je met 'Bouw verder' zelf een zin maken.", "For some sentences, 'Continue' lets you make your own sentence.", "Bei manchen Sätzen kannst du mit 'Weiter' deinen eigenen Satz bauen.", "Pour certaines phrases, « Continuer » te permet de faire ta propre phrase."),
           m("Zinnen die je begrijpt verdwijnen. Zet ze terug via Instellingen.", "Sentences you understand disappear. Bring them back via Settings.", "Verstandene Sätze verschwinden. Hol sie über die Einstellungen zurück.", "Les phrases que tu comprends disparaissent. Remets-les via les réglages.")] },
     { n: m("Onderwerpen", "Topics", "Themen", "Sujets"),
       w: m("Vragen per onderwerp om een gesprek te beginnen of gaande te houden.",
@@ -1996,10 +1996,10 @@
            "Questions par sujet pour lancer ou entretenir une conversation."),
       k: [m("Lees de vraag hardop en luister naar het voorbeeld.", "Read the question aloud and listen to the example.", "Lies die Frage laut vor und höre das Beispiel an.", "Lis la question à voix haute et écoute l'exemple."),
           m("Gebruik ze als het gesprek stilvalt.", "Use them when the conversation stalls.", "Nutze sie, wenn das Gespräch stockt.", "Utilise-les quand la conversation s'arrête.")] },
-    { n: m("Vastlopen", "Stuck", "Hängen", "Bloqué"),
+    { n: m("Vastlopen", "Stuck", "Hänger", "Bloqué"),
       w: m("Wat je zegt als je even niets weet.", "What to say when you don't know what to say.", "Was du sagst, wenn dir nichts einfällt.", "Que dire quand tu ne sais plus quoi dire."),
       k: [m("Een grote zin met luisterknop.", "A large sentence with a listen button.", "Ein großer Satz mit Hörknopf.", "Une grande phrase avec bouton d'écoute."),
-          m("'Andere zin' laat een nieuwe zin zien.", "'Another sentence' shows a new one.", "'Anderer Satz' zeigt einen neuen.", "« Autre phrase » en affiche une nouvelle."),
+          m("'Andere zin' laat een nieuwe zin zien.", "'Another phrase' shows a new one.", "'Anderer Satz' zeigt einen neuen.", "« Autre phrase » en affiche une nouvelle."),
           m("Onderaan staat de volledige lijst.", "The full list is at the bottom.", "Unten steht die vollständige Liste.", "La liste complète est en bas.")] },
     { n: m("Zin bouwen", "Build a sentence", "Satz bauen", "Construire une phrase"),
       w: m("Maak zelf zinnen met een patroon uit woorden die je al kent.", "Make your own sentences with a pattern from words you already know.", "Baue eigene Sätze mit einem Muster aus Wörtern, die du schon kennst.", "Fais tes propres phrases avec un modèle à partir de mots que tu connais déjà."),
@@ -2008,11 +2008,11 @@
     { n: m("Reageren", "React", "Reagieren", "Réagir"),
       w: m("Antwoorden op wat je gesprekspartner vraagt, of op wat een vriend vertelt.", "Answers to what your partner asks, or to what a friend tells you.", "Antworten auf das, was dein Gesprächspartner fragt, oder auf das, was ein Freund erzählt.", "Réponses à ce que ton interlocuteur demande, ou à ce qu'un ami raconte."),
       k: [m("'Ik vraag': antwoorden op vragen van je partner.", "'I ask': answers to questions from your partner.", "'Ich frage': Antworten auf Fragen deines Partners.", "« Je demande » : réponses aux questions de ton interlocuteur."),
-          m("'Vriend vertelt': reageer op een verhaal.", "'Friend tells': respond to a story.", "'Freund erzählt': reagiere auf eine Geschichte.", "« Un ami raconte » : réagis à une histoire."),
+          m("'Vriend vertelt': reageer op een verhaal.", "'A friend tells': respond to a story.", "'Freund erzählt': reagiere auf eine Geschichte.", "« L'ami raconte » : réagis à une histoire."),
           m("Begrepen reacties verdwijnen uit de lijst.", "Understood responses disappear from the list.", "Verstandene Reaktionen verschwinden aus der Liste.", "Les réponses comprises disparaissent de la liste.")] },
     { n: m("Leren", "Learn", "Lernen", "Apprendre"),
       w: m("Oefenen met kaarten, een quiz en grammatica.", "Practise with flashcards, a quiz and grammar.", "Üben mit Karteikarten, einem Quiz und Grammatik.", "S'entraîner avec des cartes, un quiz et la grammaire."),
-      k: [m("Kaarten: markeer wat je al kent als 'gekend'.", "Flashcards: mark what you already know as 'known'.", "Karten: markiere, was du schon kennst, als 'gekannt'.", "Cartes : marque ce que tu connais déjà comme « connu »."),
+      k: [m("Kaarten: markeer wat je al kent als 'gekend'.", "Flashcards: mark what you already know with 'Known'.", "Karten: markiere, was du schon kannst, mit 'Gekonnt'.", "Cartes : marque ce que tu connais déjà avec « Acquis »."),
           m("Quiz: kies de juiste vertaling uit drie opties.", "Quiz: choose the right translation from three options.", "Quiz: wähle die richtige Übersetzung aus drei Optionen.", "Quiz : choisis la bonne traduction parmi trois options."),
           m("Grammatica: korte regels met voorbeelden en het waarom.", "Grammar: short rules with examples and the reason.", "Grammatik: kurze Regeln mit Beispielen und dem Warum.", "Grammaire : courtes règles avec exemples et explication.")] },
     { n: m("Regels", "Rules", "Regeln", "Règles"),
@@ -2026,10 +2026,11 @@
           m("Rechts staan mogelijke antwoorden in bellen.", "Possible answers are shown on the right in bubbles.", "Rechts stehen mögliche Antworten in Sprechblasen.", "À droite, les réponses possibles dans des bulles."),
           m("Verbeter een vertaling of voeg een eigen antwoord toe.", "Correct a translation or add your own answer.", "Verbessere eine Übersetzung oder füge eine eigene Antwort hinzu.", "Corrige une traduction ou ajoute ta propre réponse."),
           m("Met 'Wis gesprek' begin je het gesprek opnieuw.", "With 'Clear conversation' you start the conversation over.", "Mit 'Gespräch leeren' fängst du das Gespräch neu an.", "Avec « Effacer la conversation », tu recommences la conversation."),
-          m("Op de iPhone wordt spraak herkend met een model dat je eenmalig downloadt, met jouw toestemming.", "On iPhone, speech is recognised with a model you download once, with your permission.", "Auf dem iPhone wird Sprache mit einem Modell erkannt, das du einmal mit deiner Zustimmung lädst.", "Sur iPhone, la parole est reconnue par un modèle que tu télécharges une fois, avec ton accord.")] },
+          m("Op de iPhone wordt spraak herkend met een model dat je eenmalig downloadt, met jouw toestemming.", "On iPhone, speech is recognised with a model you download once, with your permission.", "Auf dem iPhone wird Sprache mit einem Modell erkannt, das du einmalig mit deiner Zustimmung herunterlädst.", "Sur iPhone, la parole est reconnue par un modèle que tu télécharges une fois, avec ton accord.")] },
     { n: m("Uitspraak", "Pronunciation", "Aussprache", "Prononciation"),
       w: m("Oefen je uitspraak met opnemen en vergelijken, met minimale paren en shadowing.", "Practise your pronunciation by recording and comparing, with minimal pairs and shadowing.", "Übe deine Aussprache mit Aufnehmen und Vergleichen, mit Minimalpaaren und Shadowing.", "Entraîne ta prononciation en enregistrant et en comparant, avec paires minimales et shadowing."),
       k: [m("Luister, herhaal en neem jezelf op.", "Listen, repeat and record yourself.", "Hör zu, wiederhole und nimm dich auf.", "Écoute, répète et enregistre-toi."),
+          m("Na het opnemen zie je per woord en per klank wat afweek van het voorbeeld, met een tip.", "After recording you see, per word and per sound, what differed from the example, with a tip.", "Nach der Aufnahme siehst du pro Wort und pro Laut, was vom Beispiel abwich, mit einem Tipp.", "Après l'enregistrement, tu vois pour chaque mot et chaque son ce qui différait de l'exemple, avec un conseil."),
           m("Vergelijk jezelf met het voorbeeld en beoordeel jezelf.", "Compare yourself with the example and assess yourself.", "Vergleiche dich mit dem Beispiel und bewerte dich selbst.", "Compare-toi à l'exemple et évalue-toi."),
           m("Het tempo stel je in bij Instellingen.", "Set the speed in Settings.", "Das Tempo stellst du in den Einstellungen ein.", "Règle la vitesse dans les réglages.")] },
     { n: m("Info", "Info", "Info", "Info"),
@@ -2037,10 +2038,11 @@
       k: [] }
   ];
   var EXTRA_GUIDE = { n: m("Instellingen en extra's", "Settings and extras", "Einstellungen und Extras", "Réglages et extras"),
-    k: [m("Vertaalbalk bovenaan: typ Nederlands en tik op Vertaal.", "Translation bar at the top: type English and tap Translate.", "Übersetzungsleiste oben: Deutsch tippen und auf Übersetzen tippen.", "Barre de traduction en haut : écris en français et touche Traduire."),
+    k: [m("Vertaalbalk bovenaan: typ Nederlands en tik op Vertaal.", "Translation bar at the top: type English and tap Translate.", "Übersetzungsleiste oben: Gib einen deutschen Satz ein und tippe auf Übersetzen.", "Barre de traduction en haut : écris en français et touche Traduire."),
         m("Taal: via het logo of het tandwiel (Nederlands, Engels, Duits, Frans).", "Language: via the logo or the gear icon (Dutch, English, German, French).", "Sprache: über das Logo oder das Zahnrad (Niederländisch, Englisch, Deutsch, Französisch).", "Langue : via le logo ou la roue crantée (néerlandais, anglais, allemand, français)."),
         m("Thema: Standaard, Systeem (donker als je telefoon dat is), Café, IJs, Jungle of Ruimte.", "Theme: Standard, System (dark when your phone is), Café, Ice, Jungle or Outer space.", "Design: Standard, System (dunkel, wenn dein Telefon es ist), Café, Eis, Dschungel oder Weltraum.", "Thème : Standard, Système (sombre si ton téléphone l'est), Café, Glace, Jungle ou Espace."),
         m("Gesprekspartner: automatisch, neutraal (o/a), man (hij) of vrouw (zij). Automatisch leidt het alleen af uit een zin die de partner over zichzelf zegt.", "Conversation partner: automatic, neutral (o/a), man (he) or woman (she). Automatic only uses a sentence in which the partner describes themselves.", "Gesprächspartner: automatisch, neutral (o/a), Mann (er) oder Frau (sie). Automatisch leitet nur aus einem Satz ab, in dem der Partner sich selbst beschreibt.", "Partenaire : automatique, neutre (o/a), homme (il) ou femme (elle). Automatique ne se base que sur une phrase où le partenaire se décrit lui-même."),
+        m("Mijn geslacht: man (Estoy cansado) of vrouw (Estoy cansada). Zo krijgen zinnen over jezelf de juiste Spaanse vorm.", "My gender: male (Estoy cansado) or female (Estoy cansada). This gives sentences about yourself the right Spanish form.", "Mein Geschlecht: männlich (Estoy cansado) oder weiblich (Estoy cansada). So bekommen Sätze über dich die richtige spanische Form.", "Mon genre : masculin (Estoy cansado) ou féminin (Estoy cansada). Ainsi, les phrases sur toi ont la bonne forme en espagnol."),
         m("Snelheid van voorlezen: stel het tempo in.", "Reading speed: set the tempo.", "Vorlesegeschwindigkeit: stelle das Tempo ein.", "Vitesse de lecture : règle le rythme."),
         m("'Begrepen items resetten' zet de begrepen items terug. 'Voortgang resetten' wist je voortgang.", "'Reset understood items' brings back the understood items. 'Reset progress' clears your progress.", "'Verstandene zurücksetzen' holt die verstandenen Elemente zurück. 'Fortschritt zurücksetzen' löscht deinen Fortschritt.", "« Réinitialiser les éléments compris » remet les éléments compris. « Réinitialiser la progression » efface ta progression."),
         m("De onderste balk verdwijnt na een paar seconden. Tik op het belletje of scroll naar het einde van de pagina om hem terug te halen.", "The bottom bar disappears after a few seconds. Tap the bell or scroll to the end of the page to bring it back.", "Die untere Leiste verschwindet nach ein paar Sekunden. Tippe auf das Glöckchen oder scrolle bis zum Ende der Seite, um sie zurückzuholen.", "La barre du bas disparaît après quelques secondes. Touche la cloche ou fais défiler jusqu'à la fin de la page pour la faire revenir."),
@@ -2099,7 +2101,7 @@
         "Voor de spraakherkenning heeft de app eenmalig een gespreksmodel nodig. Dat wordt op je toestel gedownload: ongeveer 40 MB voor de snelle versie of 80 MB voor de nauwkeurige.",
         "For speech recognition the app needs a conversation model once. It is downloaded to your device: about 40 MB for the fast version or 80 MB for the more accurate one.",
         "Für die Spracherkennung braucht die App einmalig ein Gesprächsmodell. Es wird auf dein Gerät heruntergeladen: etwa 40 MB für die schnelle Version oder 80 MB für die genauere.",
-        "Pour la reconnaissance vocale, l'application a besoin une fois d'un modèle de conversation. Il est téléchargé sur ton appareil : environ 40 Mo pour la version rapide ou 80 Mo pour la version plus précise.")))
+        "Pour la reconnaissance vocale, l'application a besoin, une seule fois, d'un modèle de conversation. Il est téléchargé sur ton appareil : environ 40 Mo pour la version rapide ou 80 Mo pour la version plus précise.")))
       , infoSec(L(m("Offline gebruik", "Offline use", "Offline-Nutzung", "Usage hors ligne")), L(m(
         "Daarna kun je de dienst offline gebruiken.",
         "After that you can use the service offline.",
@@ -2156,10 +2158,10 @@
     var privA = el("a", "", L(m("Lees de privacyverklaring", "Read the privacy statement", "Zur Datenschutzerklärung", "Lire la déclaration de confidentialité")));
     privA.href = "privacy.html";
     page(L(m("Privacy", "Privacy", "Datenschutz", "Confidentialité")), [el("p", "", L(m(
-      "De app heeft geen account, geen advertenties en geen analytics. Je voortgang blijft op je eigen toestel.",
+      "De app heeft geen account, geen advertenties en geen gebruiksstatistieken. Je voortgang blijft op je eigen toestel.",
       "The app has no account, no ads and no analytics. Your progress stays on your own device.",
-      "Die App hat kein Konto, keine Werbung und keine Analyse. Dein Fortschritt bleibt auf deinem Gerät.",
-      "L'application n'a pas de compte, pas de publicité et pas d'analyse. Ta progression reste sur ton appareil.")) ), privA]);
+      "Die App hat kein Konto, keine Werbung und keine Nutzungsanalyse. Dein Fortschritt bleibt auf deinem Gerät.",
+      "L'application n'a ni compte, ni publicité, ni statistiques d'utilisation. Ta progression reste sur ton appareil.")) ), privA]);
 
     // Het boekje zelf: één blad tegelijk, een vaste grootte, stipjes onderaan
     var n = pages.length;
@@ -2175,6 +2177,17 @@
       if (next !== cur && next >= 0 && next < n) goLeaf(next);
     });
     card.appendChild(pages[cur]);
+    // Eerste blad: laat zien dat je verder kunt bladeren
+    if (cur === 0 && n > 1) {
+      var hint = el("button", "leafhint", L(m(
+        "Tik rechts op de kaart om verder te bladeren. Links tikken gaat een blad terug.",
+        "Tap the right side of the card to go to the next page. Tap the left side to go back.",
+        "Tippe rechts auf die Karte, um weiterzublättern. Links tippen blättert zurück.",
+        "Touche le côté droit de la carte pour passer à la page suivante. Touche le côté gauche pour revenir en arrière.")) + " →");
+      hint.type = "button";
+      hint.onclick = function (e) { e.stopPropagation(); goLeaf(1); };
+      card.appendChild(hint);
+    }
     card.appendChild(el("div", "leafnum", (cur + 1) + " / " + n));
     bk.appendChild(card);
     var dots = el("div", "leafdots");
@@ -2410,8 +2423,9 @@
         rawStream.getTracks().forEach(function (t) { t.stop(); });
         if (ctx && ctx.state !== "closed") { try { ctx.close().catch(function () {}); } catch (e) {} }
         if (prUrl) URL.revokeObjectURL(prUrl);
-        prUrl = URL.createObjectURL(new Blob(prChunks, { type: prRec.mimeType || "audio/webm" }));
-        onStop && onStop(prUrl);
+        var prBlob = new Blob(prChunks, { type: prRec.mimeType || "audio/webm" });
+        prUrl = URL.createObjectURL(prBlob);
+        onStop && onStop(prUrl, prBlob);
       };
       prRec.start();
       return true;
@@ -2476,7 +2490,8 @@
     return wrap;
   }
 
-  // Opneemblok: opnemen, herkennen en afspelen van eigen opname
+  // Opneemblok: opnemen, herkennen, de klanken vergelijken met het voorbeeld en de eigen opname afspelen.
+  // Herkenning: de spraakherkenning van de browser; op de iPhone (of zonder browserherkenning) het Whisper-model.
   function prRecordBlock(target) {
     var box = el("div");
     var row = el("div", "chips");
@@ -2488,23 +2503,73 @@
     row.appendChild(recB); row.appendChild(stopB); row.appendChild(playB); row.appendChild(status);
     var result = el("div");
     var audio = new Audio();
+    var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    var useWhisper = !SR || isIOS();
+    var srState = "idle", blob = null, stopped = false;
     playB.onclick = function () { if (prUrl) { audio.src = prUrl; audio.play().catch(function () {}); } };
+    var col = lang === "fr" ? " : " : ": ";
+    function showResult(text) {
+      result.innerHTML = "";
+      var k = KLANK.compare(target, text, lang);
+      result.appendChild(el("div", "heard", T("Herkend") + col + text));
+      var wl = el("div", "klank-words");
+      k.words.forEach(function (w) { wl.appendChild(el("span", w.ok ? "good" : "bad", (w.ok ? "✓ " : "✗ ") + w.w)); });
+      result.appendChild(wl);
+      result.appendChild(el("div", k.score >= 85 ? "good" : "bad", T("Klankovereenkomst") + col + k.score + "%"));
+      k.msgs.forEach(function (msg) { result.appendChild(el("div", "nl", msg)); });
+      if (k.tip) result.appendChild(el("div", "note", T("Tip") + col + k.tip));
+      result.appendChild(el("div", "note", KLANK.note(lang)));
+    }
+    // Whisper op de eigen opname (alleen als het model gedownload is)
+    function checkWithWhisper() {
+      if (!blob) return;
+      if (!store.get("whModel", null)) {
+        result.innerHTML = "";
+        result.appendChild(el("div", "note", T("Download het spraakmodel om je uitspraak per klank te laten controleren. Je kunt jezelf ook met de sterren beoordelen.")));
+        result.appendChild(whConsentCard());
+        return;
+      }
+      result.innerHTML = "";
+      result.appendChild(el("div", "note", T("Bezig met controleren…")));
+      whLoad().then(function () { return whDecode(blob); }).then(function (pcm) {
+        var peak = 0, i;
+        for (i = 0; i < pcm.length; i++) { var a = Math.abs(pcm[i]); if (a > peak) peak = a; }
+        if (peak > 0 && peak < 0.9) { var f = 0.9 / peak; for (i = 0; i < pcm.length; i++) pcm[i] *= f; }
+        return whRun(pcm);
+      }).then(function (text) {
+        text = String(text || "").trim();
+        if (!text || /^[\[(]|m[uú]sica|subt[ií]tulo/i.test(text)) { result.innerHTML = ""; result.appendChild(el("div", "bad", T("Niets verstaan. Probeer het opnieuw."))); return; }
+        showResult(text);
+      }).catch(function (e) {
+        result.innerHTML = "";
+        result.appendChild(el("div", "note", whErr(e).split(". ")[0] + ". " + T("Beoordeel jezelf met de sterren.")));
+      });
+    }
     recB.onclick = function () {
-      prStartRecording(function () { playB.disabled = false; status.textContent = T("Opname klaar."); })
-        .then(function (ok) {
-          if (!ok) { result.appendChild(el("div", "bad", T("Microfoon is niet beschikbaar. Geef toegang of beoordeel jezelf met de sterren."))); return; }
-          recB.disabled = true; stopB.disabled = false;
-          status.textContent = T("● Opname loopt");
-          prHear(function (text) {
-            recB.disabled = false; stopB.disabled = true;
+      srState = useWhisper ? "none" : "pending"; blob = null; stopped = false;
+      result.innerHTML = "";
+      prStartRecording(function (url, b) {
+        blob = b; stopped = true;
+        playB.disabled = false; status.textContent = T("Opname klaar.");
+        recB.disabled = false; stopB.disabled = true;
+        if (useWhisper) checkWithWhisper();
+        else if (srState === "pending") result.appendChild(el("div", "note", T("Bezig met controleren…")));
+      }).then(function (ok) {
+        if (!ok) { result.appendChild(el("div", "bad", T("Microfoon is niet beschikbaar. Geef toegang of beoordeel jezelf met de sterren."))); return; }
+        recB.disabled = true; stopB.disabled = false;
+        status.textContent = T("● Opname loopt") + (useWhisper ? " · " + T("tik op Stop als je klaar bent") : "");
+        if (useWhisper) return;
+        prHear(function (text) {
+          srState = text === null ? "failed" : "done";
+          if (text === null) {
             result.innerHTML = "";
-            if (text === null) { result.appendChild(el("div", "note", T("Spraakherkenning werkt niet in deze browser; beoordeel jezelf met de sterren."))); return; }
-            var s = prSimilar(target, text);
-            result.appendChild(el("div", "heard", T("Herkend") + ": " + text));
-            result.appendChild(el("div", s >= 70 ? "good" : "bad", T("Overeenkomst") + ": " + s + "%"));
-            result.appendChild(el("div", "note", T("Herkenning is grof: ze checkt woorden, niet de klank. Vergelijk ook met je opname.")));
-          });
+            result.appendChild(el("div", "bad", T("Niets verstaan. Probeer het opnieuw.")));
+            return;
+          }
+          showResult(text);
+          if (!stopped) prStopRecording();
         });
+      });
     };
     stopB.onclick = function () {
       prStopRecording();
@@ -2935,7 +3000,7 @@
     if (!pending.length) return;
     var box = el("div", "card reinstall-note");
     box.setAttribute("role", "dialog");
-    box.appendChild(el("div", "sec-title", L(m("Nieuwe versie: zet de app opnieuw op je beginscherm", "New version: put the app on your home screen again", "Neue Version: lege die App erneut auf deinen Startbildschirm", "Nouvelle version : remets l'app sur ton écran d'accueil"))));
+    box.appendChild(el("div", "sec-title", L(m("Nieuwe versie: zet de app opnieuw op je beginscherm", "New version: put the app on your home screen again", "Neue Version: lege die App erneut auf deinen Home-Bildschirm", "Nouvelle version : remets l'app sur ton écran d'accueil"))));
     box.appendChild(el("div", "", L(m(
       "Verwijder het oude icoon: houd het ingedrukt en kies 'App verwijderen'. Open daarna deze pagina in Safari, tik op Deel en kies 'Zet op beginscherm'. Zo heb je de nieuwste versie.",
       "Remove the old icon: press and hold it and choose 'Remove App'. Then open this page in Safari, tap Share and choose 'Add to Home Screen'. That gives you the latest version.",

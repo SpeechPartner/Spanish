@@ -415,6 +415,11 @@ body.speels .leafhead { margin: 0 0 12px; padding-bottom: 8px; border-bottom: 3p
 body.speels .leafsec + .leafsec { margin-top: 14px; padding-top: 12px; border-top: 2px dashed var(--ink-k); }
 body.speels .leafsec p, body.speels .leafpage > p { margin: 0; line-height: 1.5; }
 body.speels .leafnum { margin-top: auto; padding-top: 10px; text-align: center; font-size: 12px; opacity: .6; }
+body.speels .leafhint { margin-top: auto; align-self: stretch; padding: 10px 12px; border: 2px dashed var(--p); border-radius: 12px; background: transparent;
+  color: inherit; font: inherit; font-weight: 700; text-align: center; line-height: 1.4; cursor: pointer; animation: hintNudge 1.6s ease-in-out 3; }
+body.speels .leafhint + .leafnum { margin-top: 6px; }
+@keyframes hintNudge { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(6px); } }
+@media (prefers-reduced-motion: reduce) { body.speels .leafhint { animation: none; } }
 body.speels .leafdots { display: flex; justify-content: center; gap: 9px; margin: 12px 0 4px; flex-wrap: wrap; }
 body.speels .leafdot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--ink-k); background: var(--card); padding: 0; cursor: pointer; }
 body.speels .leafdot.on { background: var(--p); }
@@ -449,3 +454,6 @@ body.speels:not(.cafe)[data-lang] .dock-btn.active::after, body.speels:not(.cafe
 /* Knoppen in de banner: donkere tekst op de lichte knop; bij selectie een gekleurde knop met witte tekst (kleur van thema of land) */
 body.speels .iconbtn.on { background: var(--bt1) !important; color: #fff !important; }
 body.speels.cafe .iconbtn.on { background: var(--accent) !important; color: #fff !important; }
+
+/* Uitspraak: woorden met ✓ of ✗ na de klankvergelijking */
+.klank-words { display: flex; flex-wrap: wrap; gap: 6px 12px; margin: 6px 0; font-weight: 700; }
