@@ -91,5 +91,21 @@ check("klank: b en v klinken hetzelfde", k2.score === 100, JSON.stringify(k2));
 const k3 = KLANK.compare("¿Dónde está la estación?", "donde esta la estacion", "en");
 check("klank: accenten en leestekens tellen niet mee", k3.score === 100 && k3.words[3].w === "estación", JSON.stringify(k3));
 
+// 8. Achtergrondband: elk palet bevat de knopkleuren van het thema
+{
+  const css = read("css/speels.css");
+  const ach = {}; vm.createContext(ach); vm.runInContext(read("js/achtergrond.js") + ";this.A=ACHTERGROND", ach);
+  const PAL = ach.A.PAL;
+  const bt = { "standaard-nl": 'data-lang="nl"', "standaard-en": 'data-lang="en"', "standaard-de": 'data-lang="de"', "standaard-fr": 'data-lang="fr"', ijs: "th-ijs", jungle: "th-jungle", ruimte: "th-ruimte", donker: "th-donker" };
+  for (const k of Object.keys(bt)) {
+    const line = css.split("\n").find((l) => l.includes(bt[k]) && l.includes("--bt1"));
+    const cols = line ? [...line.matchAll(/--bt\d:\s*(#[0-9a-fA-F]{6})/g)].map((m) => m[1].toLowerCase()) : [];
+    const pal = PAL[k].map((c) => c.toLowerCase());
+    const miss = cols.filter((c) => !pal.includes(c));
+    check(`achtergrond ${k}: knopkleuren zitten in het palet`, cols.length === 3 && miss.length === 0, `ontbreekt: ${miss.join(", ")}`);
+  }
+  check("achtergrond: kleurenkaart staat in de offline-cache", read("sw.js").includes("./img/achtergrond-kaart.png"));
+}
+
 console.log(failures === 0 ? "\nAlles geslaagd." : `\n${failures} controle(s) mislukt.`);
 process.exit(failures === 0 ? 0 : 1);
