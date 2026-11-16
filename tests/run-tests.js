@@ -35,7 +35,7 @@ check("alle bestanden in de offline-cache bestaan", brokenCache.length === 0, br
 // 4. Woordenlijsten: formaat en inhoud
 const ctx = {};
 vm.createContext(ctx);
-for (const f of ["js/dict-wiki.js", "js/dict-extra.js", "js/dict-pdf.js", "js/dict.js"]) {
+for (const f of ["js/dict-wiki.js", "js/dict-extra.js", "js/dict-pdf.js", "js/dict-pdf-nl.js", "js/dict-pdf-en.js", "js/dict-pdf-de.js", "js/dict-pdf-fr.js", "js/dict.js"]) {
   if (fs.existsSync(path.join(root, f))) vm.runInContext(read(f), ctx, { filename: f });
 }
 const DICTS = vm.runInContext("DICTS", ctx);
@@ -58,6 +58,28 @@ const helpBlock = helpStart >= 0 ? helpSrc.slice(helpStart) : "";
 const mCalls = [...helpBlock.matchAll(/m\(("(?:[^"\\]|\\.)*")\s*,\s*("(?:[^"\\]|\\.)*")\s*,\s*("(?:[^"\\]|\\.)*")\s*,\s*("(?:[^"\\]|\\.)*")\s*\)/g)];
 const allM = (helpBlock.match(/m\(/g) || []).length;
 check("stappenplan: elke vertaling heeft vier talen", mCalls.length > 0 && mCalls.length >= allM - 2, `volledig=${mCalls.length} aanroepen=${allM}`);
+
+// 6. Zinsmodules Engels, Duits, Frans (beide richtingen)
+for (const f of ["js/zin-lex.js", "js/zin-gender.js", "js/zin-core.js", "js/zin-out.js", "js/zin-in.js"]) vm.runInContext(read(f), ctx, { filename: f });
+vm.runInContext("var REVS = typeof REVS !== 'undefined' ? REVS : {};", ctx);
+const ZIN = vm.runInContext("ZIN", ctx);
+const fromCases = [
+  ["Estoy cansada.", "en", "I am tired."], ["Estoy cansada.", "fr", "Je suis fatiguée."],
+  ["No tengo hermanos.", "de", "Ich habe keine Geschwister."], ["Me gusta el café.", "fr", "J'aime le café."],
+  ["¿Dónde está la estación?", "de", "Wo ist der Bahnhof?"], ["Mis padres viven en Utrecht.", "en", "My parents live in Utrecht."],
+  ["Ayer fui al cine con un amigo.", "de", "Ich bin gestern mit einem Freund ins Kino gegangen."],
+  ["Es mi padre.", "fr", "C'est mon père."], ["Me voy mañana.", "en", "I am leaving tomorrow."],
+  ["No bebo café.", "de", "Ich trinke keinen Kaffee."], ["¿Cuánto cuesta el café?", "fr", "Combien coûte le café ?"]
+];
+for (const [es, l, exp] of fromCases) { const r = ZIN.fromEs(es, l); check(`zin ${l}: "${es}" -> "${exp}"`, r === exp, `kreeg ${r}`); }
+const toCases = [
+  ["en", "I don't like dogs.", "No me gustan los perros."], ["en", "Where are you going?", "¿Adónde vas?"],
+  ["de", "Ich habe Hunger.", "Tengo hambre."], ["de", "Ich rufe meine Mutter an.", "Llamo a mi madre."],
+  ["fr", "Je n'ai pas de chien.", "No tengo perro."], ["fr", "Je suis fatiguée.", "Estoy cansada."]
+];
+for (const [l, txt, exp] of toCases) { const r = ZIN.toEs(txt, l, "m"); check(`zin ${l}->es: "${txt}" -> "${exp}"`, r === exp, `kreeg ${r}`); }
+// Onzekere zinnen geven geen zin (alleen woorden): "lo" kan hem of het zijn
+check("onzeker: 'Lo veo.' geeft in het Engels geen zin", ZIN.fromEs("Lo veo.", "en") === null, `kreeg ${ZIN.fromEs("Lo veo.", "en")}`);
 
 console.log(failures === 0 ? "\nAlles geslaagd." : `\n${failures} controle(s) mislukt.`);
 process.exit(failures === 0 ? 0 : 1);

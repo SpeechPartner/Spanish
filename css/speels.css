@@ -5,7 +5,7 @@
    p = hoofdknop · s = accent (actieve tab, geluidsknop) · sInk = tekst op s
    hi = tint voor de uitgelichte kaart · t2 = tint voor de afwisselende kaarten · paper = achtergrond
    nl: rood-wit-blauw · en: blauw-rood-wit · de: zwart-rood-goud · fr: blauw-wit-rood */
-body.speels:not(.cafe)[data-lang="nl"] { --p:#AE1C28; --s:#21468B; --sInk:#ffffff; --hi:#fde3e6; --t2:#dfe8fb; --paper:#fff8f8; --bar:#000; --head:#AE1C28; }
+body.speels:not(.cafe)[data-lang="nl"] { --p:#AE1C28; --s:#D62B3A; --sInk:#ffffff; --hi:#fde3e6; --t2:#dfe8fb; --paper:#fff8f8; --bar:#000; --head:#AE1C28; }
 body.speels:not(.cafe)[data-lang="en"] { --p:#C8102E; --s:#012169; --sInk:#ffffff; --hi:#dfe6f7; --t2:#f9dde1; --paper:#f5f7fc; --bar:#000; --head:#012169; }
 body.speels:not(.cafe)[data-lang="de"] { --p:#DD0000; --s:#FFCE00; --sInk:#000000; --hi:#ffe9a8; --t2:#fff4cc; --paper:#fffbef; --bar:#000; --head:#000000; }
 body.speels:not(.cafe)[data-lang="fr"] { --p:#ED2939; --s:#002395; --sInk:#ffffff; --hi:#dfe5f7; --t2:#fbdde0; --paper:#f5f7fd; --bar:#000; --head:#002395; }
@@ -259,7 +259,7 @@ body.speels .dock-r { right: 0; border-right: none; border-radius: 14px 0 0 14px
 body.speels .dock-t {
   transition: transform .35s cubic-bezier(.2,.9,.3,1);
   top: calc(var(--hh) - 6px); left: 50%; transform: translateX(-50%);
-  height: 30px; padding: 0 16px; border-top: none; border-radius: 0 0 14px 14px;
+  height: 28px; min-height: 0; padding: 0 16px; border-top: none; border-radius: 0 0 14px 14px;
 }
 body.speels .dock-t:active { transform: translateX(-50%); box-shadow: var(--hard); filter: brightness(.94); }
 body:has(#settings.open) .dock-t { display: none; }
@@ -328,7 +328,7 @@ body.speels:not(.cafe) .dock-l, body.speels:not(.cafe) .dock-r, body.speels:not(
 /* ===== v83: nieuw ontwerp alleen voor de verdwijnende onderknoppen en Zinnen/Gesprek; kleuren uit land en thema ===== */
 /* Kleuren per taal (landen) */
 /* Landskleuren (vlaggen) en themakleuren: alleen deze drie kleuren komen in de knoppen */
-body.speels:not(.cafe)[data-lang="nl"] { --bt1: #AE1C28; --bt2: #111111; --bt3: #21468B; }
+body.speels:not(.cafe)[data-lang="nl"] { --bt1: #AE1C28; --bt2: #111111; --bt3: #D62B3A; }
 body.speels:not(.cafe)[data-lang="en"] { --bt1: #012169; --bt2: #C8102E; --bt3: #111111; }
 body.speels:not(.cafe)[data-lang="de"] { --bt1: #000000; --bt2: #DD0000; --bt3: #FFCE00; }
 body.speels:not(.cafe)[data-lang="fr"] { --bt1: #002395; --bt2: #111111; --bt3: #ED2939; }
@@ -439,8 +439,7 @@ body.speels:not(.cafe)[data-lang] .dock-br { text-shadow: 0 1px 2px rgba(0,0,0,.
 /* Paginatitel bovenaan de pagina */
 body.speels .page-title { font-size: 26px; font-weight: 900; line-height: 1.2; letter-spacing: -.3px; margin: 0 0 14px; color: var(--ink-k); }
 
-body.speels .dock-btn.active, body.speels #navHandle.active { font-size: 16px; }
-body.speels .dock-t.active { height: 34px; }
+body.speels #navHandle.active { font-size: 16px; }
 body.speels nav.bottomnav .btn.active { font-size: 16px; }
 /* Actieve pagina: de knop is iets groter en heeft een vaste glans (geen beweging) */
 body.speels:not(.cafe)[data-lang] .dock-btn.active::after, body.speels:not(.cafe)[data-lang] nav.bottomnav .btn.active::after, body.speels:not(.cafe)[data-lang] #navHandle.active::after {

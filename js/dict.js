@@ -120,3 +120,50 @@ var PHRASES_ES = {};
     });
   });
 })();
+
+// Correcties uit de PDF-woordenlijsten (dict-pdf-nl.js): winnen van de oude waarden in beide richtingen
+if (typeof DICT_PDF_FIX !== "undefined" && DICT_PDF_FIX.nl) {
+  DICT_PDF_FIX.nl.split("|").forEach(function (pair) {
+    var i = pair.indexOf("=");
+    if (i < 0) return;
+    var nlW = pair.slice(0, i).trim().toLowerCase(), esW = pair.slice(i + 1).trim().toLowerCase();
+    if (!nlW || !esW) return;
+    DICTS.nl[nlW] = esW;
+    REVS.nl[esW] = nlW;
+  });
+}
+
+// Correcties op de Engelse woordenlijsten (dict-pdf-en.js)
+if (typeof DICT_PDF_FIX_EN !== "undefined") {
+  DICT_PDF_FIX_EN.split("|").forEach(function (pair) {
+    var i = pair.indexOf("=");
+    if (i < 0) return;
+    var enW = pair.slice(0, i).trim().toLowerCase(), esW = pair.slice(i + 1).trim().toLowerCase();
+    if (!enW || !esW) return;
+    DICTS.en[enW] = esW;
+    REVS.en[esW] = enW;
+  });
+}
+
+// Correcties op de Duitse en Franse woordenlijsten (dict-pdf-de.js / dict-pdf-fr.js).
+// Ook de varianten met lidwoord (der/die/das, le/la/les/l'/un/une) worden bijgewerkt als die bestaan.
+(function () {
+  var ARTS = ["der ", "die ", "das ", "le ", "la ", "les ", "l'", "un ", "une "];
+  function applyFix(lang, str) {
+    if (!str || !DICTS[lang] || !REVS[lang]) return;
+    str.split("|").forEach(function (pair) {
+      var i = pair.indexOf("=");
+      if (i < 0) return;
+      var w = pair.slice(0, i).trim().toLowerCase(), es = pair.slice(i + 1).trim().toLowerCase();
+      if (!w || !es) return;
+      DICTS[lang][w] = es;
+      REVS[lang][es] = w;
+      ARTS.forEach(function (a) {
+        var k = a + w;
+        if (Object.prototype.hasOwnProperty.call(DICTS[lang], k)) DICTS[lang][k] = es;
+      });
+    });
+  }
+  if (typeof DICT_PDF_FIX_DE !== "undefined") applyFix("de", DICT_PDF_FIX_DE);
+  if (typeof DICT_PDF_FIX_FR !== "undefined") applyFix("fr", DICT_PDF_FIX_FR);
+})();
