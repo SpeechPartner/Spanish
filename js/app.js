@@ -1634,7 +1634,7 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "2.5";
+  var APP_VERSION = "2.6";
   // Versies waarvoor gebruikers de app opnieuw op hun beginscherm moeten zetten (oude icoon weg, nieuwe erop).
   // Bij zo'n update verschijnt eenmalig een melding met uitleg.
   var REINSTALL_VERSIONS = ["1.8"];
@@ -2871,7 +2871,7 @@
     document.body.classList.toggle("cafe", eff === "cafe");
     // Het café-thema heet in de banner "Business Café"
     var ttlEl = document.querySelector("header.top h1");
-    if (ttlEl) ttlEl.textContent = eff === "cafe" ? "Business Café" : T("SpeechPartner.Spanish");
+    if (ttlEl) { var ttlTxt = T("SpeechPartner.Spanish"); if (eff === "cafe") ttlEl.textContent = "Business Café"; else if (ttlTxt.indexOf("Speech") === 0) ttlEl.innerHTML = "Speech<br>" + ttlTxt.slice(6); else ttlEl.textContent = ttlTxt; }
     ["ijs", "jungle", "ruimte", "donker"].forEach(function (t) { document.body.classList.toggle("th-" + t, eff === t); });
     if (typeof ACHTERGROND !== "undefined") ACHTERGROND.set(eff === "standaard" ? "standaard-" + lang : eff);
     renderLogo();
