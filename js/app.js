@@ -1640,7 +1640,7 @@
     if (WH_LOG.length > 40) WH_LOG.shift();
   }
   function whReport() {
-    return "Speech Partner v" + APP_VERSION + "\n" + navigator.userAgent + "\n" +
+    return "SpeechPartner v" + APP_VERSION + "\n" + navigator.userAgent + "\n" +
       "standalone: " + (!!navigator.standalone) + " | model: " + store.get("whModel", "-") + " | ready: " + WH.ready + "\n" +
       (WH_LOG.length ? WH_LOG.join("\n") : "(nog geen stappen)");
   }
@@ -1983,7 +1983,7 @@
 
   // ---------- Info: uitleg over de app, de maker en de bronnen ----------
   var INFO_SECTIONS = [
-    { t: m("Wat is Speech Partner.Spanish?", "What is Speech Partner.Spanish?", "Was ist Speech Partner.Spanish?", "Qu'est-ce que Speech Partner.Spanish ?"),
+    { t: m("Wat is SpeechPartner.Spanish?", "What is SpeechPartner.Spanish?", "Was ist SpeechPartner.Spanish?", "Qu'est-ce que SpeechPartner.Spanish ?"),
       b: m("Een gratis hulpmiddel om Spaans te spreken, ook als je de taal nog niet goed kent. Je vindt er kant-en-klare zinnen, uitleg over de grammatica en een gesprekstrainer. De app werkt op je telefoon, zonder account en zonder server.",
            "A free tool to speak Spanish, even if you don't know the language well yet. It has ready-made sentences, grammar explanations and a conversation trainer. The app runs on your phone, without an account and without a server.",
            "Ein kostenloses Hilfsmittel, um Spanisch zu sprechen, auch wenn du die Sprache noch nicht gut kennst. Es gibt fertige Sätze, Grammatikerklärungen und einen Gesprächstrainer. Die App läuft auf deinem Telefon, ohne Konto und ohne Server.",
@@ -2004,10 +2004,10 @@
            "Erkennt die App einen Satz oder ein Wort nicht, kannst du es ihr selbst beibringen. Tu das nur, wenn du die Bedeutung sicher kennst; dafür gibt es einen Prüfknopf (nachfragen oder online prüfen). Was du beibringst, bleibt auf deinem eigenen Gerät.",
            "Si l'application ne reconnaît pas une phrase ou un mot, tu peux le lui apprendre. Fais-le seulement si tu es sûr du sens ; un bouton de vérification t'aide (demander ou vérifier en ligne). Ce que tu enseignes reste sur ton propre appareil.") },
     { t: m("Over de maker", "About the maker", "Über den Entwickler", "À propos de l'auteur"),
-      b: m("Speech Partner.Spanish is ontworpen en gemaakt door Abel, in samenwerking met Claude (Anthropic). Abel bedacht de opzet, de inhoud en de werkwijze; Claude heeft de code en de teksten uitgewerkt en getest.",
-           "Speech Partner.Spanish was designed and created by Abel, in collaboration with Claude (Anthropic). Abel devised the concept, content and approach; Claude developed and tested the code and texts.",
-           "Speech Partner.Spanish wurde von Abel entworfen und erstellt, in Zusammenarbeit mit Claude (Anthropic). Abel hat das Konzept, den Inhalt und die Herangehensweise entwickelt; Claude hat den Code und die Texte ausgearbeitet und getestet.",
-           "Speech Partner.Spanish a été conçu et créé par Abel, en collaboration avec Claude (Anthropic). Abel a imaginé le concept, le contenu et la démarche ; Claude a développé et testé le code et les textes.") },
+      b: m("SpeechPartner.Spanish is ontworpen en gemaakt door Abel, in samenwerking met Claude (Anthropic). Abel bedacht de opzet, de inhoud en de werkwijze; Claude heeft de code en de teksten uitgewerkt en getest.",
+           "SpeechPartner.Spanish was designed and created by Abel, in collaboration with Claude (Anthropic). Abel devised the concept, content and approach; Claude developed and tested the code and texts.",
+           "SpeechPartner.Spanish wurde von Abel entworfen und erstellt, in Zusammenarbeit mit Claude (Anthropic). Abel hat das Konzept, den Inhalt und die Herangehensweise entwickelt; Claude hat den Code und die Texte ausgearbeitet und getestet.",
+           "SpeechPartner.Spanish a été conçu et créé par Abel, en collaboration avec Claude (Anthropic). Abel a imaginé le concept, le contenu et la démarche ; Claude a développé et testé le code et les textes.") },
     { t: m("Bronnen en licenties", "Sources and licences", "Quellen und Lizenzen", "Sources et licences"),
       b: m("Woordenlijst: Wiktionary, CC BY-SA 4.0, via kaikki.org. Spraakherkenning: Whisper (OpenAI, MIT-licentie) via Hugging Face en Transformers.js (Apache 2.0). De app zelf is gratis; er wordt niets verkocht.",
            "Word list: Wiktionary, CC BY-SA 4.0, via kaikki.org. Speech recognition: Whisper (OpenAI, MIT licence) via Hugging Face and Transformers.js (Apache 2.0). The app itself is free; nothing is sold.",
@@ -2245,7 +2245,7 @@
       w.appendChild(c);
     });
     var head = el("div", "card");
-    head.appendChild(el("div", "sec-title", "Speech Partner.Spanish"));
+    head.appendChild(el("div", "sec-title", "SpeechPartner.Spanish"));
     head.appendChild(el("div", "nl", T("Versie") + " " + APP_VERSION + " · " + T("Gemaakt door Abel, met Claude")));
     w.appendChild(head);
     return w;
@@ -2855,7 +2855,7 @@
     document.body.classList.toggle("cafe", eff === "cafe");
     // Het café-thema heet in de banner "Business Café"
     var ttlEl = document.querySelector("header.top h1");
-    if (ttlEl) ttlEl.textContent = eff === "cafe" ? "Business Café" : T("Speech Partner.Spanish");
+    if (ttlEl) ttlEl.textContent = eff === "cafe" ? "Business Café" : T("SpeechPartner.Spanish");
     ["ijs", "jungle", "ruimte", "donker"].forEach(function (t) { document.body.classList.toggle("th-" + t, eff === t); });
     if (typeof ACHTERGROND !== "undefined") ACHTERGROND.set(eff === "standaard" ? "standaard-" + lang : eff);
     renderLogo();
