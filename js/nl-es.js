@@ -519,11 +519,39 @@ var NL_ES = (function () {
   }
 
   // Object en bijwoorden/voorzetsels. Geeft "clitic|rest" terug (clitic = objectvoornaamwoord voor het werkwoord)
+  // Tijden in het Nederlands naar Spaans: "half twaalf" = 11:30 = "las once y media";
+  // "kwart over drie" = "las tres y cuarto"; "kwart voor drie" = "las dos menos cuarto"; "vijf over tien" = "las diez y cinco".
+  var NUMV = { een: 1, "één": 1, twee: 2, drie: 3, vier: 4, vijf: 5, zes: 6, zeven: 7, acht: 8, negen: 9, tien: 10, elf: 11, twaalf: 12 };
+  var ESNUM = ["", "una", "dos", "tres", "cuatro", "cinco", "seis", "siete", "ocho", "nueve", "diez", "once", "doce"];
+  function hourEs(h) {
+    h = ((h + 11) % 12) + 1;           // 0 -> 12, 13 -> 1
+    return h === 1 ? "la una" : "las " + ESNUM[h];
+  }
+  // Geeft {es, n} terug als er op positie i een tijd staat, anders null. n = aantal woorden dat verwerkt is.
+  function timeEs(words, i) {
+    var at = words[i] === "om" ? 1 : 0, j = i + at, t = words[j], pre = at ? "a " : "";
+    if (t === undefined) return null;
+    if (t === "half" && NUMV[words[j + 1]] !== undefined) return { es: pre + hourEs(NUMV[words[j + 1]] - 1) + " y media", n: at + 2 };
+    if (t === "kwart" && NUMV[words[j + 2]] !== undefined) {
+      if (words[j + 1] === "over") return { es: pre + hourEs(NUMV[words[j + 2]]) + " y cuarto", n: at + 3 };
+      if (words[j + 1] === "voor") return { es: pre + hourEs(NUMV[words[j + 2]] - 1) + " menos cuarto", n: at + 3 };
+    }
+    if ((t === "vijf" || t === "tien") && (words[j + 1] === "over" || words[j + 1] === "voor") && NUMV[words[j + 2]] !== undefined) {
+      var mins = t === "vijf" ? "cinco" : "diez";
+      if (words[j + 1] === "over") return { es: pre + hourEs(NUMV[words[j + 2]]) + " y " + mins, n: at + 3 };
+      return { es: pre + hourEs(NUMV[words[j + 2]] - 1) + " menos " + mins, n: at + 3 };
+    }
+    if (NUMV[t] !== undefined && words[j + 1] === "uur") return { es: pre + hourEs(NUMV[t]), n: at + 2 };
+    return null;
+  }
+
   function clauseTail(words, dict, withClitic) {
     var out = [], clit = "";
     var i = 0;
     while (i < words.length) {
       var w = words[i];
+      var tm = (w === "om" || w === "half" || w === "kwart" || w === "vijf" || w === "tien") ? timeEs(words, i) : null;
+      if (tm) { out.push(tm.es); i += tm.n; continue; }
       if (w === "om" && NUM[words[i + 1]] && words[i + 2] === "uur") { out.push("a las " + NUM[words[i + 1]]); i += 3; continue; }
       if (w === "veel" || w === "weinig") {
         var qn = nounEs(words[i + 1] || "", dict);
@@ -652,5 +680,14 @@ var NL_ES = (function () {
   // estar, persoon 0..5 (yo, tú, él, nosotros, ustedes, ellos)
   var ESTAR_FORM = ["estoy", "estás", "está", "estamos", "están", "están"];
 
-  return { translate: translate };
+  // Vertrekken: "de bus gaat om half twaalf" betekent "sale a las once y media", niet "va a".
+  var VERTREK_NL = /\b(bus|bussen|trein|treinen|tram|metro|vliegtuig|vliegtuigen|boot|veerboot)\b/;
+  function translateVertrek(text, dict, gen) {
+    var out = translate(text, dict, gen);
+    if (out && VERTREK_NL.test(lower(String(text))) && /\bgaat om\b/.test(lower(String(text))) && /^(El|La) [^ ]+ va a /.test(out)) {
+      out = out.replace(/^((El|La) [^ ]+) va a /, "$1 sale a ");
+    }
+    return out;
+  }
+  return { translate: translateVertrek };
 })();

@@ -40,7 +40,7 @@ var PHRASES = {
   "Afronden": [
     p("Tengo que irme.", "Ik moet gaan.", "I have to go.", "Ich muss gehen.", "Je dois y aller."),
     p("Me alegro de verte.", "Leuk je gezien te hebben.", "Nice to have seen you.", "Schön, dich gesehen zu haben.", "Ravi de t'avoir vu."),
-    p("Hablamos luego.", "Praten we later.", "Let's talk later.", "Wir sprechen später.", "On se parle plus tard."),
+    p("Hablamos luego.", "We praten later.", "Let's talk later.", "Wir sprechen später.", "On se parle plus tard."),
     p("Nos vemos.", "Tot ziens.", "See you.", "Bis bald.", "À bientôt.")
   ]
 };

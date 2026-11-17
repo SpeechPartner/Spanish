@@ -18,6 +18,7 @@ var ZINI = (function () {
   Object.keys(NOUN).forEach(function (k) { var e = NOUN[k]; addN(k, k, e.esPlOnly); if (!e.esPlOnly) addN(C.esPlural(k), k, true); });
   function esNoun(tok) {
     var t = fold(tok);
+    if (has(ESPRON, t)) return null;   // voornaamwoorden (él, ella, …) zijn nooit een zelfstandig naamwoord
     if (has(ESN, t)) return ESN[t];
     // woorden uit de woordenlijsten: alleen als er een vertaling in het Engels, Duits of Frans is
     var cand = [[tok, false]];
@@ -199,7 +200,8 @@ var ZINI = (function () {
     }
     // onderwerp vooraan
     var subj = null;
-    if (has(ESPRON, T[i]) && !(T[i] === "el" && esNoun(O[i + 1] || ""))) { var sp = ESPRON[T[i]]; subj = subjOf(sp[0], sp[1], sp[2], true); i++; }
+    // "él" (met accent) is altijd het voornaamwoord; "el" zonder accent kan het lidwoord zijn
+    if (has(ESPRON, T[i]) && !(T[i] === "el" && O[i] === "el" && esNoun(O[i + 1] || ""))) { var sp = ESPRON[T[i]]; subj = subjOf(sp[0], sp[1], sp[2], true); i++; }
     else if (c.type !== "wh" || true) {
       var sn = esNP(T, O, i);
       if (sn) { var vj = sn.end; if (T[vj] === "no") vj++; while (/^(me|te|lo|la|nos|os|los|las|le|les|se)$/.test(T[vj] || "")) vj++; if (esVerbAt(O, T, vj).length || /^(hay|he|has|ha|hemos|han)$/.test(T[vj] || "")) { subj = { p: sn.np.pl ? 5 : 2, np: sn.np }; i = sn.end; } }
@@ -236,7 +238,7 @@ var ZINI = (function () {
     if (subj && subj.np) { if (subj.np.pl ? p !== 5 : p !== 2) return null; }
     else if (subj) { if (subj.p !== p && !(subj.formal && ((subj.p === 2 && p === 2) || (subj.p === 5 && p === 5)))) return null; }
     else subj = subjOf(p, null, false, false);
-    c.s = subj; c.v = vinfo.v; c.t = vinfo.tense === "pret" ? "past" : (vinfo.tense === "imp" ? "impf" : vinfo.tense);
+    c.s = subj; c.v = vinfo.v; if (c.v === "salir" && subj && subj.np && subj.np.k === "n" && TRANSPORT_N[subj.np.n]) c.v = "partir"; c.t = vinfo.tense === "pret" ? "past" : (vinfo.tense === "imp" ? "impf" : vinfo.tense);
     // wederkerend werkwoord met het voornaamwoord
     var refl = C.esIsRefl(c.v);
     var reflWord = C.REFL_ES[p];
@@ -417,6 +419,8 @@ var ZINI = (function () {
       var t = T[i];
       var adv = esAdvAt(T, i);
       if (adv && !(t === "manana" && /^(por)$/.test(T[i - 1] || "")) && !(t === "cerca" && T[i + 1] === "de") && !(t === "lejos" && T[i + 1] === "de")) { c.advs.push(adv.k); i = adv.end; continue; }
+      // Klokttijd met minuten: "a las once y media", "a las doce menos cuarto", "a la una y cinco"
+      if (t === "a") { var ck = esClock(T, i); if (ck && ck.min) { c.hour = ck.hour; c.min = ck.min; i += ck.n; continue; } }
       if (t === "a" && T[i + 1] === "las" && (has(ESNUM, T[i + 2]) || /^\d+$/.test(T[i + 2] || ""))) { c.hour = has(ESNUM, T[i + 2]) ? ESNUM[T[i + 2]] : +T[i + 2]; i += 3; continue; }
       if (t === "a" && T[i + 1] === "la" && T[i + 2] === "una") { c.hour = 1; i += 3; continue; }
       if ((t === "el" || t === "los") && /^(lunes|martes|miercoles|jueves|viernes|sabados?|domingos?)$/.test(T[i + 1] || "")) {
@@ -483,6 +487,25 @@ var ZINI = (function () {
   var ENPRON = { i: [0], you: [1], he: [2, "m"], she: [2, "f"], it: [2, "n"], we: [3], they: [5] };
   var ENOBJ = { me: [0], you: [1], him: [2, "m"], her: [2, "f"], it: [2, "n"], us: [3], them: [5] };
   var ENPOSS = { my: 0, your: 1, his: 2, her: 2, its: 2, our: 3, their: 5 };
+  // Spaanse klokttijd op positie i (T[i] = "a"). Geeft {hour, min, n} terug; min is 0 bij een hele uur.
+  // "y media" = 30, "y cuarto" = 15, "y cinco/diez/veinte/veinticinco" = 5/10/20/25 na het uur;
+  // "menos cuarto" en "menos cinco/diez/veinte/veinticinco" = het volgende uur (het echte uur is het vorige).
+  // Vervoermiddelen: "sale" betekent bij een bus, trein of vliegtuig "vertrekt" (partir), niet "gaat weg" (salir)
+  var TRANSPORT_N = { "autobús": 1, "autobus": 1, "tren": 1, "avión": 1, "metro": 1, "barco": 1, "tranvía": 1 };
+  var ESCLOCK_MIN = { media: 30, cuarto: 15, cinco: 5, diez: 10, veinte: 20, veinticinco: 25 };
+  function esClock(T, i) {
+    var j = i + 1, h = null;
+    if (T[j] === "las" && (has(ESNUM, T[j + 1]) || /^\d+$/.test(T[j + 1] || ""))) { h = has(ESNUM, T[j + 1]) ? ESNUM[T[j + 1]] : +T[j + 1]; j += 2; }
+    else if (T[j] === "la" && T[j + 1] === "una") { h = 1; j += 2; }
+    else return null;
+    var a = T[j], b = T[j + 1];
+    if (a === "y" && ESCLOCK_MIN[b] !== undefined) return { hour: h, min: ESCLOCK_MIN[b], n: j + 2 - i };
+    if (a === "menos" && ESCLOCK_MIN[b] !== undefined) {
+      var hm = ((h + 10) % 12) + 1;                 // het uur ervoor (1 -> 12)
+      return { hour: hm, min: 60 - ESCLOCK_MIN[b], n: j + 2 - i };
+    }
+    return { hour: h, min: 0, n: j - i };
+  }
   var ENNUM = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12, twenty: 20, thirty: 30, hundred: 100 };
   var ENWH = { what: "que", where: "donde", when: "cuando", how: "como", who: "quien", why: "porque", which: "cual" };
   var ENDAYS = { monday: "lunes", tuesday: "martes", wednesday: "miércoles", thursday: "jueves", friday: "viernes", saturday: "sábado", sunday: "domingo" };
@@ -550,7 +573,7 @@ var ZINI = (function () {
     EN_CONTR.forEach(function (r) { s = s.replace(r[0], r[1]); });
     var T = s.split(/\s+/).filter(Boolean), O = String(raw).replace(/[?!.,]/g, " ").split(/\s+/).filter(Boolean);
     if (!T.length) return null;
-    if ((T[0] === "yes" || T[0] === "no") && T.length > 1 && /^(yes|no)\s*,/i.test(raw)) { c.intj = { es: T[0] === "yes" ? "Sí" : "No" }; T = T.slice(1); O = O.slice(1); }
+    if ((T[0] === "yes" || T[0] === "no") && T.length > 1 && /^(yes|no)\s*,/i.test(raw)) { c.intj = INTJ[T[0] === "yes" ? "si" : "no"]; T = T.slice(1); O = O.slice(1); }
     var i = 0;
     // vraagwoord
     if (has(ENWH, T[0]) || (T[0] === "how" && /^(much|many|old)$/.test(T[1] || ""))) {
@@ -901,7 +924,7 @@ var ZINI = (function () {
     var s = raw.replace(/[?!.,]/g, " ");
     var Ow = s.split(/\s+/).filter(Boolean);
     if (/(^|\s)bitte(\s|$)/i.test(s)) { c.please = true; Ow = Ow.filter(function (w) { return low(w) !== "bitte"; }); }
-    if (Ow.length > 1 && /^(ja|nein)$/i.test(Ow[0]) && /^(ja|nein)\s*,/i.test(raw)) { c.intj = { es: /^j/i.test(Ow[0]) ? "Sí" : "No" }; Ow = Ow.slice(1); }
+    if (Ow.length > 1 && /^(ja|nein)$/i.test(Ow[0]) && /^(ja|nein)\s*,/i.test(raw)) { c.intj = INTJ[/^j/i.test(Ow[0]) ? "si" : "no"]; Ow = Ow.slice(1); }
     var O = Ow, T = Ow.map(low);
     if (!T.length) return null;
     // "mir ist kalt"
@@ -1081,7 +1104,7 @@ var ZINI = (function () {
       if (!c.o) {
         var np = deNP(T, O, i, { bare: true });
         if (np) {
-          if (np.np.det === "neg") { c.neg = true; np.np.det = np.np.pl ? "none" : "ind"; }
+          if (np.np.det === "neg") { c.neg = true; np.np.det = (np.np.pl || (NOUN[np.np.n] && NOUN[np.np.n].enMass)) ? "none" : "ind"; }
           c.o = np.np; i = np.end;
           while (T[i] === "und" && T[i + 1] !== undefined) { var n2 = deNP(T, O, i + 1, { bare: true }); if (!n2 || n2.np.det === "neg") return null; c.o = coord(c.o, n2.np); i = n2.end; }
           continue;
@@ -1271,7 +1294,7 @@ var ZINI = (function () {
     var Oraw = raw.replace(/[?!.,]/g, " ").split(/\s+/).filter(Boolean);
     var T = frTokens(raw);
     if (!T.length) return null;
-    if (/^(oui|non)\s*,/i.test(raw) && T.length > 1) { c.intj = { es: T[0] === "oui" ? "Sí" : "No" }; T = T.slice(1); Oraw = Oraw.slice(1); }
+    if (/^(oui|non)\s*,/i.test(raw) && T.length > 1) { c.intj = INTJ[T[0] === "oui" ? "si" : "no"]; T = T.slice(1); Oraw = Oraw.slice(1); }
     var i = 0;
     if (T[0] === "_ecq_") { c.type = "yn"; i = 1; }
     if (T[i] === "il" && T[i + 1] === "y" && /^(a|avait)$/.test(T[i + 2] || "") || (T[i] === "il" && T[i + 1] === "ne" && T[i + 2] === "y")) {
@@ -1520,5 +1543,67 @@ var ZIN = (function () {
     }
     try { return ZINO.es(c, gen === "f" ? "f" : "m") || null; } catch (e) { return null; }
   }
-  return { fromEs: fromEs, toEs: toEs };
+  // Vaste zin in de gevraagde taal
+  function fixedOut(f, to, gen, isQ) {
+    if (!f) return null;
+    if (to !== "es") return f[to] || null;
+    var es = f.es;
+    if (gen === "f") es = es.replace(/^encantado$/, "encantada").replace(/^bienvenido$/, "bienvenida");
+    var q = isQ || /\?\s*$/.test(f.en || "");
+    es = ZINC.cap(es).replace(/ por favor$/, ", por favor");
+    return q ? "¿" + es + "?" : es + ".";
+  }
+  // Eigen geslacht: "ik ben leraar" wordt bij een vrouw "lerares" (waar de taal dat onderscheid kent)
+  var FEM_N = { profesor: "profesora", "médico": "médica", camarero: "camarera", enfermero: "enfermera", jefe: "jefa", amigo: "amiga", vecino: "vecina", "compañero": "compañera" };
+  function ownGender(c, gen) {
+    if (!c.s || c.s.np || c.s.p !== 0) return;
+    if (!c.s.g) c.s.g = gen === "f" ? "f" : "m";
+    if (c.s.g === "f" && c.pred && c.pred.t === "np" && c.pred.np.k === "n" && (c.pred.np.det === "none" || c.pred.np.det === "ind") && FEM_N[c.pred.np.n]) c.pred.np.n = FEM_N[c.pred.np.n];
+  }
+  // Algemeen: van elke taal naar elke taal (nl, en, de, fr, es). Nederlands loopt via het Spaans,
+  // met de aparte modules NL_ES en ES_NL. Geeft null als een stap niet zeker is.
+  function translate(text, from, to, gen) {
+    if (from === to) return null;
+    gen = gen === "f" ? "f" : "m";
+    var isQ = /\?\s*$/.test(String(text).trim());
+    if (from === "nl") {
+      var nk = ZINC.NLIDX[ZINC.normKey(text)];
+      if (nk) { var fn = ZINC.FIXED[ZINC.fold(nk)] || ZINC.WEATHER[ZINC.fold(nk)]; return fixedOut(fn, to, gen, isQ); }
+      if (typeof NL_ES === "undefined") return null;
+      var es0 = null;
+      try { es0 = NL_ES.translate(text, DICTS.nl, gen); } catch (e) { es0 = null; }
+      if (!es0) return null;
+      if (to === "es") return es0;
+      text = es0; from = "es";
+    }
+    var c;
+    try { c = ZINI[from](text); } catch (e) { return null; }
+    if (!c) return null;
+    // beroep als gezegde: geen lidwoord in het Duits, Frans en Spaans, en de vrouwelijke vorm bij een vrouw
+    if (c.pred && c.pred.t === "np" && c.pred.np.k === "n" && c.pred.np.det === "ind" && !c.pred.np.pl && !(c.pred.np.adjs || []).length && (ZINC.PROF[c.pred.np.n] || FEM_N[c.pred.np.n] && ZINC.PROF[FEM_N[c.pred.np.n]])) {
+      c.pred.np.det = "none";
+      var sf = c.s && (c.s.np ? (c.s.np.k === "n" && ZINC.PERSON[c.s.np.n] && ZINC.esFem(c.s.np.n)) : (c.s.g === "f" && c.s.p !== 0));
+      if (sf && FEM_N[c.pred.np.n]) c.pred.np.n = FEM_N[c.pred.np.n];
+    }
+    if ((c.fixed || c.fixedEs) && to === "nl") {
+      var f0 = c.fixed || ZINC.FIXED[ZINC.fold(c.fixedEs)] || ZINC.WEATHER[ZINC.fold(c.fixedEs)];
+      if (f0 && f0.nl) return f0.nl;
+    }
+    var viaEs = to === "nl", out = null, target = viaEs ? "es" : to;
+    if (viaEs && from === "es") out = String(text).trim();
+    else if (c.fixed || c.fixedEs) {
+      var f = c.fixed || ZINC.FIXED[ZINC.fold(c.fixedEs)] || ZINC.WEATHER[ZINC.fold(c.fixedEs)];
+      out = fixedOut(f, target, gen, isQ);
+    } else {
+      ownGender(c, gen);
+      try { out = target === "es" ? ZINO.es(c, gen) : ZINO[target](c); } catch (e) { out = null; }
+    }
+    if (!out) return null;
+    if (!viaEs) return out;
+    if (typeof ES_NL === "undefined") return null;
+    try {
+      return ES_NL.translate(out, REVS.nl, function (w) { return (typeof GRAM !== "undefined") ? GRAM.gen(w, "nl") : null; }) || null;
+    } catch (e) { return null; }
+  }
+  return { fromEs: fromEs, toEs: toEs, translate: translate };
 })();

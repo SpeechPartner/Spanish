@@ -171,13 +171,13 @@ var ZINC = (function () {
   var WEATHER = {}, WIDX = { en: {}, de: {}, fr: {} };
   L.WEATHER.forEach(function (line) {
     var f = line.split("|"), k = fold(f[0]);
-    if (!has(WEATHER, k)) WEATHER[k] = { es: f[0], en: f[1], de: f[2], fr: f[3] };
+    if (!has(WEATHER, k)) WEATHER[k] = { es: f[0], en: f[1], de: f[2], fr: f[3], nl: (L.FIXED_NL || {})[f[0]] };
     [["en", 1], ["de", 2], ["fr", 3]].forEach(function (p) { var kk = p[0] === "en" ? enKey(f[p[1]]) : normKey(f[p[1]]); if (!has(WIDX[p[0]], kk)) WIDX[p[0]][kk] = f[0]; });
   });
   var FIXED = {}, FIDX = { en: {}, de: {}, fr: {} };
   L.FIXED.forEach(function (line) {
     var f = line.split("|"), k = fold(f[0]);
-    if (!has(FIXED, k)) FIXED[k] = { es: f[0], en: f[1], de: f[2], fr: f[3] };
+    if (!has(FIXED, k)) FIXED[k] = { es: f[0], en: f[1], de: f[2], fr: f[3], nl: (L.FIXED_NL || {})[f[0]] };
     [["en", 1], ["de", 2], ["fr", 3]].forEach(function (p) { var kk = p[0] === "en" ? enKey(f[p[1]]) : normKey(f[p[1]]); if (!has(FIDX[p[0]], kk)) FIDX[p[0]][kk] = f[0]; });
   });
   function enKey(s) {
@@ -186,6 +186,8 @@ var ZINC = (function () {
      [/\bcan't\b/g, "can not"], [/\bwon't\b/g, "will not"], [/\b(\w+)n't\b/g, "$1 not"], [/\b(\w+)'ll\b/g, "$1 will"], [/\b(\w+)'d\b/g, "$1 would"]].forEach(function (r) { k = k.replace(r[0], r[1]); });
     return k;
   }
+  var NLIDX = {};
+  Object.keys(L.FIXED_NL || {}).forEach(function (k) { var kk = fold(L.FIXED_NL[k]).replace(/[?!.,;:]/g, " ").replace(/\s+/g, " ").trim(); if (!has(NLIDX, kk)) NLIDX[kk] = k; });
   function normKey(s) { return fold(s).replace(/[’']/g, "'").replace(/[¿¡?!.,;:]/g, " ").replace(/\s+/g, " ").trim(); }
 
   // ---------------- Werkwoorden ----------------
@@ -323,7 +325,7 @@ var ZINC = (function () {
     esFem: esFem, esPlural: esPlural, esArt: esArt, esAdj: esAdj, STRESSED_A: STRESSED_A,
     ADJ: ADJ, AIDX: AIDX, SER_ESTAR: SER_ESTAR, frAdjPl: frAdjPl, deAdjStem: deAdjStem,
     NAT: NAT, NATIDX: NATIDX, LANG: LANG, LANGIDX: LANGIDX, PLACE: PLACE, PIDX: PIDX,
-    ADV: ADV, ADVIDX: ADVIDX, TENER: TENER, TIDX: TIDX, WEATHER: WEATHER, WIDX: WIDX, FIXED: FIXED, FIDX: FIDX,
+    NLIDX: NLIDX, ADV: ADV, ADVIDX: ADVIDX, TENER: TENER, TIDX: TIDX, WEATHER: WEATHER, WIDX: WIDX, FIXED: FIXED, FIDX: FIDX,
     VERB: VERB, esForm: esForm, esGer: esGer, esPP: esPP, HABER: HABER, REFL_ES: REFL_ES, esIsRefl: esIsRefl, esBase: esBase,
     ESF: ESF, ESFF: ESFF, GERIDX: GERIDX, PPIDX: PPIDX, INFIDX: INFIDX,
     enS3: enS3, enPast: enPast, enPPf: enPPf, enIng: enIng,

@@ -13,12 +13,12 @@ Een gratis, offline werkende app (PWA) om Spaans te gebruiken in gesprekken. Gee
 
 1. Maak een gratis account op https://github.com (als je er nog geen hebt).
 2. Klik rechtsboven op **+** en kies **New repository**.
-3. Geef een naam, bijvoorbeeld `gespreksgids-spaans`. Kies **Public**. Klik op **Create repository**.
+3. Geef een naam, bijvoorbeeld `Spanish`. Kies **Public**. Klik op **Create repository**.
 4. Klik op **uploading an existing file**. Sleep alle bestanden en mappen uit deze map erin (ook `css`, `js` en `icons`). Let op: upload de inhoud van de map, niet de map zelf.
 5. Klik op **Commit changes**.
 6. Ga naar **Settings** > **Pages**.
 7. Bij **Build and deployment**, kies bij *Source* **Deploy from a branch**. Kies bij *Branch* **main** en map **/ (root)**. Klik op **Save**.
-8. Wacht 1 tot 2 minuten. Ververs de pagina. Bovenaan staat nu je link, in de vorm `https://JOUWNAAM.github.io/gespreksgids-spaans/`.
+8. Wacht 1 tot 2 minuten. Ververs de pagina. Bovenaan staat nu je link, in de vorm `https://speechpartner.github.io/Spanish/`.
 
 Dit is de ene link die je met vrienden deelt.
 

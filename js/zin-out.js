@@ -46,6 +46,17 @@ var ZINO = (function () {
   }
   function enPoss(p, g, formal) { if (formal) return "your"; if (p === 2) return g ? en3(g)[2] : null; return EN_POSS[p]; }
   function enNum(n) { return n <= 12 ? EN_NUM[n] : String(n); }
+  // Klok met minuten (Engels): "at half past eleven", "at quarter to twelve", "at five past eleven"
+  var EN_MIN = { 5: "five", 10: "ten", 20: "twenty", 25: "twenty-five" };
+  function enTime(h, m) {
+    var nx = h % 12 + 1;
+    if (!m) return "at " + enNum(h) + " o'clock";
+    if (m === 30) return "at half past " + enNum(h);
+    if (m === 15) return "at quarter past " + enNum(h);
+    if (m === 45) return "at quarter to " + enNum(nx);
+    if (m < 30) return "at " + EN_MIN[m] + " past " + enNum(h);
+    return "at " + EN_MIN[60 - m] + " to " + enNum(nx);
+  }
   // role: subj/obj; generic = bij "like": lidwoord weg bij ontelbaar of meervoud
   function enNP(np, role, generic, anyCtx) {
     if (!np) return null;
@@ -123,7 +134,7 @@ var ZINO = (function () {
     var tail = [];
     var obl = enObl(c);
     if (obl === null) return null;
-    if (c.hour) tail.push("at " + enNum(c.hour) + " o'clock");
+    if (c.hour) tail.push(enTime(c.hour, c.min || 0));
     if (c.day) tail.push("on " + nounEntry(c.day.key).en + (c.day.pl ? "s" : ""));
     var endAdv = [].concat(dAdv, obl, pAdv, tail, tAdv);
     if (too) endAdv.push(neg ? "either" : "too");
@@ -386,6 +397,20 @@ var ZINO = (function () {
   var DE_WEAK = { Student: "Studenten", Junge: "Jungen", Kollege: "Kollegen", Nachbar: "Nachbarn", Herr: "Herrn", Mensch: "Menschen", Name: "Namen", Franzose: "Franzosen", Kunde: "Kunden" };
   var DE_NUM = ["null", "ein", "zwei", "drei", "vier", "fünf", "sechs", "sieben", "acht", "neun", "zehn", "elf", "zwölf"];
   function deNumW(n) { return n <= 12 ? DE_NUM[n] : String(n); }
+  // Klok met minuten (Duits): "um halb zwölf", "um Viertel nach elf", "um fünf vor zwölf"
+  var DE_MIN = { 5: "fünf", 10: "zehn", 20: "zwanzig" };
+  function deHr(n) { return deNumW(n).replace(/^ein$/, "eins"); }
+  function deTime(h, m) {
+    var nx = h % 12 + 1;
+    if (!m) return "um " + deHr(h) + " Uhr";
+    if (m === 30) return "um halb " + deHr(nx);
+    if (m === 15) return "um Viertel nach " + deHr(h);
+    if (m === 45) return "um Viertel vor " + deHr(nx);
+    if (m === 25) return "um fünf vor halb " + deHr(nx);
+    if (m === 35) return "um fünf nach halb " + deHr(nx);
+    if (m < 30) return "um " + DE_MIN[m] + " nach " + deHr(h);
+    return "um " + DE_MIN[60 - m] + " vor " + deHr(nx);
+  }
   function dePron(s, cas) {
     if (s.amb && s.g === "m") return null;
     if (s.formal) return cas === "nom" || cas === "acc" ? "Sie" : "Ihnen";
@@ -485,7 +510,9 @@ var ZINO = (function () {
         var map = { con: ["mit", "dat"], para: ["für", "acc"], sin: ["ohne", "acc"], de: ["aus", "dat"], sobre: ["über", "acc"], hasta: ["bis", "acc"] };
         var m = map[pp.prep]; if (!m) return null;
         if (pp.prep === "de" && np.k === "n" && isPerson(np.n)) m = ["von", "dat"];
-        r = dePP(m[0], np, m[1]);
+        // "de casa" zonder lidwoord: "aus dem Haus" (niet "aus Haus")
+        if (pp.prep === "de" && np.k === "n" && np.n === "casa" && np.det === "none") r = "aus dem Haus";
+        else r = dePP(m[0], np, m[1]);
       }
       if (!r) return null;
       out.push(r);
@@ -514,7 +541,7 @@ var ZINO = (function () {
       if (k === "también") { auch = true; return; }
       if (a.k === "t") tAdv.push(a.de); else if (a.k === "f") fAdv.push(a.de); else if (a.k === "p") pAdv.push(a.de); else dAdv.push(a.de);
     });
-    if (c.hour) tAdv.push("um " + deNumW(c.hour).replace(/^ein$/, "eins") + " Uhr");
+    if (c.hour) tAdv.push(deTime(c.hour, c.min || 0));
     if (c.day) { var de = nounEntry(c.day.key).de; tAdv.push(c.day.pl ? low(de) + "s" : "am " + de); }
     var obl = deObl(c); if (obl === null) return null;
     var negW = never ? "nie" : (neg ? "nicht" : null);
@@ -643,6 +670,8 @@ var ZINO = (function () {
     if (dv.tail) part.tail = dv.tail;
     // "leben" zonder plaats, "wohnen" met plaats
     if (c.v === "vivir" && !obl.length && !(c.type === "wh" && c.wh === "donde")) dv = { inf: "leben" };
+    // "salir de casa": de voorzetselgroep bevat al "aus", dus geen losse afscheidbare "aus" erbij
+    if (c.v === "salir" && obl.some(function (x) { return /^aus /.test(x); })) dv = Object.assign({}, dv, { sep: null });
     return deClause(c, subj, pp, dv, part, negW, tAdv, fAdv, dAdv, pAdv, obl, auch);
   }
   // Zinsbouw: Vorfeld + finiet werkwoord + middenveld + eindveld
@@ -716,6 +745,18 @@ var ZINO = (function () {
   var FR_REFL = ["me", "te", "se", "nous", "vous", "se"];
   var FR_POSS = [["mon", "ma", "mes"], ["ton", "ta", "tes"], ["son", "sa", "ses"], ["notre", "notre", "nos"], ["votre", "votre", "vos"], ["leur", "leur", "leurs"]];
   var FR_NUM = ["zéro", "un", "deux", "trois", "quatre", "cinq", "six", "sept", "huit", "neuf", "dix", "onze", "douze"];
+  // Klok met minuten (Frans): "à onze heures et demie", "à onze heures et quart", "à midi moins le quart"
+  var FR_MIN = { 5: "cinq", 10: "dix", 20: "vingt", 25: "vingt-cinq" };
+  function frHrs(n) { return n === 1 ? "une heure" : (n === 12 ? "midi" : FR_NUM[n] + " heures"); }
+  function frTime(h, m) {
+    var nx = h % 12 + 1;
+    if (!m) return "à " + (h === 1 ? "une heure" : (h <= 12 ? FR_NUM[h] : h) + " heures");
+    if (m === 30) return "à " + frHrs(h) + " et demie";
+    if (m === 15) return "à " + frHrs(h) + " et quart";
+    if (m === 45) return "à " + frHrs(nx) + " moins le quart";
+    if (m < 30) return "à " + frHrs(h) + " " + FR_MIN[m];
+    return "à " + frHrs(nx) + " moins " + FR_MIN[60 - m];
+  }
   function frV(w) { return /^[aeiouyhàâéèêëîïôöùûœ]/i.test(w); }
   function frSubj(s) {
     if (s.formal) return "vous";
@@ -849,7 +890,7 @@ var ZINO = (function () {
       if (a.k === "t") tAdv.push(a.fr); else if (a.k === "p") pAdv.push(a.fr); else vAdv.push(a.fr);
     });
     if (aussi) { if (neg) return null; vAdv.push("aussi"); }
-    if (c.hour) tAdv.push("à " + (c.hour === 1 ? "une heure" : (c.hour <= 12 ? FR_NUM[c.hour] : c.hour) + " heures"));
+    if (c.hour) tAdv.push(frTime(c.hour, c.min || 0));
     if (c.day) { var dn = nounEntry(c.day.key).fr; tAdv.push(c.day.pl ? "le " + dn : dn); }
     var obl = frObl(c); if (obl === null) return null;
 
@@ -1052,6 +1093,18 @@ var ZINO = (function () {
   var ES_OBJ = ["me", "te", null, "nos", "os", null];
   var ES_POSS = ["mi", "tu", "su", "nuestro", "vuestro", "su"];
   var ES_NUM = ["cero", "un", "dos", "tres", "cuatro", "cinco", "seis", "siete", "ocho", "nueve", "diez", "once", "doce"];
+  // Klok met minuten (Spaans): "a las once y media", "a las doce menos cuarto", "a la una y cinco"
+  var ES_MIN = { 5: "cinco", 10: "diez", 20: "veinte", 25: "veinticinco" };
+  function esHrs(n) { return n === 1 ? "la una" : "las " + ES_NUM[n]; }
+  function esTime(h, m) {
+    var nx = h % 12 + 1;
+    if (!m) return h === 1 ? "a la una" : "a las " + (h <= 12 ? ES_NUM[h] : h);
+    if (m === 30) return "a " + esHrs(h) + " y media";
+    if (m === 15) return "a " + esHrs(h) + " y cuarto";
+    if (m === 45) return "a " + esHrs(nx) + " menos cuarto";
+    if (m < 30) return "a " + esHrs(h) + " y " + ES_MIN[m];
+    return "a " + esHrs(nx) + " menos " + ES_MIN[60 - m];
+  }
   function esNP(np, opts) {
     opts = opts || {};
     if (!np) return null;
@@ -1124,7 +1177,7 @@ var ZINO = (function () {
     var neg = c.neg, never = c.never;
     var advEnd = [], advFront = [];
     (c.advs || []).forEach(function (k) { if (k === "siempre" || k === "a veces" || k === "también" && false) advFront.push(k); else advEnd.push(k); });
-    if (c.hour) advEnd.push(c.hour === 1 ? "a la una" : "a las " + (c.hour <= 12 ? ES_NUM[c.hour] : c.hour));
+    if (c.hour) advEnd.push(esTime(c.hour, c.min || 0));
     if (c.day) advEnd.push(c.day.pl ? "los " + C.esPlural(c.day.key) : "el " + c.day.key);
     var obl = esObl(c); if (obl === null) return null;
     var tense = esTense(c);

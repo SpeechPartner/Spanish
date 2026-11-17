@@ -1454,7 +1454,43 @@
     };
   }
 
+  // Foutmarge voor spraak en typefouten: een woord dat niet in de woordenlijst van de doeltaal staat,
+  // wordt vervangen door het dichtstbijzijnde bekende woord (1 letter fout bij 4+ letters, 2 bij 8+ letters).
+  // Woorden die wel bekend zijn, blijven ongewijzigd, dus "twaalf" wordt nooit "twee".
+  var HEARD_VOCAB = {};
+  function heardVocab(lang) {
+    if (!HEARD_VOCAB[lang]) {
+      var src = REVS[lang] || {};   // sleutels = woorden in de taal van de gesprekspartner
+      var byLen = {};
+      Object.keys(src).forEach(function (w) {
+        var n = norm(w).toLowerCase();
+        if (n.indexOf(" ") >= 0 || n.length < 4) return;
+        (byLen[n.length] = byLen[n.length] || []).push(n);
+      });
+      HEARD_VOCAB[lang] = { known: Object.create(null), byLen: byLen };
+      Object.keys(byLen).forEach(function (k) { byLen[k].forEach(function (n) { HEARD_VOCAB[lang].known[n] = 1; }); });
+    }
+    return HEARD_VOCAB[lang];
+  }
+  function heardFix(text) {
+    var v = heardVocab(lang), out = [];
+    String(text).split(/(\s+|[.,;:!?¿¡])/).forEach(function (tok) {
+      var n = norm(tok).toLowerCase();
+      if (!n || /^\s+$|^[.,;:!?¿¡]$/.test(tok) || n.length < 4 || v.known[n]) { out.push(tok); return; }
+      var thr = n.length >= 8 ? 2 : 1, best = null, bestD = thr + 1, ties = 0;
+      for (var L = n.length - thr; L <= n.length + thr; L++) {
+        (v.byLen[L] || []).forEach(function (c) {
+          var d = lev(n, c);
+          if (d < bestD) { bestD = d; best = c; ties = 1; }
+          else if (d === bestD && c !== best) ties++;
+        });
+      }
+      out.push(best !== null && ties === 1 ? best : tok);
+    });
+    return out.join("");
+  }
   function makeTurn(text) {
+    text = heardFix(text);
     var n = norm(text);
     var genDetected = detectPartnerGender(text);
     if (genDetected) store.set("partnerGenderAuto", genDetected);
@@ -1593,7 +1629,7 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "1.29";
+  var APP_VERSION = "2.1";
   // Versies waarvoor gebruikers de app opnieuw op hun beginscherm moeten zetten (oude icoon weg, nieuwe erop).
   // Bij zo'n update verschijnt eenmalig een melding met uitleg.
   var REINSTALL_VERSIONS = ["1.8"];

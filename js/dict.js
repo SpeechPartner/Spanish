@@ -38,6 +38,9 @@ if (typeof DICT_EXTRA !== "undefined") {
     if (DICT_EXTRA._adj && DICT_EXTRA._adj[l]) DICT_RAW[l] += "|" + DICT_EXTRA._adj[l];
     if (typeof DICT_WIKI !== "undefined" && DICT_WIKI[l]) DICT_RAW[l] += "|" + DICT_WIKI[l];
     if (typeof DICT_PDF !== "undefined" && DICT_PDF[l]) DICT_RAW[l] += "|" + DICT_PDF[l];
+    if (l === "en" && typeof DICT_PDF_ES_EN !== "undefined") DICT_RAW[l] += "|" + DICT_PDF_ES_EN;
+    if (l === "en" && typeof EN_ES_EXTRA !== "undefined") DICT_RAW[l] += "|" + EN_ES_EXTRA;
+    if (l === "nl" && typeof NL_ES_PAIRS !== "undefined") DICT_RAW[l] += "|" + NL_ES_PAIRS;
   });
 }
 var DICTS = {}, PHRASES_BY_LANG = {}, REVS = {};
@@ -54,7 +57,7 @@ var DICTS = {}, PHRASES_BY_LANG = {}, REVS = {};
   REVS[l] = {};
   Object.keys(DICTS[l]).forEach(function (src) {
     var es = DICTS[l][src];
-    if (REVS[l][es] === undefined && es.indexOf(" ") < 0) REVS[l][es] = src;
+    if (REVS[l][es] === undefined) REVS[l][es] = src;
   });
   // Vrouwelijke en meervoudsvormen van bijvoeglijke naamwoorden: elke Spaanse vorm krijgt zijn eigen woord
   if (typeof DICT_EXTRA !== "undefined" && DICT_EXTRA._adjRev && DICT_EXTRA._adjRev[l]) {
@@ -166,4 +169,42 @@ if (typeof DICT_PDF_FIX_EN !== "undefined") {
   }
   if (typeof DICT_PDF_FIX_DE !== "undefined") applyFix("de", DICT_PDF_FIX_DE);
   if (typeof DICT_PDF_FIX_FR !== "undefined") applyFix("fr", DICT_PDF_FIX_FR);
+})();
+
+// Basiswoorden gaan voor: de PDF-correcties hierboven zetten een paar veelgebruikte woorden op een minder gangbare
+// betekenis (werk -> obra, neuf -> nuevo). Voor deze woorden geldt weer de gewone betekenis.
+(function () {
+  var VOORRANG = {
+    nl: "laat=tarde|vakantie=vacaciones|werk=trabajo|kantoor=oficina|computer=ordenador|blij=contento|bang=asustado|gezond=sano|druk=ocupado|rustig=tranquilo|goed=bien|leer=aprendo|rust=descanso|wacht=espero|hoop=espero|partner=pareja|verhaal=historia|plan=plan|keuze=elección",
+    de: "sie=ella|heute=hoy|an=a|weiß=sé|laufen=caminar|arm=pobre|speisekarte=carta",
+    fr: "bois=bebo|marcher=caminar|sentir=sentir|son=su|neuf=nueve"
+  };
+  // Omgekeerde richting (Spaans -> taal): de gewone vertaling van veelgebruikte woorden
+  var VOORRANG_ES = {
+    nl: "día=dag|noche=nacht",
+    en: "casa=house|trabajo=work|noche=night|amiga=friend|bien=well|mal=badly|gracias=thank you",
+    de: "trabajo=Arbeit|malo=schlecht|hacer=machen|noche=Nacht|tienda=Geschäft",
+    fr: "malo=mauvais|nuevo=nouveau|puerta=porte|también=aussi|médico=médecin|noche=nuit|agua=eau"
+  };
+  Object.keys(VOORRANG_ES).forEach(function (l) {
+    if (!REVS[l]) return;
+    VOORRANG_ES[l].split("|").forEach(function (p) { var i = p.indexOf("="); REVS[l][p.slice(0, i)] = p.slice(i + 1); });
+  });
+  Object.keys(VOORRANG).forEach(function (l) {
+    if (!DICTS[l]) return;
+    VOORRANG[l].split("|").forEach(function (p) {
+      var i = p.indexOf("="), k = p.slice(0, i), v = p.slice(i + 1);
+      DICTS[l][k] = v;
+      if (REVS[l] && REVS[l][v] === undefined) REVS[l][v] = k;
+    });
+  });
+})();
+// Gaten vullen via het Engels: Nederlands -> Engels -> Spaans, alleen als er nog geen Spaans woord staat
+(function () {
+  if (typeof NL_EN_EXTRA === "undefined" || !DICTS.nl || !DICTS.en) return;
+  NL_EN_EXTRA.split("|").forEach(function (p) {
+    var i = p.indexOf("="); if (i < 1) return;
+    var nl = p.slice(0, i), en = p.slice(i + 1), es = DICTS.en[en];
+    if (es !== undefined && DICTS.nl[nl] === undefined) { DICTS.nl[nl] = es; if (REVS.nl[es] === undefined) REVS.nl[es] = nl; }
+  });
 })();

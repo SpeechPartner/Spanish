@@ -22,6 +22,7 @@ var ES_NL = (function () {
     trabajar:  { es: ["trabajo", "trabajas", "trabaja", "trabajamos", "trabajan"], d: ["werk", "werkt", "werkt", "werken"], inf: "werken" },
     estudiar:  { es: ["estudio", "estudias", "estudia", "estudiamos", "estudian"], d: ["studeer", "studeert", "studeert", "studeren"], inf: "studeren" },
     comer:     { es: ["como", "comes", "come", "comemos", "comen"], d: ["eet", "eet", "eet", "eten"], inf: "eten" },
+    partir:    { es: ["parto", "partes", "parte", "partimos", "parten"], d: ["vertrek", "vertrekt", "vertrekt", "vertrekken"], inf: "vertrekken" },
     beber:     { es: ["bebo", "bebes", "bebe", "bebemos", "beben"], d: ["drink", "drinkt", "drinkt", "drinken"], inf: "drinken" },
     cocinar:   { es: ["cocino", "cocinas", "cocina", "cocinamos", "cocinan"], d: ["kook", "kookt", "kookt", "koken"], inf: "koken" },
     leer:      { es: ["leo", "lees", "lee", "leemos", "leen"], d: ["lees", "leest", "leest", "lezen"], inf: "lezen" },
@@ -241,7 +242,7 @@ var ES_NL = (function () {
     if (past) return PAST_NL[p];
     var d = VERBS[v].d;
     if (p === 0) return d[0];
-    if (p === 1) return inv ? d[1].replace(/t$/, "") : d[1];
+    if (p === 1) return inv ? d[0] === "eet" ? "eet" : (d[1] === "gaat" ? "ga" : (d[1] === "weet" ? "weet" : d[1].replace(/t$/, ""))) : d[1];
     if (p === 2) return d[2];
     return d[3];
   }
@@ -709,5 +710,69 @@ var ES_NL = (function () {
     return parts.join(" ").replace(/\s+/g, " ").trim() + ".";
   }
 
-  return { translate: translate };
+  // Schil om translate(): tijdsbepaling aan het eind gaat in het Nederlands naar voren
+  // ("Voy a la playa mañana." -> "Morgen ga ik naar het strand."), en namen van talen krijgen de juiste vorm.
+  var TAAL_NL = { espanol: "Spaans", ingles: "Engels", aleman: "Duits", frances: "Frans", holandes: "Nederlands", neerlandes: "Nederlands", italiano: "Italiaans" };
+  // Tijden aan het eind van de zin: "a las once y media" = "om half twaalf", "a las doce menos cuarto" = "om kwart voor twaalf"
+  var ES_HOUR = { una: 1, un: 1, dos: 2, tres: 3, cuatro: 4, cinco: 5, seis: 6, siete: 7, ocho: 8, nueve: 9, diez: 10, once: 11, doce: 12 };
+  var NL_HOUR = ["", "één", "twee", "drie", "vier", "vijf", "zes", "zeven", "acht", "negen", "tien", "elf", "twaalf"];
+  var ES_TIME_END = /\s+a\s+(?:las|la)\s+(una|un|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|once|doce)(?:\s+(y media|y cuarto|menos cuarto|y cinco|y diez|menos cinco|menos diez))?\s*[.!]?$/i;
+  function nlClock(hw, min) {
+    var H = ES_HOUR[hw.toLowerCase()];
+    if (!min) return "om " + NL_HOUR[H] + " uur";
+    var nx = H % 12 + 1;
+    if (min === "y media") return "om half " + NL_HOUR[nx];
+    if (min === "y cuarto") return "om kwart over " + NL_HOUR[H];
+    if (min === "menos cuarto") return "om kwart voor " + NL_HOUR[H];
+    if (min === "y cinco") return "om vijf over " + NL_HOUR[H];
+    if (min === "y diez") return "om tien over " + NL_HOUR[H];
+    if (min === "menos cinco") return "om vijf voor " + NL_HOUR[H];
+    if (min === "menos diez") return "om tien voor " + NL_HOUR[H];
+    return null;
+  }
+  function translateNL(text, rev, gen) {
+    var raw = String(text || "").trim();
+    // Vervoermiddelen vertrekken: "el autobús sale" = "de bus vertrekt"
+    raw = raw.replace(/^((?:el|la|los|las)\s+(?:autob[uú]s|autobuses|tren|trenes|avi[oó]n|aviones|metro|barco|tranv[ií]a)\s+)sale\b/i, "$1parte");
+    var isQ = /\?/.test(raw) || /^¿/.test(raw);
+    var tm = ES_TIME_END.exec(raw);
+    if (tm && !isQ) {
+      var tt = nlClock(tm[1], (tm[2] || "").toLowerCase());
+      var head = raw.slice(0, tm.index).trim();
+      var base = tt && head ? translate(head + ".", normRev(rev), gen) : null;
+      if (!base) return null;
+      return base.replace(/\.$/, "") + " " + tt + ".";
+    }
+    if (isQ && /\s(hoy|mañana|ayer|ahora)\s*\?\s*$/i.test(raw)) return null;
+    if (/(^|\s)no\s+(hablo|hablas|habla|hablamos|hablan|aprendo|estudio|entiendo)\s+(un poco de\s+)?(español|inglés|alemán|francés|holandés|neerlandés|italiano)\b/i.test(raw)) return null;
+    var m = /^(.*\S)\s+(hoy|mañana|ayer|ahora)\s*([.!]?)$/i.exec(raw);
+    if (m && !/^(hoy|mañana|ayer|ahora)\b/i.test(raw)) {
+      if (isQ) return null;
+      var head = m[1].replace(/,\s*$/, "");
+      if (/^(s[ií]|no)\s*,/i.test(head)) return null;
+      var fronted = m[2].charAt(0).toUpperCase() + m[2].slice(1).toLowerCase() + " " + head.charAt(0).toLowerCase() + head.slice(1) + ".";
+      var fo = translate(fronted, rev, gen);
+      if (fo) return fo;
+      if (!/^no\s/i.test(raw)) return null;      // "Ik heb geen tijd vandaag." mag; anders hoort de tijd vooraan
+    }
+    // talen als lijdend voorwerp: "hablo español", "aprendo un poco de inglés"
+    var lang = /\b(hablo|hablas|habla|hablamos|hablan|aprendo|aprendes|aprende|aprendemos|aprenden|estudio|estudias|estudia|estudiamos|estudian|entiendo|entiendes|entiende)\s+(un poco de\s+)?(español|inglés|alemán|francés|holandés|neerlandés|italiano)\b/i.exec(raw);
+    var out;
+    if (lang) {
+      var stripped = raw.replace(lang[0], lang[1]);
+      out = translate(stripped, rev, gen);
+      if (!out) return null;
+      var nm = TAAL_NL[nf(lang[3])], add = (lang[2] ? "een beetje " : "") + nm;
+      var w = out.replace(/[.?!]$/, "").split(" "), endP = /[.?!]$/.exec(out);
+      // direct na de persoonsvorm en het onderwerp: "Ik spreek Spaans", "Spreek je Spaans?", "Morgen leer ik Spaans"
+      var pos = /^(ik|je|jij|hij|zij|we|wij|u)$/i.test(w[0]) ? 2 : (/^(ik|je|jij|hij|zij|we|wij|u)$/i.test(w[1] || "") ? 2 : (/^(ik|je|jij|hij|zij|we|wij|u)$/i.test(w[2] || "") ? 3 : -1));
+      if (pos < 0) return null;
+      w.splice(pos, 0, add);
+      return w.join(" ") + (endP ? endP[0] : ".");
+    }
+    out = translate(raw, rev, gen);
+    if (out && /spanjaard|een weinig van/i.test(out) && /\b(un poco de|español)\b/i.test(raw) && !/\b(soy|eres|es|somos|son)\s+español/i.test(raw)) return null;
+    return out;
+  }
+  return { translate: translateNL };
 })();
