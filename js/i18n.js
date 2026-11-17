@@ -145,6 +145,8 @@ var UI = {
   "Controleer online": m("Controleer online", "Check online", "Online prüfen", "Vérifier en ligne"),
   "Diagnose spraak": m("Diagnose spraak", "Speech diagnostics", "Sprachdiagnose", "Diagnostic vocal"),
   "Info": m("Info", "Info", "Info", "Info"),
+  "Webshop": m("Webshop", "Shop", "Webshop", "Boutique"),
+  "Nog geen volledige zinsvertaling. Tik op Verbeter vertaling om er een toe te voegen.": m("Nog geen volledige zinsvertaling. Tik op Verbeter vertaling om er een toe te voegen.", "No full sentence translation yet. Tap Correct translation to add one.", "Noch keine vollständige Satzübersetzung. Tippe auf Übersetzung verbessern, um eine hinzuzufügen.", "Pas encore de traduction complète de la phrase. Touche Corriger la traduction pour en ajouter une."),
   "Versie": m("Versie", "Version", "Version", "Version"),
   "Gemaakt door Abel, met Claude": m("Gemaakt door Abel, met Claude", "Made by Abel, with Claude", "Erstellt von Abel, mit Claude", "Créé par Abel, avec Claude"),
   "Bezig met verwerken…": m("Bezig met verwerken…", "Processing…", "Wird verarbeitet…", "Traitement en cours…"),

@@ -12,7 +12,8 @@
   var TABS = [
     ["zinnen", "Zinnen"], ["onderwerpen", "Onderwerpen"], ["vastlopen", "Vastlopen"],
     ["bouwen", "Zin bouwen"], ["reageren", "Reageren"], ["leren", "Leren"],
-    ["regels", "Regels"], ["gesprek", "Gesprek"], ["uitspraak", "Uitspraak"], ["info", "Info"]
+    ["regels", "Regels"], ["gesprek", "Gesprek"], ["uitspraak", "Uitspraak"], ["info", "Info"],
+    ["shop", "Webshop"]
   ];
 
   // ---------- Opslag op het toestel ----------
@@ -268,6 +269,9 @@
     return card;
   }
 
+  // Na een nieuwe beurt: naar de onderkant, waar de opneemkaart staat.
+  function scrollGesprekEnd() { setTimeout(function () { window.scrollTo(0, document.body.scrollHeight); }, 0); }
+
   // Een gekozen zin wordt jouw eerste beurt in het Gesprek-tabblad; het gesprek gaat daar verder.
   // Tik op een kaart-zin: die wordt je eigen beurt, de gesprekspartner antwoordt positief,
   // daarna kies je een hulpvraag. Alleen voor de wisselkaart; de vertaalbox blijft zoals hij was.
@@ -282,7 +286,7 @@
     S.chatStartTurn = null;
     S.note = "";
     go("gesprek");
-    window.scrollTo(0, 0);
+    scrollGesprekEnd();
   }
 
   // Gekozen hulpvraag: de rest verdwijnt, de microfoon gaat aan en het antwoord wordt vertaald.
@@ -293,7 +297,7 @@
     startMic();
     if (S.listening) S.note = T("Wacht op het antwoord van de gesprekspartner. Tik op Stop als die klaar is.");
     render();
-    window.scrollTo(0, 0);
+    scrollGesprekEnd();
   }
 
   function startChatWith(text) {
@@ -1161,7 +1165,7 @@
     vt.value = "";
     document.getElementById("transOut").hidden = true;
     render();
-    window.scrollTo(0, 0);
+    scrollGesprekEnd();
   }
 
   function showTranslation() {
@@ -1634,7 +1638,7 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "2.6";
+  var APP_VERSION = "2.9";
   // Versies waarvoor gebruikers de app opnieuw op hun beginscherm moeten zetten (oude icoon weg, nieuwe erop).
   // Bij zo'n update verschijnt eenmalig een melding met uitleg.
   var REINSTALL_VERSIONS = ["1.8"];
@@ -2206,15 +2210,6 @@
       "Die App hat kein Konto, keine Werbung und keine Nutzungsanalyse. Dein Fortschritt bleibt auf deinem Gerät.",
       "L'application n'a ni compte, ni publicité, ni statistiques d'utilisation. Ta progression reste sur ton appareil.")) ), privA]);
 
-    // Blad: webshop (een vrijwillige donatie van 1,99 euro; los pagina)
-    var shopA = el("a", "", L(m("Open de webshop", "Open the shop", "Zum Webshop", "Ouvrir la boutique")));
-    shopA.href = "webshop.html";
-    page(L(m("Webshop", "Shop", "Webshop", "Boutique")), [el("p", "", L(m(
-      "Vind je de app nuttig? Dan kun je de ontwikkelaar een kop koffie aanbieden voor 1,99 euro. Dat is vrijwillig.",
-      "Do you find the app useful? You can buy the developer a coffee for 1.99 euro. This is voluntary.",
-      "Findest du die App nützlich? Du kannst dem Entwickler einen Kaffee für 1,99 Euro spendieren. Das ist freiwillig.",
-      "Vous trouvez l'application utile ? Vous pouvez offrir un café au développeur pour 1,99 euro. C'est facultatif.")) ), shopA]);
-
     // Het boekje zelf: één blad tegelijk, een vaste grootte, stipjes onderaan
     var n = pages.length;
     var cur = Math.min(S.infoLeaf || 0, n - 1);
@@ -2270,7 +2265,6 @@
   function viewGesprek() {
     var w = el("div");
     var built = [];
-    var startRep = null;
     var row = el("div", "chips");
     if (S.listening) row.appendChild(btn("⏹ " + T("Stop"), "primary", stopMic));
     else row.appendChild(btn("🎤 " + T("Opnemen"), "primary", startMic));
@@ -2338,7 +2332,7 @@
       f.appendChild(btn(T("Annuleer"), "small", function () { S.teach = null; render(); }));
       card.appendChild(f);
     }
-    S.convo.slice().reverse().forEach(function (t, ti) {
+    S.convo.forEach(function (t, ti) {
       // Jouw eigen beurt (vanuit de vertaalbox): rechts, met de andere manieren om het te zeggen
       if (t.me) {
         var mt = el("div", "turn");
@@ -2370,7 +2364,7 @@
             mrep.appendChild(l);
           });
         }
-        if (startRep === null && S.chatStartTurn === t) startRep = mrep; else mt.appendChild(mrep);
+        mt.appendChild(mrep);
         built.push(mt);
         return;
       }
@@ -2386,13 +2380,14 @@
       card.appendChild(el("div", "nl", T("Vertaling")));
       // De vertaling wordt bij het tonen opnieuw gemaakt, zodat ze altijd de gekozen taal volgt.
       var trr = t.fixedM ? { text: L(t.fixedM) } : (esToLang(t.es) || t.tr);
-      if (trr.text) card.appendChild(el("div", "", trr.text));
-      else { var pgl = glossBlock(t.es); if (pgl) card.appendChild(pgl); }
+      // Eerst de volledige zinvertaling, daaronder de woord-voor-woord-laag (één keer)
+      if (trr.text) card.appendChild(el("div", "sentence-tr", trr.text));
+      else card.appendChild(el("div", "note", T("Nog geen volledige zinsvertaling. Tik op Verbeter vertaling om er een toe te voegen.")));
+      var pgl = glossBlock(t.es); if (pgl) card.appendChild(pgl);
       if (altsFor(t.es).length) card.appendChild(altBlock(altsFor(t.es)));
       if (t.gen) card.appendChild(el("div", "nl", T("Uit de zin afgeleid: vorm voor de gesprekspartner") + " (" + (t.gen === "zij" ? "zij" : "hij") + ")"));
       if (trr.about && trr.es) card.appendChild(el("div", "nl", T("Herkend als:") + " " + trr.es));
       if (trr.learned) card.appendChild(el("div", "nl", T("Door jou aangeleerd")));
-      if (trr.parts) card.appendChild(el("div", "nl", trr.parts.join(" · ")));
       var teach = (S.teach && S.teach.i === ti) ? S.teach : null;
       if (trr.missing && trr.missing.length) {
         card.appendChild(el("div", "bad", T("Niet in de lijst. Tik op een woord om het de app te leren:")));
@@ -2429,20 +2424,15 @@
           rep.appendChild(l);
         });
         // De start van de chat (vanuit de vertaalbox) krijgt de antwoorden pas na de opneemfunctie
-        if (startRep === null && S.chatStartTurn && t === S.chatStartTurn) startRep = rep; else turn.appendChild(rep);
+        turn.appendChild(rep);
       }
       built.push(turn);
     });
-    if (startRep) {
-      var out = el("div");
-      out.appendChild(built[0]);
-      out.appendChild(w);
-      out.appendChild(startRep);
-      built.slice(1).forEach(function (x) { out.appendChild(x); });
-      return out;
-    }
-    built.forEach(function (x) { w.appendChild(x); });
-    return w;
+    // Chronologisch: de nieuwste beurt staat onderaan, en de opneemkaart volgt direct daarna
+    var out = el("div");
+    built.forEach(function (x) { out.appendChild(x); });
+    out.appendChild(w);
+    return out;
   }
 
   // ---------- Uitspraaktrainer ----------
@@ -2807,10 +2797,28 @@
   }
 
   // ---------- Opbouw van de pagina ----------
+  // ---------- Webshop: eigen pagina (vrijwillige donatie), laatste knop in de onderste balk ----------
+  function viewShop() {
+    var w = el("div", "shop-page");
+    var img = el("img", "shop-cup");
+    img.src = "img/koffiekopje.png";
+    img.alt = L(m("Een kopje koffie", "A cup of coffee", "Eine Tasse Kaffee", "Une tasse de café"));
+    w.appendChild(img);
+    w.appendChild(el("p", "", L(m(
+      "Vind je de app nuttig? Dan kun je de ontwikkelaar een kop koffie aanbieden voor 1,99 euro. Dat is vrijwillig.",
+      "Do you find the app useful? You can buy the developer a coffee for 1.99 euro. This is voluntary.",
+      "Findest du die App nützlich? Du kannst dem Entwickler einen Kaffee für 1,99 Euro spendieren. Das ist freiwillig.",
+      "Vous trouvez l'application utile ? Vous pouvez offrir un café au développeur pour 1,99 euro. C'est facultatif."))));
+    var shopA = el("a", "btn primary", L(m("Open de webshop", "Open the shop", "Zum Webshop", "Ouvrir la boutique")));
+    shopA.href = "webshop.html";
+    w.appendChild(shopA);
+    return w;
+  }
+
   var VIEWS = {
     zinnen: viewZinnen, onderwerpen: viewOnderwerpen, vastlopen: viewVastlopen,
     bouwen: viewBouwen, reageren: viewReageren, leren: viewLeren,
-    regels: viewRegels, gesprek: viewGesprek, uitspraak: viewUitspraak, info: viewInfo
+    regels: viewRegels, gesprek: viewGesprek, uitspraak: viewUitspraak, info: viewInfo, shop: viewShop
   };
 
   // Vlaggen als SVG (overal gelijk; geen emoji nodig). Spaans is altijd rood-geel-rood.

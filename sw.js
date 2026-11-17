@@ -1,6 +1,6 @@
 // Service worker: maakt de app offline bruikbaar.
 // BELANGRIJK: verhoog CACHE_VERSION bij elke nieuwe versie, anders blijft de oude versie op het toestel.
-const CACHE_VERSION = "gespreksgids-v2.6";
+const CACHE_VERSION = "gespreksgids-v2.9";
 const ASSETS = [
   "./",
   "./index.html",
@@ -36,6 +36,7 @@ const ASSETS = [
   "./js/piper-tts.js",
   "./js/spraak-schoon.js",
   "./js/koffie.js",
+  "./img/koffiekopje.png",
   "./webshop.html",
   "./js/vendor/piper/piper-bundle.js",
   "./js/app.js",
