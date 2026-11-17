@@ -114,7 +114,12 @@
     es.forEach(function (v) { var sc = voiceScore(v); if (sc > bs) { best = v; bs = sc; } });
     return best;
   }
+  // Eerst de natuurlijke Piper-stem; zolang die niet klaar is of faalt, de ingebouwde stem.
   function speak(text) {
+    if (window.PiperTTS && PiperTTS.speak(text, "es", rate, function () { speakBuiltIn(text); })) return;
+    speakBuiltIn(text);
+  }
+  function speakBuiltIn(text) {
     if (!("speechSynthesis" in window)) return;
     try {
       speechSynthesis.cancel();
@@ -1629,7 +1634,7 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "2.1";
+  var APP_VERSION = "2.5";
   // Versies waarvoor gebruikers de app opnieuw op hun beginscherm moeten zetten (oude icoon weg, nieuwe erop).
   // Bij zo'n update verschijnt eenmalig een melding met uitleg.
   var REINSTALL_VERSIONS = ["1.8"];
@@ -1892,6 +1897,8 @@
         S.note = T("Geen spraak gehoord. Probeer het opnieuw.") + " (" + T("opname") + " 0 s)";
         go("gesprek"); return null;
       }
+      // Eerst achtergrondgeluid dempen (brom, ruis), daarna pas het volume gelijkmaken.
+      if (window.SpraakSchoon) out = SpraakSchoon.clean(out, 16000);
       var n = out.length, peak = 0, k;
       for (k = 0; k < n; k++) { var v = out[k] < 0 ? -out[k] : out[k]; if (v > peak) peak = v; }
       // Zachte opnames (partner op afstand) versterken tot een normaal niveau.
@@ -2198,6 +2205,15 @@
       "The app has no account, no ads and no analytics. Your progress stays on your own device.",
       "Die App hat kein Konto, keine Werbung und keine Nutzungsanalyse. Dein Fortschritt bleibt auf deinem Gerät.",
       "L'application n'a ni compte, ni publicité, ni statistiques d'utilisation. Ta progression reste sur ton appareil.")) ), privA]);
+
+    // Blad: webshop (een vrijwillige donatie van 1,99 euro; los pagina)
+    var shopA = el("a", "", L(m("Open de webshop", "Open the shop", "Zum Webshop", "Ouvrir la boutique")));
+    shopA.href = "webshop.html";
+    page(L(m("Webshop", "Shop", "Webshop", "Boutique")), [el("p", "", L(m(
+      "Vind je de app nuttig? Dan kun je de ontwikkelaar een kop koffie aanbieden voor 1,99 euro. Dat is vrijwillig.",
+      "Do you find the app useful? You can buy the developer a coffee for 1.99 euro. This is voluntary.",
+      "Findest du die App nützlich? Du kannst dem Entwickler einen Kaffee für 1,99 Euro spendieren. Das ist freiwillig.",
+      "Vous trouvez l'application utile ? Vous pouvez offrir un café au développeur pour 1,99 euro. C'est facultatif.")) ), shopA]);
 
     // Het boekje zelf: één blad tegelijk, een vaste grootte, stipjes onderaan
     var n = pages.length;

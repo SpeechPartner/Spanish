@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tienda · SpeechPartner.Spanish</title>
+<style>
+  body { font-family: system-ui, -apple-system, Segoe UI, sans-serif; max-width: 680px; margin: 0 auto; padding: 24px 18px 48px; line-height: 1.55; color: #161616; background: #fff; }
+  h1 { font-size: 1.5rem; margin-bottom: .2rem; }
+  .small { color: #555; font-size: .9rem; }
+  .en { border-top: 1px solid #ddd; margin-top: 2.5rem; padding-top: 1rem; }
+  .koop { display: inline-block; margin: 1rem 0; padding: 14px 22px; border-radius: 12px; background: #161616; color: #fff; font-weight: 600; text-decoration: none; font-size: 1.05rem; }
+  a { color: #1a4fa0; }
+</style>
+</head>
+<body>
+<button id="closeBtn" type="button" aria-label="Sluiten" style="position:fixed;top:12px;right:12px;width:44px;height:44px;border-radius:12px;border:3px solid #161616;background:#AE1C28;color:#fff;font-size:24px;font-weight:700;cursor:pointer;">×</button>
+<script>document.getElementById("closeBtn").onclick=function(){if(history.length>1){history.back();}else{location.href="./";}};</script>
+
+<h1>Tienda</h1>
+<p class="small">SpeechPartner.Spanish</p>
+
+<p>Deze app is gratis en blijft gratis. Vind je hem nuttig? Dan kun je de ontwikkelaar een kop koffie aanbieden voor 1,99 euro. Dat is helemaal vrijwillig; je krijgt er geen product of dienst voor terug.</p>
+
+<p><a class="koop" href="#" target="_blank" rel="noopener">Invítame a un café (1,99 €)</a></p>
+
+<p class="small">De betaling loopt via PayPal, een externe betaaldienst. PayPal verwerkt je betaalgegevens; de app ontvangt daar niets van.</p>
+
+<div class="en">
+<p><strong>English.</strong> This app is free and will stay free. Do you find it useful? You can buy the developer a coffee for 1.99 euro. This is entirely voluntary; you receive no product or service in return.</p>
+<p class="small">Payment goes through PayPal, an external payment provider. PayPal processes your payment details; the app receives nothing from it.</p>
+</div>
+
+<script src="js/koffie.js"></script>
+<script>document.querySelector("a.koop").href = KOFFIE_LINK;</script>
+</body>
+</html>

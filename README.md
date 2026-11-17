@@ -50,3 +50,5 @@ Bij Netlify: sleep de hele map opnieuw in https://app.netlify.com/drop, of gebru
 
 - De spraakherkenning (microfoon) hangt af van je browser. Op iPhone werkt die niet altijd. Het typvak op de pagina Gesprek werkt altijd.
 - Oefeningen, begrepen zinnen en voortgang worden op je eigen toestel opgeslagen. Ze gaan verloren als je de gegevens van de site wist.
+
+Stemmen: natuurlijke spraak met Piper (open source, MIT). Stem: Davefx (CC0).
