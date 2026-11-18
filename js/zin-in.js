@@ -1850,6 +1850,15 @@ var ZIN = (function () {
     if (from === to) return null;
     gen = gen === "f" ? "f" : "m";
     var isQ = /\?\s*$/.test(String(text).trim());
+    // "Hoe laat ...?" = vraag naar de tijd: vertaal als "Wanneer ...?" en zet het vraagwoord om in "what time" enz.
+    if (from === "nl" && to !== "es") {
+      var hl = /^(\s*)hoe laat\s+(.+)$/i.exec(String(text || ""));
+      if (hl && !/^is het\s*\??\s*$/i.test(hl[2].trim())) {
+        var ow = translate(hl[1] + "Wanneer " + hl[2], from, to, gen);
+        var rep = { en: [/^When /, "What time "], de: [/^Wann /, "Um wie viel Uhr "], fr: [/^Quand /, "À quelle heure "] }[to];
+        return ow && rep && rep[0].test(ow) ? ow.replace(rep[0], rep[1]) : null;
+      }
+    }
     if (from === "nl") {
       var nk = ZINC.NLIDX[ZINC.normKey(text)];
       if (nk) { var fn = ZINC.FIXED[ZINC.fold(nk)] || ZINC.WEATHER[ZINC.fold(nk)]; return fixedOut(fn, to, gen, isQ); }
@@ -1885,6 +1894,8 @@ var ZIN = (function () {
     }
     var c;
     try { c = ZINI[from](text); } catch (e) { c = null; }
+    // Nederlands "vertrekken" is niet "uitgaan": via het Spaans werd het "salir" (go out / sortir / ausgehen)
+    if (fromNl && c && c.v === "salir" && /\bvertrek/i.test(text0)) c.v = "partir";
     var imp = false;
     if (!c && to !== "nl" && from !== "nl") { try { c = from === "en" ? ZINI.enImp(text) : ZINI.impIn(text, from); } catch (e) { c = null; } imp = !!c; }
     if (!c) return null;

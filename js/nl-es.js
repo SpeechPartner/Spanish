@@ -860,6 +860,13 @@ var NL_ES = (function () {
   // Vertrekken: "de bus gaat om half twaalf" betekent "sale a las once y media", niet "va a".
   var VERTREK_NL = /\b(bus|bussen|trein|treinen|tram|metro|vliegtuig|vliegtuigen|boot|veerboot)\b/;
   function translateVertrek(text, dict, gen) {
+    // "Hoe laat ...?" is een vraag naar de tijd: vertaal als "Wanneer ...?" en zet er "¿A qué hora ...?" van
+    var hl = /^(\s*)hoe laat\s+(.+)$/i.exec(String(text || ""));
+    if (hl && !/^(is het|is het\?)\s*$/i.test(hl[2].trim())) {
+      var o2 = translate(hl[1] + "Wanneer " + hl[2], dict, gen);
+      if (o2 && /^¿Cuándo /.test(o2)) return o2.replace(/^¿Cuándo /, "¿A qué hora ");
+      return null;
+    }
     var out = translate(text, dict, gen);
     if (out && VERTREK_NL.test(lower(String(text))) && /\bgaat om\b/.test(lower(String(text))) && /^(El|La) [^ ]+ va a /.test(out)) {
       out = out.replace(/^((El|La) [^ ]+) va a /, "$1 sale a ");
