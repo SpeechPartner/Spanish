@@ -766,6 +766,21 @@ var ZIN_LEX = (function () {
     add("cuánto cuesta esto", "Hoeveel kost dit?", "How much is this?", "Was kostet das?", "Combien ça coûte ?",
       { nl: ["Wat kost dit?", "Wat kost het?", "Hoeveel kost het?", "Hoeveel kost dat?", "Wat kost dat?"], en: ["How much does this cost?", "How much is it?", "How much does it cost?", "What does this cost?", "How much is that?"],
         de: ["Wie viel kostet das?", "Was kostet es?", "Wie viel kostet es?", "Wie viel kostet dies?"], fr: ["Combien coûte ceci ?", "Combien ça coûte ?", "Ça coûte combien ?", "C'est combien ?", "Combien coûte ça ?"] });
+    // meningen: "Ik vind het leuk / niet leuk / mooi ...", "Wat vind je ervan?"
+    add("me gusta", "Ik vind het leuk.", "I like it.", "Es gefällt mir.", "Ça me plaît.", { en: ["I like that."], de: ["Das gefällt mir.", "Ich mag es."], fr: ["J'aime ça.", "J'aime bien."] });
+    add("no me gusta", "Ik vind het niet leuk.", "I don't like it.", "Es gefällt mir nicht.", "Ça ne me plaît pas.", { en: ["I do not like it.", "I don't like that."], de: ["Das gefällt mir nicht.", "Ich mag es nicht."], fr: ["Je n'aime pas ça.", "Je n'aime pas."] });
+    add("te gusta", "Vind je het leuk?", "Do you like it?", "Gefällt es dir?", "Ça te plaît ?", { en: ["Do you like that?"], de: ["Magst du es?"], fr: ["Tu aimes ça ?", "Tu aimes bien ?"] });
+    add("no te gusta", "Vind je het niet leuk?", "Don't you like it?", "Gefällt es dir nicht?", "Ça ne te plaît pas ?", { en: ["Do you not like it?"], de: ["Magst du es nicht?"], fr: ["Tu n'aimes pas ça ?"] });
+    add("me parece bonito", "Ik vind het mooi.", "I think it's beautiful.", "Ich finde es schön.", "Je le trouve beau.", { en: ["I find it beautiful.", "I think it's pretty.", "I think it's nice."], fr: ["Je trouve ça beau."] });
+    add("me parece muy bonito", "Ik vind het erg mooi.", "I think it's very beautiful.", "Ich finde es sehr schön.", "Je le trouve très beau.", { nl: ["Ik vind het heel mooi."], en: ["I find it very beautiful.", "I think it's very pretty."], fr: ["Je trouve ça très beau."] });
+    add("no me parece bien", "Ik vind het niet goed.", "I don't think that's good.", "Ich finde das nicht gut.", "Je ne trouve pas ça bien.", { nl: ["Ik vind dat niet goed."], en: ["I don't think it's good.", "I don't think that's right."], de: ["Ich finde es nicht gut."], fr: ["Je ne trouve pas ça bon."] });
+    add("me parece mal", "Ik vind het slecht.", "I think it's bad.", "Ich finde es schlecht.", "Je trouve ça mal.", { nl: ["Ik vind dat slecht."], en: ["I find it bad."], fr: ["Je trouve ça mauvais."] });
+    add("me parece interesante", "Ik vind het interessant.", "I think it's interesting.", "Ich finde es interessant.", "Je trouve ça intéressant.", { en: ["I find it interesting."] });
+    add("me parece difícil", "Ik vind het moeilijk.", "I think it's difficult.", "Ich finde es schwierig.", "Je trouve ça difficile.", { en: ["I find it difficult.", "I think it's hard."] });
+    add("me parece fácil", "Ik vind het makkelijk.", "I think it's easy.", "Ich finde es einfach.", "Je trouve ça facile.", { nl: ["Ik vind het gemakkelijk."], en: ["I find it easy."], de: ["Ich finde es leicht."] });
+    add("me parece caro", "Ik vind het duur.", "I think it's expensive.", "Ich finde es teuer.", "Je le trouve cher.", { en: ["I find it expensive."], fr: ["Je trouve ça cher."] });
+    add("me parece barato", "Ik vind het goedkoop.", "I think it's cheap.", "Ich finde es billig.", "Je le trouve bon marché.", { en: ["I find it cheap."], fr: ["Je trouve ça pas cher."] });
+    add("qué te parece", "Wat vind je ervan?", "What do you think of it?", "Was hältst du davon?", "Qu'en penses-tu ?", { nl: ["Wat vind je daarvan?", "Wat vind je ervan"], en: ["What do you think about it?", "What do you think of that?", "What do you think?"], de: ["Was denkst du darüber?", "Was meinst du dazu?"], fr: ["Qu'est-ce que tu en penses ?", "Que penses-tu de ça ?", "Qu'en dis-tu ?"] });
   })();
 
   return { FIXED_ALT: FIXED_ALT, FIXED_NL: FIXED_NL, NOUNS: NOUNS, PERSON: PERSON, PROFESSION: PROFESSION, ADJS: ADJS, ADJ_SER_ESTAR: ADJ_SER_ESTAR, NATS: NATS, LANGS: LANGS,

@@ -517,6 +517,7 @@ var ZINI = (function () {
     var ve = Object.assign({ b: x[0] }, x[2] || {});
     addEV(ve.b, x[1], "b", {}); addEV(C.enS3(ve), x[1], "s3", {}); addEV(C.enPast(ve), x[1], "past", {}); addEV(C.enIng(ve), x[1], "ing", {});
   });
+  (function () { var ve = { b: "miss", past: "missed" }; addEV("missed", "perder", "past", {}); addEV("missed", "perder", "pp", {}); })();   // "I missed the bus" (niet "I miss you")
   var EN_PREF = { understand: "entender", know: "saber", have: "tener", go: "ir", come: "venir", get: "levantarse", feel: "sentirse", like: "gustar", love: "encantar", watch: "mirar" };
   var ENPRON = { i: [0], you: [1], he: [2, "m"], she: [2, "f"], it: [2, "n"], we: [3], they: [5] };
   var ENOBJ = { me: [0], you: [1], him: [2, "m"], her: [2, "f"], it: [2, "n"], us: [3], them: [5] };
@@ -904,6 +905,7 @@ var ZINI = (function () {
   // wollen: ook "querer"
   ["will", "willst", "will", "wollen", "wollt", "wollen"].forEach(function (f, p) { addDV(f, "querer", [p], "pres", {}); });
   ["mag", "magst", "mag", "mögen", "mögt", "mögen"].forEach(function (f, p) { addDV(f, "gustar", [p], "pres", {}); });
+  "verpasse verpasst verpasst verpassen verpasst verpassen".split(" ").forEach(function (f, p) { addDV(f, "perder", [p], "pres", {}); });
   var DEINF = {}, DEPP = {};
   Object.keys(VERB).forEach(function (lemma) {
     var dv = VERB[lemma].de; if (!dv) return;
@@ -1278,6 +1280,7 @@ var ZINI = (function () {
   }
 
   // ================= FRANS =================
+  (function () { (DEINF.verpassen = DEINF.verpassen || []).push({ v: "perder", tail: null }); (DEPP.verpasst = DEPP.verpasst || []).push({ v: "perder", aux: "h", tail: null }); })();
   var FRV = {};
   function addFV(form, lemma, p, tense, fv) { if (!form) return; (FRV[form] = FRV[form] || []).push({ v: lemma, p: p, tense: tense, refl: !!fv.refl }); }
   Object.keys(VERB).forEach(function (lemma) {
@@ -1295,6 +1298,9 @@ var ZINI = (function () {
   (FRINF.vivre = FRINF.vivre || []).push({ v: "vivir", refl: false });
   ["vécu", "vécue", "vécus", "vécues"].forEach(function (f) { (FRPP[f] = FRPP[f] || []).push({ v: "vivir", refl: false, aux: "a" }); });
   ["vivais", "vivais", "vivait", "vivions", "viviez", "vivaient"].forEach(function (f, p) { addFV(f, "vivir", p, "impf", {}); });
+  "rate rates rate ratons ratez ratent".split(" ").forEach(function (f, p) { addFV(f, "perder", p, "pres", {}); });
+  (FRINF.rater = FRINF.rater || []).push({ v: "perder", refl: false });
+  ["raté", "ratée", "ratés", "ratées"].forEach(function (f) { (FRPP[f] = FRPP[f] || []).push({ v: "perder", refl: false, aux: "a" }); });
   var FR_PREF = { "être": "estar", aller: "ir", avoir: "tener", comprendre: "entender", devoir: "tener que", aimer: "gustar", adorer: "encantar", sentir: "sentirse", appeler: "llamar" };
   var FRPRON = { je: [0], tu: [1], il: [2, "m"], elle: [2, "f"], on: [3], nous: [3], vous: [1, null, true], ils: [5, "m"], elles: [5, "f"] };
   var FRCLIT = { me: [0], te: [1], le: [2, "m"], la: [2, "f"], les: [5], nous: [3], vous: [4], se: ["refl"], lui: ["dat"], leur: ["dat"], y: ["y"], en: ["en"] };
@@ -1961,14 +1967,28 @@ var ZIN = (function () {
     }
     if (!out) return null;
     if (imp) return ZINO.imp(out, target, c);
+    var missSense = c.v === "perder" && (fromNl && /\b(mis|mist|missen|miste|misten|gemist)\b/i.test(text0) && !/verlie|verlor/i.test(text0) || from === "en" && /\bmissed\b/i.test(text0) || from === "de" && /verpass/i.test(text0) || from === "fr" && /(^|[^\wÀ-ÿ])(rat(e|es|ons|ez|ent|é|ée|és|ées)|rater)(?![\wÀ-ÿ])/i.test(text0));
+    if (!viaEs && missSense && target !== "es") out = missOut(out, target);
     if (!viaEs) return out;
     if (typeof ES_NL === "undefined") return null;
     try {
       if (c.o && c.o.k === "pron" && c.o.p === 2 && c.o.g === "m" && !c.o.amb) out = String(out).replace(/\blo\b/i, "lom");   // "hem", niet "het"
-      return ES_NL.translate(out, REVS.nl, function (w) { return (typeof GRAM !== "undefined") ? GRAM.gen(w, "nl") : null; }) || null;
+      var nlRes = ES_NL.translate(out, REVS.nl, function (w) { return (typeof GRAM !== "undefined") ? GRAM.gen(w, "nl") : null; }) || null;
+      return nlRes && missSense && !fromNl ? missOut(nlRes, "nl") : nlRes;
     } catch (e) { return null; }
   }
   // "niets / nada / nichts / rien / anything": herschrijf naar "dat" met ontkenning en zet het woord na vertaling terug
+  // Nederlands "missen" (de bus missen) is in het Spaans "perder", maar in de andere talen niet "verlieren/lose/perdre"
+  var MISS = {
+    nl: { verloor: "miste", verloren: "gemist", verlies: "mis", verliest: "mist", verliezen: "missen" },
+    de: { verloren: "verpasst", verliere: "verpasse", verlierst: "verpasst", verliert: "verpasst", verlieren: "verpassen", verlor: "verpasste", verlorst: "verpasstest", verlorte: "verpassten" },
+    en: { lost: "missed", lose: "miss", loses: "misses", losing: "missing" },
+    fr: { "perdu": "raté", "perds": "rate", "perd": "rate", "perdons": "ratons", "perdez": "ratez", "perdent": "ratent", "perdre": "rater", "perdais": "ratais", "perdait": "ratait" }
+  };
+  function missOut(out, target) {
+    var m = MISS[target]; if (!m) return out;
+    return String(out).replace(/[A-Za-zÀ-ÿ]+/g, function (w) { return m[w.toLowerCase()] !== undefined ? m[w.toLowerCase()] : w; });
+  }
   var translateBase = translate;
   // Samengesteld onderwerp: "Mi hermano y yo somos de Alemania" -> "My brother and I are from Germany"
   var COMP_POSS = /^(mi|tu|su|nuestro|nuestra|mis|tus|sus)\s+([a-záéíóúñ]+)\s+y\s+yo\s+(.+)$/i;

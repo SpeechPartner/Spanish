@@ -211,7 +211,23 @@ var NL_ES = (function () {
   function nounEs(nl, dict) {
     if (NOT_NOUN[nl]) return null;
     var v = NL_NOUN_FIX[nl] || dict[nl];
-    if (v !== undefined && !/\s/.test(v)) return { es: v, plural: !!PLURAL_ES[v] || (/en$/.test(nl) && /s$/.test(v)) };
+    // Nederlands meervoud (boeken, kaartjes, winkels, huizen): het woordenboek geeft soms een werkwoord ("boeken" = sacar) of niets
+    var verbLike = v !== undefined && /^[a-záéíóúñ]+(ar|er|ir|ír)$/.test(v);
+    if (!NL_NOUN_FIX[nl] && (v === undefined || verbLike)) {
+      var sg = [];
+      if (/en$/.test(nl)) { var b0 = nl.slice(0, -2); sg.push(b0, b0.replace(/([^aeiou])\1$/, "$1"), b0.replace(/(.)(?=[^aeiou]$)/, "$1").replace(/z$/, "s"), b0.replace(/v$/, "f"), b0.replace(/(a|e|o|u)([^aeiou])$/, "$1$1$2")); }
+      if (/s$/.test(nl)) sg.push(nl.slice(0, -1));
+      if (/'s$/.test(nl)) sg.push(nl.slice(0, -2));
+      for (var si = 0; si < sg.length; si++) {
+        var sv = dict[sg[si]];
+        if (sv !== undefined && !/\s/.test(sv) && !/^[a-záéíóúñ]+(ar|ir|ír)$/.test(sv) && !NOT_NOUN[sg[si]]) return { es: sv, plural: true };
+      }
+    }
+    if (v !== undefined && !/\s/.test(v)) {
+      var plNl = false;
+      if (/[^s]s$/.test(nl) && /s$/.test(v)) { var d1 = dict[nl.slice(0, -1)]; plNl = d1 !== undefined && (v === d1 + "s" || v === d1 + "es"); }
+      return { es: v, plural: !!PLURAL_ES[v] || plNl || (/en$/.test(nl) && /s$/.test(v)) };
+    }
     // Samenstelling als "parada de autobús" (bushalte): zelfstandig naamwoord + de + zelfstandig naamwoord
     if (v !== undefined && /^[a-záéíóúñ]+ (de|del|de la) [a-záéíóúñ]+$/.test(v)) return { es: v, plural: false };
     if (/en$/.test(nl) && dict[nl.slice(0, -2)] !== undefined && !/\s/.test(dict[nl.slice(0, -2)])) {
@@ -327,7 +343,7 @@ var NL_ES = (function () {
     return lem;
   }
   // "vinden" = gustar bij een mening ("ik vind het leuk"), maar encontrar bij "ik vind het boek" / "ik heb het gevonden"
-  var VIND_MENING = /^(leuk|lekker|mooi|fijn|goed|slecht|prima|gek|raar|grappig|interessant|belangrijk|moeilijk|makkelijk|duur|goedkoop|saai|lelijk|erg|geweldig|top|niets|niks|van|dat|dit|zo|te|ook)$/;
+  var VIND_MENING = /^(leuk|lekker|mooi|fijn|goed|slecht|prima|gek|raar|grappig|interessant|belangrijk|moeilijk|makkelijk|duur|goedkoop|saai|lelijk|erg|geweldig|top|niets|niks|van|dat|dit|zo|te|ook|ervan|daarvan|wat|hoe|moeilijk|makkelijk|interessant|saai|geweldig)$/;
   function vindRewrite(toks) {
     var cl = toks.map(function (t) { return t.replace(/[.,!?]/g, ""); });
     if (cl.some(function (w) { return VIND_MENING.test(w); })) return toks;
@@ -403,7 +419,26 @@ var NL_ES = (function () {
     return out;
   }
 
+  // Persoonlijke "a" op het eind: alleen als een werkwoord uit A_PERSONAL_V en een persoonlijk onderwerp (ik, je, we...) in de Nederlandse zin staan
+  var A_SUBJ = /^(ik|je|jij|u|we|wij|jullie|hij|zij|ze)$/;
   function translate(text, dict, gen) {
+    var r = translateCore(text, dict, gen);
+    if (!r || typeof r !== "string") return r;
+    var tk = String(text).toLowerCase().replace(/[.,!?¿¡]/g, " ").split(/\s+/).filter(Boolean);
+    var verbHit = tk.some(function (w) { var l = FORM[w] || NL_PP[w] || NL_OVT[w]; return l && A_PERSONAL_V[l]; });
+    if (!verbHit || !tk.some(function (w) { return A_SUBJ.test(w); })) return r;
+    var m = /(^|[¿ ])((?:el|la|los|las|mi|mis|tu|tus|su|sus|nuestro|nuestra|nuestros|nuestras|un|una|unos|unas|este|esta|estos|estas|ese|esa|esos|esas) (?:[a-záéíóúñ]+ )?(?:padre|madre|padres|hermano|hermana|hermanos|hermanas|hijo|hija|hijos|hijas|amigo|amiga|amigos|amigas|chico|chica|chicos|chicas|niño|niña|niños|niñas|hombre|mujer|hombres|mujeres|médico|médica|profesor|profesora|maestro|maestra|jefe|jefa|abuelo|abuela|esposo|esposa|marido|vecino|vecina|policía|camarero|camarera|señor|señora|doctor|doctora|colega|compañero|compañera|tío|tía|primo|prima|bebé|persona|personas|novio|novia|vecinos|colegas|compañeros|profesores|médicos))(?![a-záéíóúñ])/.exec(r);
+    if (!m || m.index === 0 && !/^¿/.test(r) && m[1] === "") {
+      return r;
+    }
+    var before = r.slice(0, m.index + m[1].length);
+    if (/(^|\s)(a|al|de|del|con|para|en|por|sin|sobre|desde|hasta|entre)\s*$/i.test(before) || before.trim() === "" || before.trim() === "¿") return r;
+    var det = m[2].split(" ")[0].toLowerCase();
+    var fixed = det === "el" ? "al " + m[2].slice(3) : "a " + m[2];
+    return before + fixed + r.slice(m.index + m[1].length + m[2].length);
+  }
+
+  function translateCore(text, dict, gen) {
     if (!text || !dict) return null;
     var raw = lower(String(text).trim());
     var q = /\?\s*$/.test(String(text).trim());
@@ -414,6 +449,24 @@ var NL_ES = (function () {
     toks.forEach(function (tk, ti) { autoVerb(tk.replace(/[.,!?]/g, ""), dict, ti === 0 || SUBJ[toks[ti - 1]] !== undefined || SUBJ[toks[ti + 1]] !== undefined); });
     var fem = gen === "f";
 
+    // "Wat vind je ervan?" / "Wat vind je van het boek?" = ¿Qué te parece (el libro)?
+    var mWv = /^wat vind(?:t)? (je|jij|u) (ervan|daarvan|daar van|er van|van .+)$/.exec(toks.join(" ").replace(/[.,!?]/g, ""));
+    if (mWv) {
+      var wvD = mWv[1] === "u" ? "le" : "te";
+      if (/^(ervan|daarvan|daar van|er van)$/.test(mWv[2])) return "¿Qué " + wvD + " parece?";
+      var wvN = np(mWv[2].split(" ").slice(1), 0, dict);
+      if (wvN && wvN.end === mWv[2].split(" ").length - 1) {
+        var wvS = /^(los|las|el|la|un|una|unos|unas|esta|este|estas|estos|ese|esa|esos|esas|mi|mis|tu|tus|su|sus|nuestro|nuestra|nuestros|nuestras) /.test(wvN.s) ? wvN.s : artFor(wvN.es, wvN.plural, true) + " " + wvN.s;
+        return "¿Qué " + wvD + (wvN.plural ? " parecen " : " parece ") + wvS + "?";
+      }
+    }
+    // "Waar ga je naartoe?" = ¿Adónde vas?
+    var mAd = /^waar (ga|gaat|gaan) (je|jij|u|hij|zij|ze|we|wij|jullie)? ?(naartoe|heen)$/.exec(toks.join(" ").replace(/[.,!?]/g, ""));
+    if (mAd) {
+      var adP = { ga: "voy", gaat: "va", gaan: "vamos" }, adS = mAd[2] || "";
+      var adV = adS === "je" || adS === "jij" ? "vas" : adS === "u" || adS === "hij" || adS === "zij" ? "va" : adS === "we" || adS === "wij" ? "vamos" : adS === "jullie" || adS === "ze" ? "van" : adP[mAd[1]];
+      return "¿Adónde " + adV + "?";
+    }
     // Vaste zinnen en vaste vragen
     var key = toks.join(" ");
     var FIXED = {
@@ -639,6 +692,17 @@ var NL_ES = (function () {
     var out = [vI.es + cl.join("")].concat(tk.slice(ix + 1));
     return out.join(" ").trim();
   }
+  // Persoonlijke "a": veo a mi padre, ayudo al hombre (alleen bij personen als lijdend voorwerp)
+  var A_PERSONAL_V = { zien: 1, bellen: 1, opbellen: 1, helpen: 1, kennen: 1, ontmoeten: 1, zoeken: 1, horen: 1, bezoeken: 1, missen: 1, uitnodigen: 1, vinden: 1, liefhebben: 1, kussen: 1, vragen: 1, verwachten: 1, ophalen: 1, halen: 1, luisteren: 1 };
+  var PERSON_ES = /^(padre|madre|padres|hermano|hermana|hermanos|hermanas|hijo|hija|hijos|hijas|amigo|amiga|amigos|amigas|chico|chica|chicos|chicas|niño|niña|niños|niñas|hombre|mujer|hombres|mujeres|médico|médica|profesor|profesora|maestro|maestra|jefe|jefa|abuelo|abuela|esposo|esposa|marido|vecino|vecina|policía|camarero|camarera|señor|señora|doctor|doctora|colega|compañero|compañera|tío|tía|primo|prima|bebé|persona|personas|novio|novia|vecinos|colegas|compañeros|profesores|médicos)$/;
+  function personalA(obj) {
+    var m = /^(el|la|los|las|mi|mis|tu|tus|su|sus|nuestro|nuestra|nuestros|nuestras|un|una|unos|unas|este|esta|estos|estas|ese|esa|esos|esas) (.+)$/.exec(obj);
+    if (!m) return obj;
+    var words = m[2].split(" ");
+    if (!words.some(function (w) { return PERSON_ES.test(w); })) return obj;
+    return m[1] === "el" ? "al " + m[2] : "a " + obj;
+  }
+  var VIND_ADJ = { leuk: "gusta", goed: "bien", slecht: "mal", mooi: "bonito", lelijk: "feo", prima: "bien", gek: "raro", raar: "raro", interessant: "interesante", moeilijk: "difícil", makkelijk: "fácil", duur: "caro", goedkoop: "barato", saai: "aburrido", geweldig: "genial" };
   function buildVerb(lem, v, subjInfo, rest, dict, fem, inverted, subjEs) {
     var p = subjInfo ? subjInfo.p : 2;
     var g = subjInfo && subjInfo.g ? subjInfo.g : (fem ? "f" : "m");
@@ -649,19 +713,36 @@ var NL_ES = (function () {
 
     // Gustar-constructie: "ik hou van X", "ik vind X leuk"
     if (v.special === "gustar") {
-      var obj = null;
+      var obj = null, datC = ["me", "te", "le", "nos", "os", "les"][p] || "me", adjOp = null;
       if (lem === "houden" && restN[0] === "van") obj = restN.slice(1);
       else if (lem === "vinden") {
-        var lk = restN.indexOf("leuk");
-        if (lk > 0) obj = restN.slice(0, lk);
-        else if (lk === 0) obj = null;
+        var ak = -1;
+        for (var ai = 0; ai < restN.length; ai++) if (VIND_ADJ[restN[ai]] !== undefined) { ak = ai; break; }
+        if (ak < 0) return null;
+        adjOp = restN[ak];
+        obj = restN.slice(0, ak);
+        var inten = "";
+        if (obj.length && /^(erg|heel|best|zeer)$/.test(obj[obj.length - 1])) { inten = "muy "; obj = obj.slice(0, -1); }
+        if (restN.slice(ak + 1).length) return null;
+        if (adjOp !== "leuk") {
+          var adjEs = VIND_ADJ[adjOp];
+          if (!obj.length || obj.length === 1 && (obj[0] === "het" || DEM[obj[0]])) return prefix + datC + " parece " + inten + adjEs + ".";
+          var npA = np(obj, 0, dict);
+          if (!npA || npA.end !== obj.length) return null;
+          var plA = npA.plural, adjF = adjEs;
+          if (/o$/.test(adjEs) && npA.fem) adjF = adjEs.slice(0, -1) + "a";
+          if (plA) adjF = /[aeiou]$/.test(adjF) ? adjF + "s" : adjF + "es";
+          var artA = /^(los|las|el|la|un|una|unos|unas|esta|este|estas|estos|ese|esa|esos|esas|mi|mis|tu|tus|su|sus|nuestro|nuestra|nuestros|nuestras) /.test(npA.s) ? npA.s : artFor(npA.es, plA, true) + " " + npA.s;
+          return artA + " " + prefix + datC + " " + (plA ? "parecen " : "parece ") + inten + adjF + ".";
+        }
+        if (!obj.length || obj.length === 1 && obj[0] === "het") return prefix + datC + " gusta" + ".";
       }
       if (!obj || !obj.length) return null;
       if (lem === "houden" && obj.length === 1 && OBJ[obj[0]] !== undefined && obj[0] !== "het") {
         var lvC = { me: "me", mij: "me", je: "te", jou: "te", hem: "lo", haar: "la", ons: "nos", jullie: "os", hen: "los", ze: "las" }[obj[0]];
         return prefix + lvC + " " + VERB.willen.p[p] + ".";
       }
-      if (obj.length === 1 && VERB[obj[0]] && VERB[obj[0]].p) return (neg ? "no " : "") + "me gusta " + VERB[obj[0]].es + ".";
+      if (obj.length === 1 && VERB[obj[0]] && VERB[obj[0]].p) return (neg ? "no " : "") + datC + " gusta " + VERB[obj[0]].es + ".";
       var sub = obj.length === 1 && DEM[obj[0]] ? (obj[0] === "dit" ? "esto" : "eso") : null;
       var subjEsObj = sub;
       if (!sub) {
@@ -673,9 +754,9 @@ var NL_ES = (function () {
         if (!/^(los|las|el|la|un|una|unos|unas|esta|este|estas|estos|ese|esa|esos|esas|mi|mis|tu|tus|su|sus|nuestro|nuestra|nuestros|nuestras) /.test(subjEsObj)) {
           subjEsObj = artFor(npO.es, pl, true) + " " + subjEsObj;
         }
-        return (neg ? "no " : "") + "me " + gust + " " + subjEsObj + ".";
+        return (neg ? "no " : "") + datC + " " + gust + " " + subjEsObj + ".";
       }
-      return prefix + "me gusta " + sub + ".";
+      return prefix + datC + " gusta " + sub + ".";
     }
 
     // Vaste werkwoordstructuren
