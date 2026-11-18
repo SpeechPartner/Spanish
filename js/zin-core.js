@@ -199,6 +199,13 @@ var ZINC = (function () {
   var NLIDX = {};
   Object.keys(L.FIXED_NL || {}).forEach(function (k) { var kk = fold(L.FIXED_NL[k]).replace(/[?!.,;:]/g, " ").replace(/\s+/g, " ").trim(); if (!has(NLIDX, kk)) NLIDX[kk] = k; });
   function normKey(s) { return fold(s).replace(/[’']/g, "'").replace(/[¿¡?!.,;:]/g, " ").replace(/\s+/g, " ").trim(); }
+  // Andere formuleringen van dezelfde vaste zin (L.FIXED_ALT): naar dezelfde Spaanse sleutel
+  (L.FIXED_ALT || []).forEach(function (al) {
+    al.nl.forEach(function (x) { var kk = normKey(x); if (!has(NLIDX, kk)) NLIDX[kk] = al.es; });
+    al.en.forEach(function (x) { var kk = enKey(x); if (!has(FIDX.en, kk)) FIDX.en[kk] = al.es; });
+    al.de.forEach(function (x) { var kk = normKey(x); if (!has(FIDX.de, kk)) FIDX.de[kk] = al.es; });
+    al.fr.forEach(function (x) { var kk = normKey(x); if (!has(FIDX.fr, kk)) FIDX.fr[kk] = al.es; });
+  });
 
   // ---------------- Werkwoorden ----------------
   var VERB = L.VERBS;

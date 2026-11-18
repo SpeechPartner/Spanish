@@ -33,6 +33,7 @@ var NL_ES = (function () {
     kijken:    { es: "mirar", prepObj: "naar",    p: ["miro", "miras", "mira", "miramos", "miran", "miran"] },
     weten:     { es: "saber",    p: ["sé", "sabes", "sabe", "sabemos", "saben", "saben"] },
     komen:     { es: "venir",    p: ["vengo", "vienes", "viene", "venimos", "vienen", "vienen"] },
+    aankomen:  { es: "llegar",   p: ["llego", "llegas", "llega", "llegamos", "llegan", "llegan"] },
     zien:      { es: "ver",      p: ["veo", "ves", "ve", "vemos", "ven", "ven"] },
     doen:      { es: "hacer",    p: ["hago", "haces", "hace", "hacemos", "hacen", "hacen"] },
     zeggen:    { es: "decir",    p: ["digo", "dices", "dice", "decimos", "dicen", "dicen"] },
@@ -76,7 +77,7 @@ var NL_ES = (function () {
     lees: "lezen", leest: "lezen",
     kijk: "kijken", kijkt: "kijken",
     weet: "weten", weten: "weten",
-    kom: "komen", komt: "komen",
+    kom: "komen", komt: "komen", aankom: "aankomen", aankomt: "aankomen", aankomen: "aankomen",
     zie: "zien", ziet: "zien",
     doe: "doen", doet: "doen",
     zeg: "zeggen", zegt: "zeggen",
@@ -117,9 +118,9 @@ var NL_ES = (function () {
 
   // Woorden die met estar gebruikt worden (tijdelijke toestand); de rest met ser
   var ESTAR_ADJ = { moe: 1, ziek: 1, blij: 1, boos: 1, verdrietig: 1, bezig: 1, klaar: 1, nerveus: 1, gestrest: 1,
-    rustig: 1, verliefd: 1, verkouden: 1, bang: 1, druk: 1, ongerust: 1 };
+    rustig: 1, verliefd: 1, verkouden: 1, bang: 1, druk: 1, ongerust: 1, open: 1, gesloten: 1, dicht: 1, vol: 1, leeg: 1, kapot: 1 };
   var ESTAR_ES = { cansado: 1, enfermo: 1, contento: 1, enojado: 1, enfadado: 1, triste: 1, ocupado: 1, listo: 1,
-    nervioso: 1, estresado: 1, tranquilo: 1, enamorado: 1, resfriado: 1, asustado: 1, preocupado: 1, lleno: 1 };
+    nervioso: 1, estresado: 1, tranquilo: 1, enamorado: 1, resfriado: 1, asustado: 1, preocupado: 1, lleno: 1, abierto: 1, cerrado: 1, vacío: 1, roto: 1 };
   var LOCATION_NL = { thuis: 1, hier: 1, daar: 1, buiten: 1, binnen: 1, in: 1, op: 1, bij: 1, aan: 1, naar: 1, uit: 1, achter: 1, naast: 1 };
   var NOT_NOUN = { ik: 1, je: 1, jij: 1, u: 1, hij: 1, zij: 1, ze: 1, wij: 1, we: 1, jullie: 1, het: 1, de: 1, een: 1, geen: 1,
     niet: 1, en: 1, of: 1, maar: 1, dat: 1, dit: 1, die: 1, mijn: 1, je_: 1 };
@@ -145,6 +146,7 @@ var NL_ES = (function () {
   }
 
   function isFem(w) {
+    if (/\s/.test(w)) w = w.split(" ")[0];   // "parada de autobús": het eerste woord bepaalt het geslacht
     if (MASC_A[w]) return false;
     if (FEM_O[w]) return true;
     if (FEM_E[w]) return true;
@@ -166,6 +168,7 @@ var NL_ES = (function () {
     return isFem(w) ? "una" : "un";
   }
   function pluralOf(w) {
+    if (/\s/.test(w)) { var wp = w.split(" "); wp[0] = pluralOf(wp[0]); return wp.join(" "); }
     if (PLURAL_ES[w]) return w;
     if (/(s)$/.test(w)) return w;
     if (/[aeiouáéíóú]$/.test(w)) return w + "s";
@@ -209,6 +212,8 @@ var NL_ES = (function () {
     if (NOT_NOUN[nl]) return null;
     var v = NL_NOUN_FIX[nl] || dict[nl];
     if (v !== undefined && !/\s/.test(v)) return { es: v, plural: !!PLURAL_ES[v] || (/en$/.test(nl) && /s$/.test(v)) };
+    // Samenstelling als "parada de autobús" (bushalte): zelfstandig naamwoord + de + zelfstandig naamwoord
+    if (v !== undefined && /^[a-záéíóúñ]+ (de|del|de la) [a-záéíóúñ]+$/.test(v)) return { es: v, plural: false };
     if (/en$/.test(nl) && dict[nl.slice(0, -2)] !== undefined && !/\s/.test(dict[nl.slice(0, -2)])) {
       return { es: dict[nl.slice(0, -2)], plural: true };
     }
@@ -353,6 +358,27 @@ var NL_ES = (function () {
     return f;
   }
 
+  // "de bus komt aan" = llega (aankomen); "hoe kom ik bij/naar het station" = ¿cómo llego a ...?
+  function aankomenRewrite(toks) {
+    var KOM = { kom: "aankom", komt: "aankomt", komen: "aankomen" };
+    var iK = -1, i;
+    for (i = 0; i < toks.length; i++) { var t0 = toks[i].replace(/[.,!?]/g, ""); if (KOM[t0] !== undefined) { iK = i; break; } }
+    if (iK < 0) return toks;
+    var out = toks.slice(), j = out.lastIndexOf("aan");
+    if (j > iK && j === out.length - 1) {                       // ... komt ... aan
+      out[iK] = KOM[out[iK].replace(/[.,!?]/g, "")];
+      out.splice(j, 1);
+      return out;
+    }
+    var nx = out.slice(iK + 1).filter(function (w) { return !SUBJ[w.replace(/[.,!?]/g, "")] && w !== "ik"; })[0];
+    if (out[0] === "hoe" && iK === 1 && /^(bij|naar|daar|er|hier|thuis)/.test(String(nx || "").replace(/[.,!?]/g, ""))) {
+      out[iK] = KOM[out[iK].replace(/[.,!?]/g, "")];
+      for (i = iK + 1; i < out.length; i++) if (out[i] === "bij") out[i] = "naar";
+      var ti = out.indexOf("thuis"); if (ti > 0) out.splice(ti, 1, "naar", "huis");   // "aankomen thuis" = llegar a casa
+    }
+    return out;
+  }
+
   function translate(text, dict, gen) {
     if (!text || !dict) return null;
     var raw = lower(String(text).trim());
@@ -360,6 +386,7 @@ var NL_ES = (function () {
     var toks = raw.split(/\s+/).filter(Boolean);
     if (!toks.length) return null;
     toks = pastRewrite(toks);
+    toks = aankomenRewrite(toks);
     toks.forEach(function (tk, ti) { autoVerb(tk.replace(/[.,!?]/g, ""), dict, ti === 0 || SUBJ[toks[ti - 1]] !== undefined || SUBJ[toks[ti + 1]] !== undefined); });
     var fem = gen === "f";
 
@@ -424,6 +451,14 @@ var NL_ES = (function () {
     if (WH[toks[0]] !== undefined) {
       var whEs = WH[toks[0]];
       var restQ = toks.slice(1);
+      // "Wat kost dit?" / "Hoeveel kost het?" = ¿Cuánto cuesta ...?
+      if ((toks[0] === "wat" || toks[0] === "hoeveel") && (toks[1] === "kost" || toks[1] === "kosten") && toks.length >= 3) {
+        var pr = toks.slice(2).map(function (w) { return w.replace(/[.,!?]/g, ""); }), prX = null;
+        if (pr.length === 1 && DEM[pr[0]]) prX = { s: pr[0] === "dit" ? "esto" : "eso", plural: false };
+        else if (pr.length === 1 && pr[0] === "het") prX = { s: "", plural: false };
+        else { var prN = np(pr, 0, dict); if (prN && prN.end === pr.length) prX = { s: prN.s, plural: prN.plural }; }
+        if (prX) return qwrap("cuánto " + (prX.plural ? "cuestan" : "cuesta") + (prX.s ? " " + prX.s : ""));
+      }
       if (restQ[0] === "laat" && restQ[1] === "is" && restQ[2] === "het") return "¿Qué hora es?";
       if (restQ[0] === "heet" && restQ[1] === "je") return "¿Cómo te llamas?";
       if (restQ[0] === "is" && restQ[1] === "je" && restQ[2] === "naam") return "¿Cómo te llamas?";
@@ -443,7 +478,14 @@ var NL_ES = (function () {
           return qwrap(whEs + " " + verbQ + " " + npQ.s);
         }
         // WH + werkwoord + onderwerp (bijv. "waar woon je")
+        // Vraagwoord + modaal/gaan/zijn + onderwerp + rest: eerst de gewone zin bouwen (met infinitief, ser/estar), dan de vraag eromheen
+        if ((vQ.modal || lemQ === "gaan" || lemQ === "zijn" || vQ.copula) && restQ.length > 2 && !PAST_MODE) {
+          var coreQ = null;
+          try { coreQ = buildVerb(lemQ, vQ, s2, restQ.slice(2), dict, fem, true); } catch (e) { coreQ = null; }
+          if (coreQ) return qwrap(whEs + " " + coreQ.replace(/\.$/, ""));
+        }
         var conjQ = vQ.p[persQ];
+        if (lemQ === "zijn" && whEs === "dónde" && !PAST_MODE) conjQ = ESTAR_FORM[persQ] || conjQ;   // "waar ben je" = ¿dónde estás?
         if (PAST_MODE && lemQ === PAST_MODE.lem) { conjQ = pastConj(lemQ, vQ, persQ); if (!conjQ) return null; }
         var tailQ = restQ.slice(2);
         var tailTxt = tailQ.length ? clauseTail(tailQ, dict) : "";
@@ -453,6 +495,15 @@ var NL_ES = (function () {
       return null;
     }
 
+    // Ja/nee-vraag met zelfstandig naamwoord als onderwerp: "is het station ver?", "is de winkel open?"
+    if ((toks[0] === "is" || toks[0] === "zijn") && SUBJ[toks[1]] === undefined && toks.length >= 3) {
+      var npJ = np(toks, 1, dict);
+      if (npJ && npJ.end < toks.length) {
+        var coreJ = null;
+        try { coreJ = buildVerb("zijn", VERB.zijn, { p: npJ.plural ? 5 : 2, g: npJ.fem ? "f" : "m", noun: true }, toks.slice(npJ.end), dict, fem, false, npJ.s); } catch (e) { coreJ = null; }
+        if (coreJ) return qwrap(npJ.s + " " + coreJ.replace(/\.$/, ""));
+      }
+    }
     // Ja/nee-vragen met omgekeerde volgorde: "heb je een hond?", "ben je moe?", "kan ik je helpen?"
     if (FORM[toks[0]] && SUBJ[toks[1]] !== undefined) {
       var lemY = FORM[toks[0]], vY = VERB[lemY];
@@ -542,6 +593,28 @@ var NL_ES = (function () {
   }
 
   // Bouwt het werkwoordsdeel en de rest van de zin. subjInfo: { p, g } of null (onderwerp weglaten)
+  // Infinitiefgroep voor een modaal werkwoord: "brood eten" -> "comer pan", "het eten" -> "comerlo", "hier werken" -> "trabajar aquí".
+  // Eerst als zin met "ik" opbouwen (bestaande regels), dan de persoonsvorm door de infinitief vervangen.
+  function infinitivePhrase(infLemma, objWords, dict, fem) {
+    var vI = VERB[infLemma];
+    if (infLemma === "zijn" && objWords.length) {
+      // "er zijn", "hier zijn", "thuis zijn": estar + plaats
+      var LOC1 = { er: "allí", daar: "allí", hier: "aquí", thuis: "en casa" };
+      if (objWords.length === 1 && LOC1[objWords[0]]) return "estar " + LOC1[objWords[0]];
+      if (locationLike(objWords)) { var lt = clauseTail(objWords, dict); return lt ? "estar " + lt : null; }
+      return null;
+    }
+    if (!vI || !vI.p || vI.special || vI.reflexive || vI.copula || vI.modal) return null;
+    var S;
+    try { S = buildVerb(infLemma, vI, { p: 0, g: fem ? "f" : "m" }, objWords, dict, fem, false, null); } catch (e) { S = null; }
+    if (!S) return null;
+    var tk = S.replace(/\.$/, "").split(" "), conjI = vI.p[0], ix = tk.indexOf(conjI);
+    if (ix < 0 || ix > 2) return null;
+    var cl = tk.slice(0, ix);
+    if (cl.some(function (w) { return !/^(me|te|lo|la|los|las|le|les|nos|os|se)$/.test(w); })) return null;
+    var out = [vI.es + cl.join("")].concat(tk.slice(ix + 1));
+    return out.join(" ").trim();
+  }
   function buildVerb(lem, v, subjInfo, rest, dict, fem, inverted, subjEs) {
     var p = subjInfo ? subjInfo.p : 2;
     var g = subjInfo && subjInfo.g ? subjInfo.g : (fem ? "f" : "m");
@@ -620,13 +693,19 @@ var NL_ES = (function () {
       // modaal + infinitief (laatste woord is een werkwoord uit de tabel)
       var last = infOrNp[infOrNp.length - 1];
       var infLemma = last && VERB[last] ? last : null;
-      if (infOrNp.length >= 1 && FORM[infOrNp[0]] && VERB[FORM[infOrNp[0]]]) return null;
+      if (infOrNp.length >= 1 && FORM[infOrNp[0]] && FORM[infOrNp[0]] !== infOrNp[0] && VERB[FORM[infOrNp[0]]]) return null;
       if (infLemma && VERB[infLemma] && VERB[infLemma].p) {
         var infEs = VERB[infLemma].es;
         var objWords = infOrNp.slice(0, -1);
         var clitic = "";
         if (objWords.length === 1 && OBJ[objWords[0]] !== undefined) clitic = OBJ[objWords[0]];
-        else if (objWords.length) return null;
+        else if (objWords.length) {
+          // modaal + voorwerp/bijwoord + infinitief: "ik wil brood eten", "ik moet hier werken"
+          var ip = infinitivePhrase(infLemma, objWords, dict, fem);
+          if (!ip) return null;
+          if (lem === "gaan") return prefix + conj + " a " + ip + ".";
+          return prefix + conj + " " + ip + ".";
+        }
         if (lem === "gaan") {
           return prefix + conj + " a " + (clitic ? clitic : "") + (clitic ? infEs.replace(/$/, "") : infEs) + ".";
         }
@@ -811,6 +890,9 @@ var NL_ES = (function () {
       var npC = np(words, 0, dict);
       if (npC && npC.end === words.length) return prefix + conj + " " + npC.s + ".";
     }
+    // plaats-bijwoorden: "het station is dichtbij" = está cerca (niet es)
+    var ESTAR_ADV = { dichtbij: "cerca", vlakbij: "cerca", ver: "lejos", overal: "en todas partes" };
+    if (words.length === 1 && ESTAR_ADV[first]) return prefix + ESTAR_FORM[p] + " " + ESTAR_ADV[first] + ".";
     // eerst het woord zelf
     if (words.length === 1 && ESTAR_ADJ[first]) {
       var esAdj = dict[first];

@@ -1854,6 +1854,11 @@ var ZIN = (function () {
     if (from === "nl" && to !== "es") {
       var hl = /^(\s*)hoe laat\s+(.+)$/i.exec(String(text || ""));
       if (hl && !/^is het\s*\??\s*$/i.test(hl[2].trim())) {
+        // eerst: staat de Spaanse vertaling ("¿A qué hora ...?") als vaste zin in alle talen?
+        var es1 = null;
+        try { es1 = typeof NL_ES !== "undefined" ? NL_ES.translate(text, DICTS.nl, gen) : null; } catch (e) { es1 = null; }
+        var fx1 = es1 ? ZINC.FIXED[ZINC.normKey(es1)] : null;
+        if (fx1) return fixedOut(fx1, to, gen, true);
         var ow = translate(hl[1] + "Wanneer " + hl[2], from, to, gen);
         var rep = { en: [/^When /, "What time "], de: [/^Wann /, "Um wie viel Uhr "], fr: [/^Quand /, "À quelle heure "] }[to];
         return ow && rep && rep[0].test(ow) ? ow.replace(rep[0], rep[1]) : null;

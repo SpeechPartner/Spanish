@@ -716,6 +716,56 @@ var ZIN_LEX = (function () {
   // Nederlandse vorm van de vaste zinnen en de weerzinnen (sleutel: de Spaanse zin)
   var FIXED_NL = {"hola": "Hallo.", "buenos días": "Goedemorgen.", "buenas tardes": "Goedemiddag.", "buenas noches": "Goedenavond.", "adiós": "Tot ziens.", "hasta luego": "Tot straks.", "hasta mañana": "Tot morgen.", "hasta pronto": "Tot gauw.", "gracias": "Dank je.", "muchas gracias": "Heel erg bedankt.", "de nada": "Graag gedaan.", "por favor": "Alsjeblieft.", "perdón": "Sorry.", "lo siento": "Het spijt me.", "vale": "Oké.", "sí": "Ja.", "no": "Nee.", "claro": "Natuurlijk.", "de acuerdo": "Akkoord.", "estoy de acuerdo": "Ik ben het ermee eens.", "no estoy de acuerdo": "Ik ben het er niet mee eens.", "mucho gusto": "Aangenaam.", "encantado": "Aangenaam.", "encantada": "Aangenaam.", "qué tal": "Hoe gaat het?", "cómo estás": "Hoe gaat het met je?", "cómo está usted": "Hoe gaat het met u?", "estoy bien": "Het gaat goed met me.", "muy bien": "Heel goed.", "bien gracias": "Goed, dank je.", "y tú": "En jij?", "y usted": "En u?", "no entiendo": "Ik begrijp het niet.", "no lo entiendo": "Ik begrijp het niet.", "no sé": "Ik weet het niet.", "no lo sé": "Ik weet het niet.", "qué hora es": "Hoe laat is het?", "cuánto cuesta": "Hoeveel kost het?", "cuánto es": "Hoeveel is het?", "la cuenta por favor": "De rekening, alstublieft.", "cómo te llamas": "Hoe heet je?", "cómo se llama usted": "Hoe heet u?", "de dónde eres": "Waar kom je vandaan?", "de dónde es usted": "Waar komt u vandaan?", "cuántos años tienes": "Hoe oud ben je?", "puedes repetir": "Kun je dat herhalen?", "puedes repetir por favor": "Kun je dat herhalen, alsjeblieft?", "más despacio por favor": "Langzamer, alsjeblieft.", "habla más despacio por favor": "Praat alsjeblieft wat langzamer.", "qué significa": "Wat betekent het?", "qué pasa": "Wat is er aan de hand?", "no pasa nada": "Geen probleem.", "qué te pasa": "Wat is er met je?", "buen provecho": "Eet smakelijk.", "salud": "Proost.", "feliz cumpleaños": "Gefeliciteerd met je verjaardag.", "buen viaje": "Goede reis.", "buena suerte": "Veel succes.", "que te mejores": "Beterschap.", "tengo una pregunta": "Ik heb een vraag.", "necesito ayuda": "Ik heb hulp nodig.", "estoy de vacaciones": "Ik ben op vakantie.", "me da igual": "Het maakt me niet uit.", "a qué hora": "Hoe laat?", "dónde está el baño": "Waar is het toilet?", "te quiero": "Ik hou van je.", "hablas inglés": "Spreek je Engels?", "hablo un poco de español": "Ik spreek een beetje Spaans.", "nos vemos": "Tot ziens.", "estás bien": "Gaat het goed met je?", "está bien": "Het is goed.", "estoy mal": "Het gaat niet goed met me.", "no lo creo": "Ik denk het niet.", "no creo": "Ik denk het niet.", "creo que sí": "Ik denk het wel.", "vamos a ver": "We zullen zien.", "vamos": "Laten we gaan.", "estás de vacaciones": "Ben je op vakantie?", "me voy": "Ik ga weg.", "me tengo que ir": "Ik moet gaan.", "tengo que irme": "Ik moet gaan.", "bienvenido": "Welkom.", "bienvenida": "Welkom.", "hace frío": "Het is koud.", "hace calor": "Het is warm.", "hace sol": "De zon schijnt.", "hace viento": "Het waait.", "hace buen tiempo": "Het is mooi weer.", "hace mal tiempo": "Het is slecht weer.", "llueve": "Het regent.", "está lloviendo": "Het regent.", "nieva": "Het sneeuwt.", "está nevando": "Het sneeuwt.", "hace mucho frío": "Het is erg koud.", "hace mucho calor": "Het is erg warm.", "no hace frío": "Het is niet koud.", "no hace calor": "Het is niet warm."};
 
-  return { FIXED_NL: FIXED_NL, NOUNS: NOUNS, PERSON: PERSON, PROFESSION: PROFESSION, ADJS: ADJS, ADJ_SER_ESTAR: ADJ_SER_ESTAR, NATS: NATS, LANGS: LANGS,
+
+  // ---- Reis- en tijdvragen: elke zin staat in alle talen vast (es|en|de|fr + nl), dus ze werken in elke app en bij elke gebruikerstaal ----
+  var FIXED_ALT = [];
+  (function () {
+    function add(es, nl, en, de, fr, alt) {
+      FIXED.push(es + "|" + en + "|" + de + "|" + fr);
+      FIXED_NL[es] = nl;
+      if (alt) FIXED_ALT.push({ es: es, nl: alt.nl || [], en: alt.en || [], de: alt.de || [], fr: alt.fr || [] });
+    }
+    // vervoermiddelen: [es, nl, en, de, fr, duitse werkwoord voor vertrek]
+    var VEH = [
+      ["el autobús", "de bus", "the bus", "der Bus", "le bus", "fährt"], ["el tren", "de trein", "the train", "der Zug", "le train", "fährt"],
+      ["el tranvía", "de tram", "the tram", "die Straßenbahn", "le tram", "fährt"], ["el metro", "de metro", "the metro", "die U-Bahn", "le métro", "fährt"],
+      ["el avión", "het vliegtuig", "the plane", "das Flugzeug", "l'avion", "fliegt"], ["el barco", "de boot", "the boat", "das Boot", "le bateau", "fährt"]
+    ];
+    VEH.forEach(function (n) {
+      add("a qué hora sale " + n[0], "Hoe laat vertrekt " + n[1] + "?", "What time does " + n[2] + " leave?", "Um wie viel Uhr " + n[5] + " " + n[3] + " ab?", "À quelle heure part " + n[4] + " ?");
+      add("a qué hora llega " + n[0], "Hoe laat komt " + n[1] + " aan?", "What time does " + n[2] + " arrive?", "Um wie viel Uhr kommt " + n[3] + " an?", "À quelle heure arrive " + n[4] + " ?");
+    });
+    // haltes en stations: [es, nl, en, de, fr]
+    var STOP = [
+      ["la parada de autobús", "de bushalte", "the bus stop", "die Bushaltestelle", "l'arrêt de bus"],
+      ["la parada de tranvía", "de tramhalte", "the tram stop", "die Straßenbahnhaltestelle", "l'arrêt de tram"],
+      ["la estación de metro", "het metrostation", "the metro station", "die U-Bahn-Station", "la station de métro"]
+    ];
+    STOP.forEach(function (n) { add("dónde está " + n[0], "Waar is " + n[1] + "?", "Where is " + n[2] + "?", "Wo ist " + n[3] + "?", "Où est " + n[4] + " ?"); });
+    // "hoe kom ik bij ...": [es (met a), nl, en, de (met zu), fr (met à)]
+    var PL = [
+      ["a la estación", "het station", "the station", "zum Bahnhof", "à la gare"], ["al aeropuerto", "het vliegveld", "the airport", "zum Flughafen", "à l'aéroport"],
+      ["al centro", "het centrum", "the city centre", "zum Stadtzentrum", "au centre-ville"], ["al hotel", "het hotel", "the hotel", "zum Hotel", "à l'hôtel"],
+      ["al museo", "het museum", "the museum", "zum Museum", "au musée"], ["al hospital", "het ziekenhuis", "the hospital", "zum Krankenhaus", "à l'hôpital"],
+      ["a la playa", "het strand", "the beach", "zum Strand", "à la plage"], ["al supermercado", "de supermarkt", "the supermarket", "zum Supermarkt", "au supermarché"],
+      ["a la farmacia", "de apotheek", "the pharmacy", "zur Apotheke", "à la pharmacie"], ["a la parada de autobús", "de bushalte", "the bus stop", "zur Bushaltestelle", "à l'arrêt de bus"]
+    ];
+    PL.forEach(function (n) {
+      add("cómo llego " + n[0], "Hoe kom ik bij " + n[1] + "?", "How do I get to " + n[2] + "?", "Wie komme ich " + n[3] + "?", "Comment aller " + n[4] + " ?",
+        { nl: ["Hoe kom ik naar " + n[1] + "?", "Hoe kom ik er bij " + n[1] + "?"], en: ["How can I get to " + n[2] + "?", "How do I get to " + n[2].replace(/^the /, "the ") + "?"], de: ["Wie komme ich " + n[3].replace(/^zum /, "zum ") + "?", "Wie gelange ich " + n[3] + "?"],
+          fr: ["Comment puis-je aller " + n[4] + " ?", "Comment est-ce que j'arrive " + n[4] + " ?", "Comment j'arrive " + n[4] + " ?"] });
+    });
+    add("cómo llego allí", "Hoe kom ik daar?", "How do I get there?", "Wie komme ich dorthin?", "Comment y aller ?", { nl: ["Hoe kom ik er?", "Hoe kom ik er naartoe?"], en: ["How can I get there?"], de: ["Wie komme ich da hin?", "Wie komme ich dahin?"], fr: ["Comment puis-je y aller ?", "Comment j'y arrive ?"] });
+    // tijdvragen
+    add("a qué hora estás en casa", "Hoe laat ben je thuis?", "What time are you home?", "Um wie viel Uhr bist du zu Hause?", "À quelle heure es-tu à la maison ?", { en: ["What time will you be home?", "What time are you at home?"], fr: ["À quelle heure es-tu chez toi ?"], de: ["Um wie viel Uhr bist du zuhause?"] });
+    add("a qué hora llegas a casa", "Hoe laat kom je thuis?", "What time do you get home?", "Um wie viel Uhr kommst du nach Hause?", "À quelle heure rentres-tu à la maison ?", { en: ["What time do you arrive home?", "What time do you come home?"], fr: ["À quelle heure rentres-tu ?", "À quelle heure arrives-tu à la maison ?"], de: ["Um wie viel Uhr kommst du nach Hause an?"] });
+    add("a qué hora tengo que estar allí", "Hoe laat moet ik er zijn?", "What time do I have to be there?", "Um wie viel Uhr muss ich dort sein?", "À quelle heure dois-je être là ?", { nl: ["Hoe laat moet ik daar zijn?"], en: ["What time should I be there?", "What time must I be there?"], fr: ["À quelle heure dois-je être là-bas ?"], de: ["Um wie viel Uhr muss ich da sein?"] });
+    add("a qué hora quieres comer", "Hoe laat wil je eten?", "What time do you want to eat?", "Um wie viel Uhr willst du essen?", "À quelle heure veux-tu manger ?", { de: ["Um wie viel Uhr möchtest du essen?"], fr: ["À quelle heure voulez-vous manger ?"] });
+    add("cuánto cuesta esto", "Hoeveel kost dit?", "How much is this?", "Was kostet das?", "Combien ça coûte ?",
+      { nl: ["Wat kost dit?", "Wat kost het?", "Hoeveel kost het?", "Hoeveel kost dat?", "Wat kost dat?"], en: ["How much does this cost?", "How much is it?", "How much does it cost?", "What does this cost?", "How much is that?"],
+        de: ["Wie viel kostet das?", "Was kostet es?", "Wie viel kostet es?", "Wie viel kostet dies?"], fr: ["Combien coûte ceci ?", "Combien ça coûte ?", "Ça coûte combien ?", "C'est combien ?", "Combien coûte ça ?"] });
+  })();
+
+  return { FIXED_ALT: FIXED_ALT, FIXED_NL: FIXED_NL, NOUNS: NOUNS, PERSON: PERSON, PROFESSION: PROFESSION, ADJS: ADJS, ADJ_SER_ESTAR: ADJ_SER_ESTAR, NATS: NATS, LANGS: LANGS,
     PLACES: PLACES, VERBS: VERBS, ADVS: ADVS, TENER: TENER, WEATHER: WEATHER, FIXED: FIXED };
 })();
