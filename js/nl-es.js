@@ -262,6 +262,7 @@ var NL_ES = (function () {
   // ---- Werkwoorden afleiden uit het woordenboek: elk Nederlands werkwoord waarvan het Spaanse equivalent in de
   // werkwoordenlijst staat, krijgt automatisch zijn vormen (regelmatige Nederlandse vervoeging).
   var AUTO_SKIP = /^(ben|bent|is|zijn|heb|hebt|heeft|hebben|ga|gaat|gaan|kan|kun|kunt|kunnen|mag|mogen|wil|wilt|willen|moet|moeten|zal|zul|zullen|zou|zouden|word|wordt|worden|blijf|blijft|blijven|laat|laten|lat)$/;
+  var AUTO_OV = { missen: "perder", terugvinden: "encontrar", vinden: "encontrar", winnen: "ganar", proberen: "intentar" };   // woordenboek geeft hier een samengestelde of andere betekenis
   function autoVerb(w, dict, force) {
     if (FORM[w] || VERB[w] || AUTO_SKIP.test(w) || typeof ZINC === "undefined" || !ZINC.VERB || !ZINC.esForm) return;
     var cands = [], st = w.replace(/t$/, "");
@@ -275,8 +276,8 @@ var NL_ES = (function () {
       if (/s$/.test(b)) cands.push(b.slice(0, -1) + "zen");
     });
     for (var i = 0; i < cands.length; i++) {
-      var inf = cands[i], lem = dict[inf];
-      if (!lem || /\s/.test(lem) || !/(ar|er|ir)$/.test(lem) || !ZINC.VERB[lem] || ZINC.esIsRefl && ZINC.esIsRefl(lem)) continue;
+      var inf = cands[i], lem = AUTO_OV[inf] || dict[inf];
+      if (!lem || /\s/.test(lem) || !/(ar|er|ir|ír)$/.test(lem) || !ZINC.VERB[lem] || ZINC.esIsRefl && ZINC.esIsRefl(lem)) continue;
       var stem = inf.slice(0, -2).replace(/(aa|ee|oo|uu)([^aeiou])$/, function (m, v, c) { return v.charAt(0) + c; });
       // stam moet bij het getoonde woord passen: infinitief, ik-vorm of jij/hij-vorm
       var stems = [inf.slice(0, -2), stem, stem.replace(/(.)\1$/, "$1"), stem.replace(/v$/, "f").replace(/z$/, "s"), inf.slice(0, -2).replace(/([^aeiou])([aeiou])([^aeiou])$/, "$1$2$2$3")];
@@ -302,8 +303,8 @@ var NL_ES = (function () {
     komen: ["kwam", "kwamen", "gekomen", "z"], zien: ["zag", "zagen", "gezien", "h"], doen: ["deed", "deden", "gedaan", "h"], zeggen: ["zei", "zeiden", "gezegd", "h"],
     luisteren: ["luisterde", "luisterden", "geluisterd", "h"], openen: ["opende", "openden", "geopend", "h"], helpen: ["hielp", "hielpen", "geholpen", "h"],
     begrijpen: ["begreep", "begrepen", "begrepen", "h"], nemen: ["nam", "namen", "genomen", "h"], geven: ["gaf", "gaven", "gegeven", "h"], brengen: ["bracht", "brachten", "gebracht", "h"],
-    sturen: ["stuurde", "stuurden", "gestuurd", "h"],
-    kopen: ["kocht", "kochten", "gekocht", "h"], maken: ["maakte", "maakten", "gemaakt", "h"], vinden: ["vond", "vonden", "gevonden", "h"],
+    sturen: ["stuurde", "stuurden", "gestuurd", "h"], missen: ["miste", "misten", "gemist", "h"],
+    kopen: ["kocht", "kochten", "gekocht", "h"], maken: ["maakte", "maakten", "gemaakt", "h"], terugvinden: ["terugvond", "terugvonden", "teruggevonden", "h"],
     schrijven: ["schreef", "schreven", "geschreven", "h"], slapen: ["sliep", "sliepen", "geslapen", "h"], betalen: ["betaalde", "betaalden", "betaald", "h"],
     bellen: ["belde", "belden", "gebeld", "h"], vragen: ["vroeg", "vroegen", "gevraagd", "h"], halen: ["haalde", "haalden", "gehaald", "h"],
     krijgen: ["kreeg", "kregen", "gekregen", "h"], denken: ["dacht", "dachten", "gedacht", "h"], horen: ["hoorde", "hoorden", "gehoord", "h"],
@@ -325,8 +326,22 @@ var NL_ES = (function () {
     for (var k = 0; k < keys.length; k++) if (FORM[keys[k]] === lem && !/_$/.test(keys[k])) return keys[k];
     return lem;
   }
+  // "vinden" = gustar bij een mening ("ik vind het leuk"), maar encontrar bij "ik vind het boek" / "ik heb het gevonden"
+  var VIND_MENING = /^(leuk|lekker|mooi|fijn|goed|slecht|prima|gek|raar|grappig|interessant|belangrijk|moeilijk|makkelijk|duur|goedkoop|saai|lelijk|erg|geweldig|top|niets|niks|van|dat|dit|zo|te|ook)$/;
+  function vindRewrite(toks) {
+    var cl = toks.map(function (t) { return t.replace(/[.,!?]/g, ""); });
+    if (cl.some(function (w) { return VIND_MENING.test(w); })) return toks;
+    var out = toks.slice(), changed = false;
+    cl.forEach(function (w, i) {
+      var rest = cl.slice(i + 1).filter(function (x) { return x !== "het"; }).length;
+      var r = w === "gevonden" ? "teruggevonden" : (/^(vind|vindt|vinden)$/.test(w) && rest > 0 ? "terug" + w : null);
+      if (r) { out[i] = r + toks[i].slice(w.length); changed = true; }
+    });
+    return changed ? out : toks;
+  }
   function pastRewrite(toks) {
     PAST_MODE = null;
+    toks = vindRewrite(toks);
     var clean = toks.map(function (t) { return t.replace(/[.,!?]/g, ""); });
     for (var i = 0; i < clean.length; i++) {
       if (NL_OVT[clean[i]] !== undefined && !FORM[clean[i]]) {

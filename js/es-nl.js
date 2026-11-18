@@ -47,6 +47,13 @@ var ES_NL = (function () {
     pagar:     { es: ["pago", "pagas", "paga", "pagamos", "pagan"], d: ["betaal", "betaalt", "betaalt", "betalen"], inf: "betalen" },
     tomar:     { es: ["tomo", "tomas", "toma", "tomamos", "toman"], d: ["neem", "neemt", "neemt", "nemen"], inf: "nemen" },
     abrir:     { es: ["abro", "abres", "abre", "abrimos", "abren"], d: ["open", "opent", "opent", "openen"], inf: "openen" },
+    encontrar: { es: ["encuentro", "encuentras", "encuentra", "encontramos", "encuentran"], d: ["vind", "vindt", "vindt", "vinden"], inf: "vinden" },
+    ganar:     { es: ["gano", "ganas", "gana", "ganamos", "ganan"], d: ["win", "wint", "wint", "winnen"], inf: "winnen" },
+    intentar:  { es: ["intento", "intentas", "intenta", "intentamos", "intentan"], d: ["probeer", "probeert", "probeert", "proberen"], inf: "proberen" },
+    perder:    { es: ["pierdo", "pierdes", "pierde", "perdemos", "pierden"], d: ["verlies", "verliest", "verliest", "verliezen"], inf: "verliezen" },
+    oir:       { es: ["oigo", "oyes", "oye", "oimos", "oyen"], d: ["hoor", "hoort", "hoort", "horen"], inf: "horen" },
+    llamar:    { es: ["llamo", "llamas", "llama", "llamamos", "llaman"], d: ["bel", "belt", "belt", "bellen"], inf: "bellen" },
+    probar:    { es: ["pruebo", "pruebas", "prueba", "probamos", "prueban"], d: ["probeer", "probeert", "probeert", "proberen"], inf: "proberen" },
     deber:     { es: ["debo", "debes", "debe", "debemos", "deben"], d: ["moet", "moet", "moet", "moeten"], inf: "moeten", modal: true },
     deberia:   { es: ["debería", "deberías", "debería", "deberíamos", "deberían"], d: ["zou", "zou", "zou", "zouden"], inf: "moeten", modal: true },
     mogen:     { es: [], d: ["mag", "mag", "mag", "mogen"], inf: "mogen", modal: true }
@@ -75,7 +82,9 @@ var ES_NL = (function () {
     jugar: ["speelde", "speelden", "gespeeld", "h"], costar: ["kostte", "kostten", "gekost", "h"], repetir: ["herhaalde", "herhaalden", "herhaald", "h"],
     deber: ["moest", "moesten", "gemoeten", "h"],
     comprar: ["kocht", "kochten", "gekocht", "h"], buscar: ["zocht", "zochten", "gezocht", "h"], escribir: ["schreef", "schreven", "geschreven", "h"],
-    dormir: ["sliep", "sliepen", "geslapen", "h"], pagar: ["betaalde", "betaalden", "betaald", "h"], tomar: ["nam", "namen", "genomen", "h"], abrir: ["opende", "openden", "geopend", "h"]
+    dormir: ["sliep", "sliepen", "geslapen", "h"], pagar: ["betaalde", "betaalden", "betaald", "h"], tomar: ["nam", "namen", "genomen", "h"], abrir: ["opende", "openden", "geopend", "h"],
+    encontrar: ["vond", "vonden", "gevonden", "h"], ganar: ["won", "wonnen", "gewonnen", "h"], intentar: ["probeerde", "probeerden", "geprobeerd", "h"],
+    probar: ["probeerde", "probeerden", "geprobeerd", "h"], perder: ["verloor", "verloren", "verloren", "h"], oir: ["hoorde", "hoorden", "gehoord", "h"], llamar: ["belde", "belden", "gebeld", "h"]
   };
   var AUX_H = ["heb", "hebt", "heeft", "hebben", "hebben"], AUX_Z = ["ben", "bent", "is", "zijn", "zijn"];
   var HABER_P = { he: 0, has: 1, ha: 2, hemos: 3, han: 4 };
@@ -138,10 +147,10 @@ var ES_NL = (function () {
     zus: "zussen", broer: "broers", moeder: "moeders", vader: "vaders", tafel: "tafels", auto: "auto's", park: "parken",
     strand: "stranden", station: "stations", film: "films", school: "scholen", koffie: "koffie's", water: "water",
     geld: "geld", pescado: "vis", vis: "vissen", werk: "werken", hulp: "hulp", honger: "honger", brood: "broden" };
-  var NO_ART = { water: 1, geld: 1, tijd: 1, koffie: 1, hulp: 1, honger: 1, werk: 1, vis: 1, brood: 1 };
+  var NO_ART = { hem: 1, je: 1, me: 1, het: 1, haar: 1, ons: 1, ze: 1, water: 1, geld: 1, tijd: 1, koffie: 1, hulp: 1, honger: 1, werk: 1, vis: 1, brood: 1 };
 
   // Zelfstandige naamwoorden waarvan de Nederlandse keuze afwijkt van het woordenboek
-  var NOUN_NL = { tarea: "huiswerk", deberes: "huiswerk", cafe: "koffie", tiempo: "tijd", hora: "uur",
+  var NOUN_NL = { xme: "me", xte: "je", xlo: "het", xla: "haar", xnos: "ons", xlos: "ze", xlom: "hem", tarea: "huiswerk", deberes: "huiswerk", cafe: "koffie", tiempo: "tijd", hora: "uur",
     padre: "vader", madre: "moeder", hermano: "broer", hermana: "zus", amigo: "vriend", amiga: "vriendin",
     profesor: "leraar", profesora: "lerares", medica: "arts", medico: "arts", hijo: "zoon", hija: "dochter",
     esposo: "man", esposa: "vrouw", novio: "vriend", novia: "vriendin", perro: "hond", gato: "kat",
@@ -327,6 +336,26 @@ var ES_NL = (function () {
     return m;
   }
 
+  // Voorwerp-voornaamwoord vóór het werkwoord (te oigo, lo he comprado) wordt een voorwerp erachter (oigo te -> "ik hoor je")
+  var CLITIC = { lom: "xlom", me: "xme", te: "xte", lo: "xlo", la: "xla", nos: "xnos", los: "xlos", las: "xlos" };
+  var NOT_CLITIC_V = /^(llamo|llamas|llama|gusta|gustan|encanta|encantan|parece|parecen|interesa|interesan|duele|duelen|siento|sientes|va|voy|vas)$/;
+  function moveClitic(toks) {
+    for (var k = 0; k < toks.length - 1; k++) {
+      if (!CLITIC[toks[k]]) continue;
+      var nx = toks[k + 1];
+      if ((toks[k] === "me" || toks[k] === "te" || toks[k] === "nos") && NOT_CLITIC_V.test(nx)) continue;
+      var perf = HABER_P[nx] !== undefined && toks.length > k + 2;
+      buildPast();
+      var isV = FORM[nx] !== undefined || (PASTES && PASTES[nx] !== undefined) || (PASTES && PASTES[nx + "§"] !== undefined);
+      if (!isV && !perf) continue;
+      var out = toks.slice(0, k).concat(toks.slice(k + 1));
+      var at = perf ? k + 2 : k + 1;   // na het (hulp)werkwoord of na het voltooid deelwoord
+      out.splice(at, 0, CLITIC[toks[k]]);
+      return out;
+    }
+    return toks;
+  }
+
   function translate(text, rev, gen) {
     if (!text || !rev || !gen) return null;
     rev = normRev(rev);
@@ -340,6 +369,7 @@ var ES_NL = (function () {
     if (s.indexOf(",") >= 0) return null;
     var toks = s.split(" ").filter(Boolean);
     if (!toks.length) return null;
+    toks = moveClitic(toks);
 
     var out = null;
     // Vaste zinnen (betrouwbaar)

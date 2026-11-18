@@ -276,7 +276,7 @@ var ZINI = (function () {
         if (has(VERB, C.esBase(c.v) + "se")) { c.v = C.esBase(c.v) + "se"; clits = []; }
         else if (c.v === "ir") { c.v = "irse"; clits = []; }
         else return null;
-      } else if (!cc) { /* meewerkend voorwerp al verwerkt */ } else if (/^(saber|creer|entender|comprender|hacer|decir|pensar|olvidar)$/.test(c.v) && clits[0] === "lo") c.o = { k: "pron", p: 2, g: "n" };
+      } else if (!cc) { /* meewerkend voorwerp al verwerkt */ } else if (/^(saber|creer|entender|comprender|hacer|decir|pensar|olvidar|comprar|encontrar|intentar|probar|ganar|perder|recoger|buscar|usar|pedir|leer|escribir|comer|beber|tener|preparar|abrir|cerrar|pagar|traer|llevar|enviar|mandar|necesitar|cambiar|terminar|empezar|conseguir|reservar|cocinar|tomar)$/.test(c.v) && clits[0] === "lo") c.o = { k: "pron", p: 2, g: "n" };
       else if (clits[0] === "lo" || clits[0] === "la") c.o = { k: "pron", p: 2, g: clits[0] === "la" ? "f" : "m", amb: true };
       else if (cc) c.o = { k: "pron", p: cc.p, g: cc.g || null };
     }
@@ -1919,6 +1919,11 @@ var ZIN = (function () {
       var nlS = /^\s*hij\b/i.test(text0) ? "m" : (/^\s*(zij|ze)\b/i.test(text0) ? "f" : null);
       if (nlS) c.s = Object.assign({}, c.s, { g: nlS });
     }
+    // Nederlands "het" is onzijdig, "hem" mannelijk: het Spaanse "lo" zegt dat niet
+    if (fromNl && c.o && c.o.k === "pron" && c.o.p === 2 && (c.o.amb || !c.o.g || c.o.g === "m")) {
+      if (/\bhem\b/i.test(text0)) c.o = Object.assign({}, c.o, { g: "m", amb: false });
+      else if (/\bhet\b/i.test(text0) && !/\bhet\s+(is|was|zijn|waren)\b/i.test(text0)) c.o = Object.assign({}, c.o, { g: "n", amb: false });
+    }
     if (c.io && c.io.p === 2 && !c.io.g && !c.io.np) c.io = { p: 2, g: nlHaar ? "f" : "m" };   // "lui"/"le": geslacht onbekend, standaard "hem"
     // beroep als gezegde: geen lidwoord in het Duits, Frans en Spaans, en de vrouwelijke vorm bij een vrouw
     if (c.pred && c.pred.t === "np" && c.pred.np.k === "n" && c.pred.np.det === "ind" && !c.pred.np.pl && !(c.pred.np.adjs || []).length && (ZINC.PROF[c.pred.np.n] || FEM_N[c.pred.np.n] && ZINC.PROF[FEM_N[c.pred.np.n]])) {
@@ -1959,6 +1964,7 @@ var ZIN = (function () {
     if (!viaEs) return out;
     if (typeof ES_NL === "undefined") return null;
     try {
+      if (c.o && c.o.k === "pron" && c.o.p === 2 && c.o.g === "m" && !c.o.amb) out = String(out).replace(/\blo\b/i, "lom");   // "hem", niet "het"
       return ES_NL.translate(out, REVS.nl, function (w) { return (typeof GRAM !== "undefined") ? GRAM.gen(w, "nl") : null; }) || null;
     } catch (e) { return null; }
   }

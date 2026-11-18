@@ -547,6 +547,8 @@ var ZIN_LEX = (function () {
     olvidar: { en: { b: "forget", past: "forgot", ing: "forgetting" }, de: { inf: "vergessen", pres: "vergesse vergisst vergisst vergessen vergesst vergessen", pp: "vergessen" }, fr: { inf: "oublier" } },
     encontrar: { es: { pres: "encuentro encuentras encuentra encontramos encontráis encuentran" },
       en: { b: "find", past: "found" }, de: { inf: "finden", pres: "finde findest findet finden findet finden", pp: "gefunden" }, fr: { inf: "trouver" } },
+    ganar: { en: { b: "win", past: "won", ing: "winning" }, de: { inf: "gewinnen", pp: "gewonnen" }, fr: { inf: "gagner" } },
+    intentar: { en: { b: "try", past: "tried", ing: "trying" }, de: { inf: "versuchen" }, fr: { inf: "essayer", pres: "essaie essaies essaie essayons essayez essaient", pp: "essayé" } },
     perder: { es: { pres: "pierdo pierdes pierde perdemos perdéis pierden" },
       en: { b: "lose", past: "lost", ing: "losing" }, de: { inf: "verlieren", pp: "verloren" },
       fr: { inf: "perdre", pres: "perds perds perd perdons perdez perdent", pp: "perdu" } },
