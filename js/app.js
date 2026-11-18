@@ -988,6 +988,13 @@
       if (q.answered === q.it.es) fb.appendChild(el("div", "ok", T("Goed!")));
       else fb.appendChild(el("div", "bad", T("Niet helemaal. Het juiste antwoord is:") + " " + L(q.it.m)));
       fb.appendChild(el("div", "nl", T("Onthoud:") + " " + q.it.es + " = " + L(q.it.m)));
+      if (q.answered !== q.it.es) {
+        // Bij een fout antwoord: wat de gekozen optie betekende, en de woord-voor-woord-vertaling van de juiste zin
+        var keuze = q.opts.filter(function (x) { return x.es === q.answered; })[0];
+        if (keuze) fb.appendChild(el("div", "nl", T("Jouw keuze betekende:") + " " + L(keuze.m)));
+        var qg = glossBlock(q.it.es);
+        if (qg) fb.appendChild(qg);
+      }
       w.appendChild(fb);
       w.appendChild(btn(T("Volgende vraag →"), "primary", function () { S.quiz = null; render(); }));
     }
@@ -1280,6 +1287,7 @@
       var genNl = function (w) { return (typeof GRAM !== "undefined") ? GRAM.gen(w, "nl") : null; };
       var enl = null;
       try { enl = ES_NL.translate(text, REVS.nl, genNl); } catch (e) { enl = null; }
+      if (!enl && typeof ZIN !== "undefined") { try { enl = ZIN.translate(text, "es", "nl", "m") || null; } catch (e) { enl = null; } }
       if (enl) return { text: enl, grammar: true, parts: [], missing: [] };
     }
     // Engels, Duits, Frans: de zinsmodule (zin-*.js). Lukt die niet, dan alleen de woorden.
@@ -1575,6 +1583,13 @@
   function topicReplies(tp, isQ) {
     var x = tp.es, art = tp.art, dk = tp.det;
     var dSpec = (dk === "un" || dk === "una") ? "un" : (dk === "tu" || dk === "tus") ? "tu" : (dk === "mi" || dk === "mis") ? "mi" : "el";
+    // Bezittelijk voornaamwoord volgt wie met wie praat: zegt de gesprekspartner "mi hermano", dan is dat zijn broer en vraag jij naar "tu hermano".
+    var famUn = /^(un|una|unos|unas)$/.test(dk) && /^(hermano|hermana|hermanos|hermanas|padre|madre|padres|hijo|hija|hijos|hijas|perro|perra|gato|gata|amigo|amiga|amigos|amigas|novio|novia|marido|esposa|esposo|abuelo|abuela|tío|tía|primo|prima|sobrino|sobrina|jefe|jefa|compañero|compañera)$/.test(x);
+    var poss = /^(mi|mis|tu|tus|su|sus)$/.test(dk) || famUn, plD = /s$/.test(dk);
+    var dSpecQ = poss ? "tu" : dSpec;
+    var dSpecA = /^(mi|mis|su|sus)$/.test(dk) || famUn ? "tu" : /^(tu|tus)$/.test(dk) ? "mi" : dSpec;
+    var artQ = poss ? (plD ? "tus" : "tu") : art;
+    var artA = dSpecA === "tu" ? (plD ? "tus" : "tu") : dSpecA === "mi" ? (plD ? "mis" : "mi") : art;
     var gD = (typeof GRAM !== "undefined") ? GRAM.gen(x, "de") : null;
     var gF = (typeof GRAM !== "undefined") ? GRAM.gen(x, "fr") : null;
     var known = !!(gD && gF);
@@ -1587,21 +1602,22 @@
     var nlNoun = gN === "n" ? "het " + nlN : gN === "c" ? "de " + nlN : "dat";
     var nlPron = gN === "n" ? "dat" : gN === "c" ? "die" : "dat";
     var pDE = { m: "er", f: "sie", n: "es" }[g], pFR = gfr === "f" ? "elle" : "il";
-    var deAcc = np("de", dSpec, "acc"), frAcc = np("fr", dSpec, "acc");
-    var deNom = np("de", "el", "nom");
+    var deAcc = np("de", dSpecA, "acc"), frAcc = np("fr", dSpecA, "acc");
+    var deAccQ = np("de", dSpecQ, "acc"), frAccQ = np("fr", dSpecQ, "acc");
+    var deNom = np("de", "el", "nom"), deNomQ = np("de", dSpecQ, "nom");
     if (!isQ) { // mededeling: reageer enthousiast en vraag door over hetzelfde onderwerp
       return {
-        answer: { es: "¡Qué bien! Me gusta " + art + " " + x + ".",
+        answer: { es: "¡Qué bien! Me gusta " + artA + " " + x + ".",
           m: { nl: "Wat leuk! Ik vind " + nlNoun + " ook leuk.", en: "How nice! I like " + enN + ".",
             de: "Wie schön! Ich mag " + (deAcc || "es") + ".",
             fr: "Super ! " + (frAcc ? "J'aime " + frAcc : "Je l'aime bien") + "." } },
         questions: [
-          { es: "¿Cómo se llama " + art + " " + x + "?",
+          { es: "¿Cómo se llama " + artQ + " " + x + "?",
             m: { nl: "Hoe heet " + nlPron + "?", en: "What is its name?",
               de: "Wie heißt " + (known ? pDE : "es") + "?", fr: "Comment s'appelle-t-" + (known ? pFR : "il") + " ?" } },
-          { es: "¿Cómo es " + art + " " + x + "?",
+          { es: "¿Cómo es " + artQ + " " + x + "?",
             m: { nl: "Hoe is " + nlNoun + "?", en: "What is " + enN + " like?",
-              de: "Wie ist " + (deNom || "es") + "?", fr: "Comment est-" + (known ? pFR : "il") + " ?" } }
+              de: "Wie ist " + (deNomQ || deNom || "es") + "?", fr: "Comment est-" + (known ? pFR : "il") + " ?" } }
         ]
       };
     }
@@ -1611,12 +1627,12 @@
           de: (known ? capDE(np("de", "mi", "dat")) + " geht es" : "Es geht ihm") + " sehr gut, danke.",
           fr: known ? "Ça va très bien pour " + np("fr", "mi", "acc") + ", merci." : "Ça va très bien, merci." } },
       questions: [
-        { es: "¿Te gusta " + art + " " + x + "?",
+        { es: "¿Te gusta " + artQ + " " + x + "?",
           m: { nl: "Vind je " + nlNoun + " leuk?", en: "Do you like " + enN + "?",
-            de: "Magst du " + (deAcc || "es") + "?", fr: "Tu aimes " + (frAcc || "ça") + " ?" } },
-        { es: "¿Cómo es " + art + " " + x + "?",
+            de: "Magst du " + (deAccQ || deAcc || "es") + "?", fr: "Tu aimes " + (frAccQ || frAcc || "ça") + " ?" } },
+        { es: "¿Cómo es " + artQ + " " + x + "?",
           m: { nl: "Hoe is " + nlNoun + "?", en: "What is " + enN + " like?",
-            de: "Wie ist " + (deNom || "es") + "?", fr: "Comment est-" + (known ? pFR : "il") + " ?" } }
+            de: "Wie ist " + (deNomQ || deNom || "es") + "?", fr: "Comment est-" + (known ? pFR : "il") + " ?" } }
       ]
     };
   }
@@ -1638,7 +1654,7 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "2.9";
+  var APP_VERSION = "2.32";
   // Versies waarvoor gebruikers de app opnieuw op hun beginscherm moeten zetten (oude icoon weg, nieuwe erop).
   // Bij zo'n update verschijnt eenmalig een melding met uitleg.
   var REINSTALL_VERSIONS = ["1.8"];
@@ -1772,11 +1788,11 @@
   // Opnemen op iPhone: het geluid wordt rechtstreeks als ruwe samples opgevangen (geen bestand
   // dat achteraf gedecodeerd moet worden), daarna naar 16 kHz gebracht en op volume gebracht.
   function whStart() {
-    if (!store.get("whModel", null)) { S.whAsk = true; S.note = ""; go("gesprek"); return; }
+    if (!store.get("whModel", null)) { S.whAsk = true; S.note = ""; go("gesprek"); scrollGesprekEnd(); return; }
     if (!WH.ready) {
       // Eerst het model laden (uit de opslag van het toestel), pas daarna opnemen.
       S.note = T("Het spraakmodel wordt nog geladen. Wacht even.");
-      go("gesprek");
+      go("gesprek"); scrollGesprekEnd();
       whLoadWithNote();
       return;
     }
@@ -1833,7 +1849,7 @@
       whLog("microfoon FOUT: " + (e && (e.name + " " + e.message)));
       if (ac) { try { ac.close().catch(function () {}); } catch (x) {} }
       S.note = T("Microfoon is niet toegestaan op deze pagina. Typ hieronder wat je gesprekspartner zei.");
-      go("gesprek");
+      go("gesprek"); scrollGesprekEnd();
     });
   }
 
@@ -1857,7 +1873,7 @@
     whLog("opname gestopt: route 1 gaf " + chunks.length + " blokken, " + (Math.round(len / rate * 10) / 10) + " s, " + rate + " Hz");
     S.listening = false; S.wrec = false;
     S.note = T("Bezig met verwerken…");
-    updateMic(); go("gesprek");
+    updateMic(); go("gesprek"); scrollGesprekEnd();
 
     function release() {
       if (WH.stream) { WH.stream.getTracks().forEach(function (t) { t.stop(); }); WH.stream = null; }
@@ -1899,7 +1915,7 @@
       if (!out || out.length < 16000 * 0.3) {
         whLog("geen bruikbaar geluid uit beide routes");
         S.note = T("Geen spraak gehoord. Probeer het opnieuw.") + " (" + T("opname") + " 0 s)";
-        go("gesprek"); return null;
+        go("gesprek"); scrollGesprekEnd(); return null;
       }
       // Eerst achtergrondgeluid dempen (brom, ruis), daarna pas het volume gelijkmaken.
       if (window.SpraakSchoon) out = SpraakSchoon.clean(out, 16000);
@@ -1918,78 +1934,87 @@
         var junk = /^[\(\[\{].*[\)\]\}]$/.test(text) || /^[\W_]+$/.test(text);
         if (text.length >= 2 && !junk) S.convo.push(makeTurn(text));
         else S.note = T("Geen spraak gehoord. Probeer het opnieuw.") + info + (text ? ", " + T("gehoord") + ": " + text.slice(0, 40) : "") + ")";
-        go("gesprek");
+        go("gesprek"); scrollGesprekEnd();
       });
     }).catch(function (e) {
       release();
       whLog("verwerken FOUT: " + (e && e.message));
       S.note = whErr(e);
-      go("gesprek");
+      go("gesprek"); scrollGesprekEnd();
     });
   }
 
+  // Opname via de spraakherkenning van de browser. Stopt de herkenning zelf (dat gebeurt na een stilte),
+  // dan start de app hem opnieuw, tot de gebruiker op Stop tikt. Alles wat gehoord is, blijft bewaard.
+  var micStop = null;
   function startMic() {
     if (S.listening) return;
     if (typeof prRelease === "function") prRelease();
     if (isIOS() && (window.AudioContext || window.webkitAudioContext) && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) { whStart(); return; }
     var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    var rec = null;
-    if (SR) { try { rec = new SR(); } catch (e) { rec = null; } }
-    if (!rec) {
+    if (!SR) {
       S.note = T("Spraakherkenning werkt niet in deze browser. Gebruik Chrome of Edge, of typ hieronder.");
-      go("gesprek");
+      go("gesprek"); scrollGesprekEnd();
       return;
     }
-    rec.lang = "es-ES";
-    rec.continuous = true;
-    rec.interimResults = false;
-    rec.maxAlternatives = 1;
-    var heard = [], errored = false;
-    rec.onresult = function (ev) {
-      for (var i = ev.resultIndex; i < ev.results.length; i++) {
-        if (ev.results[i].isFinal) {
-          var t = (ev.results[i][0].transcript || "").trim();
-          if (t) heard.push(t);
-        }
-      }
-    };
-    rec.onerror = function (ev) {
-      var code = ev && ev.error;
-      if (code === "aborted") return; // door de app zelf gestopt, geen fout
-      errored = true; S.note = errorText(code);
-    };
-    var ended = false;
-    rec.onend = function () {
-      if (ended) return;
-      ended = true;
-      S.listening = false; S.rec = null;
+    var heard = [], errored = false, ended = false, userStop = false, cur = null, restarts = 0, lastStart = 0;
+    function finish() {
+      if (ended) return; ended = true;
+      S.listening = false; S.rec = null; micStop = null;
       if (heard.length) {
         heard.forEach(function (t) { S.convo.push(makeTurn(t)); });
         S.note = "";
       } else if (!errored) {
         S.note = T("Geen spraak gehoord. Probeer het opnieuw.");
       }
-      go("gesprek");
-    };
-    S.listening = true; S.rec = rec; S.note = "";
-    updateMic();
-    try { rec.start(); } catch (e) {
-      S.listening = false; S.rec = null;
-      S.note = T("Spraakherkenning werkt niet in deze browser. Gebruik Chrome of Edge, of typ hieronder.");
-      go("gesprek");
+      go("gesprek"); scrollGesprekEnd();
     }
+    function begin() {
+      var rec = null;
+      try { rec = new SR(); } catch (e) { rec = null; }
+      if (!rec) { errored = true; S.note = T("Spraakherkenning werkt niet in deze browser. Gebruik Chrome of Edge, of typ hieronder."); finish(); return; }
+      rec.lang = "es-ES";
+      rec.continuous = true;
+      rec.interimResults = false;
+      rec.maxAlternatives = 1;
+      rec.onresult = function (ev) {
+        for (var i = ev.resultIndex; i < ev.results.length; i++) {
+          if (ev.results[i].isFinal) {
+            var t = (ev.results[i][0].transcript || "").trim();
+            if (t) heard.push(t);
+          }
+        }
+      };
+      rec.onerror = function (ev) {
+        var code = ev && ev.error;
+        // "no-speech" en "aborted" zijn geen fouten: de herkenning start dan gewoon opnieuw
+        if (code === "aborted" || code === "no-speech") return;
+        errored = true; S.note = errorText(code);
+      };
+      rec.onend = function () {
+        if (cur !== rec || ended) return;
+        var snel = Date.now() - lastStart < 400;
+        restarts = snel ? restarts + 1 : 0;
+        if (!userStop && !errored && restarts < 20) { begin(); return; }
+        finish();
+      };
+      cur = rec; S.rec = rec;
+      lastStart = Date.now();
+      try { rec.start(); } catch (e) { errored = true; S.note = T("Spraakherkenning werkt niet in deze browser. Gebruik Chrome of Edge, of typ hieronder."); finish(); }
+    }
+    S.listening = true; S.note = "";
+    updateMic();
+    micStop = function () {
+      // Stoppen op verzoek: de herkenning verwerkt eerst de laatste zin; blijft het eindsignaal uit, dan rond de app zelf af.
+      userStop = true;
+      try { if (cur) cur.stop(); } catch (e) {}
+      setTimeout(function () { if (!ended) finish(); }, 3000);
+    };
+    begin();
   }
-  // Stoppen: als het spraak-einde-event uitblijft (gebeurt op iPhone), rond de opname zelf af.
-  // Stoppen: laat de herkenning eerst de laatste zin verwerken (stop, niet abort);
-  // alleen als het eindsignaal dan nog ontbreekt, rond de app zelf af.
   function stopMic() {
     if (S.wrec) { whStop(); return; }
-    var rec = S.rec;
-    if (!rec) return;
-    try { rec.stop(); } catch (e) {}
-    setTimeout(function () {
-      if (S.rec === rec && rec.onend) rec.onend();
-    }, 3000);
+    if (micStop) micStop();
   }
 
   // ---------- Info: uitleg over de app, de maker en de bronnen ----------
@@ -2852,7 +2877,7 @@
 
   // Logo: ring in de kleuren van alle talen met SP in schrijfletters (als pad, dus overal gelijk).
   // Het kleine label rechtsonder toont de gekozen taal; een tik opent het taalmenu.
-  var LOGO_INNER = '<path d="M54.19,13.24 A37,37 0 0 1 83.67,34.66" fill="none" stroke="#D52B1E" stroke-width="6.5" stroke-linecap="round"/><path d="M86.26,42.62 A37,37 0 0 1 75.00,77.28" fill="none" stroke="#FCD116" stroke-width="6.5" stroke-linecap="round"/><path d="M68.22,82.20 A37,37 0 0 1 31.78,82.20" fill="none" stroke="#009E49" stroke-width="6.5" stroke-linecap="round"/><path d="M25.00,77.28 A37,37 0 0 1 13.74,42.62" fill="none" stroke="#0052B4" stroke-width="6.5" stroke-linecap="round"/><path d="M16.33,34.66 A37,37 0 0 1 45.81,13.24" fill="none" stroke="#1a1a1a" stroke-width="6.5" stroke-linecap="round"/><path d="M21.54 81.79Q17.08 81.79 12.89 80.27Q8.7 78.74 5.81 75.62Q2.92 72.51 2.36 67.83Q1.86 63.68 3.41 61.37Q4.97 59.05 7.61 58.14Q10.24 57.22 12.84 57.22Q10.71 59.81 9.78 62.56Q8.85 65.31 9.15 67.8Q9.46 70.42 11.07 72.67Q12.67 74.93 15.51 76.34Q18.35 77.75 22.31 77.75Q25.73 77.75 28.86 76.59Q31.98 75.44 33.8 73.16Q35.62 70.88 35.2 67.41Q34.83 64.3 32.77 62.06Q30.7 59.81 27.66 58.02Q24.62 56.23 21.3 54.59Q17.97 52.95 14.92 51.03Q11.87 49.11 9.78 46.61Q7.68 44.1 7.25 40.58Q6.88 37.45 8.02 33.9Q9.16 30.36 11.68 27.23Q14.21 24.1 18.09 22.15Q21.98 20.21 27.02 20.21Q32.28 20.21 34.69 22.42Q37.09 24.63 37.52 28.22Q37.85 31.01 37.25 34.23Q36.66 37.44 35.59 40.35Q34.52 43.25 33.47 45.31Q31.74 44.93 30.79 43.98Q29.83 43.02 29.64 41.42Q29.45 39.82 29.87 37.83Q30.3 35.85 30.89 33.71Q31.48 31.58 31.9 29.56Q32.32 27.53 32.14 26.01Q31.98 24.63 31.08 23.87Q30.19 23.11 27.72 23.11Q24.08 23.11 21.22 24.71Q18.36 26.31 16.42 28.76Q14.47 31.22 13.56 33.92Q12.66 36.62 12.92 38.83Q13.25 41.57 15.24 43.53Q17.24 45.49 20.21 47.08Q23.18 48.67 26.47 50.27Q29.75 51.88 32.77 53.88Q35.79 55.88 37.88 58.61Q39.97 61.35 40.44 65.27Q40.92 69.28 39.49 72.33Q38.07 75.38 35.27 77.48Q32.46 79.58 28.9 80.69Q25.33 81.79 21.54 81.79ZM52.9 81.79Q50.61 81.79 48.44 80.57Q46.27 79.35 46.04 77.44Q45.93 76.45 46.13 75.31Q46.34 74.16 46.52 73.17Q48.02 65.92 49.33 59.62Q50.63 53.33 52.03 47.49Q53.43 41.65 55.05 35.77Q56.67 29.9 58.8 23.49Q55.98 24.1 54.03 25.05Q52.08 26.01 50.87 26.73Q49.66 27.46 49.05 27.46Q48.67 27.46 47.88 26.92Q47.09 26.39 46.48 25.7Q45.86 25.01 45.79 24.48Q47.82 23.56 50.56 22.57Q53.31 21.58 56.58 20.89Q59.86 20.21 63.22 20.21Q66.8 20.21 70.66 21.16Q74.51 22.11 77.9 23.98Q81.29 25.85 83.58 28.64Q85.86 31.42 86.3 35.16Q86.79 39.21 85.31 42.11Q83.82 45.01 81.05 46.99Q78.27 48.98 74.91 50.2Q71.54 51.42 68.14 52.03Q64.74 52.64 62.02 52.87Q59.3 53.1 57.93 53.1H57.47Q56.24 60.65 55.08 68.17Q53.92 75.69 52.9 81.79ZM57.87 50.73Q62.11 50.43 66.25 49.28Q70.38 48.14 73.61 46.12Q76.84 44.09 78.58 41.04Q80.31 37.99 79.82 33.94Q79.37 30.13 77.06 27.76Q74.75 25.4 71.44 24.17Q68.13 22.95 64.61 22.88Q62.5 28.22 60.86 35.51Q59.21 42.8 57.87 50.73Z" fill="#1b1b1b" stroke="#ffffff" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"/>';
+  var LOGO_INNER = '<path d="M54.19,13.24 A37,37 0 0 1 83.67,34.66" fill="none" stroke="#D52B1E" stroke-width="6.5" stroke-linecap="round"/><path d="M86.26,42.62 A37,37 0 0 1 75.00,77.28" fill="none" stroke="#FCD116" stroke-width="6.5" stroke-linecap="round"/><path d="M68.22,82.20 A37,37 0 0 1 31.78,82.20" fill="none" stroke="#009E49" stroke-width="6.5" stroke-linecap="round"/><path d="M25.00,77.28 A37,37 0 0 1 13.74,42.62" fill="none" stroke="#0052B4" stroke-width="6.5" stroke-linecap="round"/><path d="M16.33,34.66 A37,37 0 0 1 45.81,13.24" fill="none" stroke="#1a1a1a" stroke-width="6.5" stroke-linecap="round"/><path d="M21.54 81.79Q17.08 81.79 12.89 80.27Q8.7 78.74 5.81 75.62Q2.92 72.51 2.36 67.83Q1.86 63.68 3.41 61.37Q4.97 59.05 7.61 58.14Q10.24 57.22 12.84 57.22Q10.71 59.81 9.78 62.56Q8.85 65.31 9.15 67.8Q9.46 70.42 11.07 72.67Q12.67 74.93 15.51 76.34Q18.35 77.75 22.32 77.75Q25.73 77.75 28.86 76.59Q31.98 75.44 33.8 73.16Q35.62 70.88 35.2 67.41Q34.83 64.3 32.77 62.06Q30.7 59.81 27.66 58.02Q24.62 56.23 21.3 54.59Q17.97 52.95 14.92 51.03Q11.87 49.11 9.78 46.61Q7.68 44.1 7.25 40.58Q6.88 37.45 8.02 33.9Q9.16 30.36 11.68 27.23Q14.21 24.1 18.09 22.15Q21.98 20.21 27.02 20.21Q32.28 20.21 34.69 22.42Q37.09 24.63 37.52 28.22Q37.85 31.01 37.25 34.23Q36.66 37.44 35.59 40.35Q34.52 43.25 33.47 45.31Q31.74 44.93 30.79 43.98Q29.83 43.02 29.64 41.42Q29.45 39.82 29.87 37.83Q30.3 35.85 30.89 33.71Q31.48 31.58 31.9 29.56Q32.32 27.53 32.14 26.01Q31.98 24.63 31.08 23.87Q30.19 23.11 27.72 23.11Q24.08 23.11 21.22 24.71Q18.36 26.31 16.42 28.76Q14.47 31.22 13.56 33.92Q12.66 36.62 12.92 38.83Q13.25 41.57 15.24 43.53Q17.24 45.49 20.21 47.08Q23.18 48.67 26.47 50.27Q29.75 51.88 32.77 53.88Q35.79 55.88 37.88 58.61Q39.97 61.35 40.44 65.27Q40.92 69.28 39.49 72.33Q38.07 75.38 35.27 77.48Q32.46 79.58 28.9 80.69Q25.33 81.79 21.54 81.79ZM52.9 81.79Q50.61 81.79 48.44 80.57Q46.27 79.35 46.04 77.44Q45.93 76.45 46.13 75.31Q46.34 74.16 46.52 73.17Q48.02 65.92 49.33 59.62Q50.63 53.33 52.03 47.49Q53.43 41.65 55.05 35.77Q56.67 29.9 58.8 23.49Q55.98 24.1 54.03 25.05Q52.08 26.01 50.87 26.73Q49.66 27.46 49.05 27.46Q48.67 27.46 47.88 26.92Q47.09 26.39 46.48 25.7Q45.86 25.01 45.79 24.48Q47.82 23.56 50.56 22.57Q53.31 21.58 56.58 20.89Q59.86 20.21 63.22 20.21Q66.8 20.21 70.66 21.16Q74.51 22.11 77.9 23.98Q81.29 25.85 83.58 28.64Q85.86 31.42 86.3 35.16Q86.79 39.21 85.31 42.11Q83.82 45.01 81.05 46.99Q78.27 48.98 74.91 50.2Q71.54 51.42 68.14 52.03Q64.74 52.64 62.02 52.87Q59.3 53.1 57.93 53.1H57.47Q56.24 60.65 55.08 68.17Q53.92 75.69 52.9 81.79ZM57.87 50.73Q62.11 50.43 66.25 49.28Q70.38 48.14 73.61 46.12Q76.84 44.09 78.58 41.04Q80.31 37.99 79.82 33.94Q79.37 30.13 77.06 27.76Q74.75 25.4 71.44 24.17Q68.13 22.95 64.61 22.88Q62.5 28.22 60.86 35.51Q59.21 42.8 57.87 50.73Z" fill="#1b1b1b" stroke="#ffffff" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"/>';
   function renderLogo() {
     document.getElementById("logo").innerHTML =
       '<img class="logo-img" src="icons/logo.png" alt="" width="52" height="52">' +

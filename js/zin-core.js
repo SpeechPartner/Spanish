@@ -55,7 +55,7 @@ var ZINC = (function () {
   function dePlural(e) { return e.dePl; }
 
   // Spaans geslacht (vuistregels met uitzonderingen)
-  var ES_FEM = { mujer: 1, mano: 1, foto: 1, moto: 1, radio: 1, bici: 1, tele: 1, calle: 1, clase: 1, leche: 1, carne: 1, noche: 1,
+  var ES_FEM = { salud: 1, mujer: 1, mano: 1, foto: 1, moto: 1, radio: 1, bici: 1, tele: 1, calle: 1, clase: 1, leche: 1, carne: 1, noche: 1,
     llave: 1, flor: 1, tarde: 1, madre: 1, gente: 1, parte: 1, suerte: 1, nieve: 1, fuente: 1, base: 1, frase: 1, sangre: 1, muerte: 1,
     torre: 1, fiebre: 1, sal: 1, miel: 1, piel: 1, "cárcel": 1, "señal": 1, postal: 1, catedral: 1, vez: 1, voz: 1, luz: 1, paz: 1,
     nariz: 1, cruz: 1, "raíz": 1, imagen: 1, crisis: 1, tesis: 1, serie: 1, especie: 1, mente: 1, red: 1, pared: 1, sed: 1, ley: 1, tos: 1,
@@ -63,9 +63,17 @@ var ZINC = (function () {
   var ES_MASC = { "día": 1, mapa: 1, problema: 1, idioma: 1, tema: 1, programa: 1, sistema: 1, clima: 1, planeta: 1, "sofá": 1, pijama: 1,
     "avión": 1, "camión": 1, "autobús": 1, "país": 1, mes: 1, "lápiz": 1, arroz: 1, pez: 1, "examen": 1, "cumpleaños": 1,
     lunes: 1, martes: 1, "miércoles": 1, jueves: 1, viernes: 1, "sábado": 1, domingo: 1, "corazón": 1, "jamón": 1, "salón": 1, "ratón": 1, "limón": 1, "melón": 1 };
+  // el/la uit de PDF-lijst (Collins Spanish); eigen tabellen hierboven winnen
+  var ESG = null;
+  function esGenData(w) {
+    if (!ESG) { ESG = {}; if (typeof ZIN_GENDER !== "undefined" && ZIN_GENDER.es) ZIN_GENDER.es.split("|").forEach(function (p) { var i = p.indexOf("="); if (i > 0) ESG[p.slice(0, i)] = p.slice(i + 1); }); }
+    return ESG[w] || null;
+  }
   function esFem(w) {
     if (has(ES_FEM, w)) return true;
     if (has(ES_MASC, w)) return false;
+    var pg = esGenData(w);
+    if (pg) return pg === "f";
     if (/(ción|sión|dad|tad|tud|umbre|ie)$/.test(w)) return true;
     if (/a$/.test(w)) return true;
     return false;
@@ -154,6 +162,8 @@ var ZINC = (function () {
     PIDX.en[low(f[1]).replace(/^the /, "")] = f[0]; PIDX.de[low(f[2]).replace(/^die /, "")] = f[0]; PIDX.fr[low(f[3])] = f[0];
   });
 
+  // Franse elisievormen voor een klinker of stomme h: bel, nouvel, vieil
+  [["bel", "beau"], ["nouvel", "nouveau"], ["vieil", "vieux"]].forEach(function (p) { if (AIDX.fr[p[1]] && !AIDX.fr[p[0]]) AIDX.fr[p[0]] = AIDX.fr[p[1]]; });
   // ---------------- Bijwoorden, tener-uitdrukkingen, weer, vaste zinnen ----------------
   var ADV = {}, ADVIDX = { es: {}, en: {}, de: {}, fr: {} };
   L.ADVS.forEach(function (line) {
@@ -199,13 +209,13 @@ var ZINC = (function () {
   };
   var REFL_ES = ["me", "te", "se", "nos", "os", "se"];
   function esBase(lemma) { return lemma.replace(/se$/, ""); }
-  function esIsRefl(lemma) { return /se$/.test(lemma) && lemma !== "tener que"; }
+  function esIsRefl(lemma) { return /se$/.test(lemma) && !/ /.test(lemma); }
   // Spaanse vervoeging. tense: pres, pret, imp. Geeft de vorm zonder wederkerend voornaamwoord.
   function esForm(lemma, tense, p) {
     var v = VERB[lemma] || {}, o = v.es || {};
     if (o[tense]) { var arr = split6(o[tense]); var f = arr[p]; return f.replace(/^(me|te|se|nos|os) /, ""); }
     var inf = esBase(lemma);
-    if (lemma === "tener que") return null;
+    if (/ /.test(lemma)) return null;
     var cls = inf.slice(-2), stem = inf.slice(0, -2), e = ES_END[cls];
     if (!e) return null;
     if (tense === "pret" && p === 0 && cls === "ar") {
@@ -244,7 +254,7 @@ var ZINC = (function () {
     if (kf !== "se") (ESFF[kf] = ESFF[kf] || []).push({ v: v, tense: tense, p: p });
   }
   Object.keys(VERB).forEach(function (lemma) {
-    if (lemma === "tener que") return;
+    if (lemma === "tener que" || lemma === "tener permiso") return;
     ["pres", "pret", "imp"].forEach(function (t) {
       for (var p = 0; p < 6; p++) {
         var f = esForm(lemma, t, p);
@@ -255,7 +265,7 @@ var ZINC = (function () {
   });
   var GERIDX = {}, PPIDX = {}, INFIDX = {};
   Object.keys(VERB).forEach(function (lemma) {
-    if (lemma === "tener que") return;
+    if (/ /.test(lemma)) return;
     GERIDX[fold(esGer(lemma))] = GERIDX[fold(esGer(lemma))] || lemma;
     PPIDX[fold(esPP(lemma))] = PPIDX[fold(esPP(lemma))] || lemma;
     INFIDX[fold(esBase(lemma))] = INFIDX[fold(esBase(lemma))] || lemma;
@@ -319,7 +329,78 @@ var ZINC = (function () {
     return s.p;
   }
 
+  // Werkwoorden met vast voorzetsel: Spaans lemma -> voorzetsel per taal (de: [voorzetsel, naamval])
+  // Voorzetsels met de tweede naamval in het Duits (wegen, trotz, während, statt, innerhalb, außerhalb)
+  var GENP = {
+    "a causa de": { en: "because of", de: "wegen", fr: "à cause de" },
+    "a pesar de": { en: "despite", de: "trotz", fr: "malgré" },
+    "durante": { en: "during", de: "während", fr: "pendant" },
+    "en lugar de": { en: "instead of", de: "statt", fr: "au lieu de" },
+    "dentro de": { en: "inside", de: "innerhalb", fr: "à l'intérieur de" },
+    "fuera de": { en: "outside", de: "außerhalb", fr: "en dehors de" }
+  };
+  var PV = {
+    soñar: { es: "con", en: "about", de: ["von", "dat"], fr: "de" },
+    depender: { es: "de", en: "on", de: ["von", "dat"], fr: "de" },
+    participar: { es: "en", en: "in", de: ["an", "dat"], fr: "à" },
+    preguntar: { es: "por", en: "about", de: ["nach", "dat"], fr: "sur" },
+    invitar: { es: "a", en: "to", de: ["zu", "dat"], fr: "à" },
+    pertenecer: { es: "a", en: "to", de: ["zu", "dat"], fr: "à" },
+    dudar: { es: "de", en: "", de: ["an", "dat"], fr: "de" },
+    consistir: { es: "en", en: "of", de: ["aus", "dat"], fr: "en" },
+    contribuir: { es: "a", en: "to", de: ["zu", "dat"], fr: "à" },
+    advertir: { es: "de", en: "about", de: ["vor", "dat"], fr: "de" },
+    felicitar: { es: "por", en: "on", de: ["zu", "dat"], fr: "pour" },
+    comparar: { es: "con", en: "with", de: ["mit", "dat"], fr: "avec" },
+    reflexionar: { es: "sobre", en: "about", de: ["über", "acc"], fr: "sur" },
+    creer: { es: "en", en: "in", de: ["an", "acc"], fr: "en" },
+    empezar: { es: "con", en: "with", de: ["mit", "dat"], fr: "avec" },
+    interesarse: { es: "por", en: "in", de: ["für", "acc"], fr: "à" },
+    alegrarse: { es: "de", en: "about", de: ["über", "acc"], fr: "de" },
+    adaptar: { es: "a", en: "to", de: ["an", "acc"], fr: "à" },
+    acordarse: { es: "de", en: "", de: ["an", "acc"], fr: "de" },
+    acostumbrarse: { es: "a", en: "", de: ["an", "acc"], fr: "à" },
+    referirse: { es: "a", en: "to", de: ["auf", "acc"], fr: "à" },
+    concentrarse: { es: "en", en: "on", de: ["auf", "acc"], fr: "sur" },
+    reaccionar: { es: "a", en: "to", de: ["auf", "acc"], fr: "à" },
+    especializarse: { es: "en", en: "in", de: ["auf", "acc"], fr: "dans" },
+    confiar: { es: "en", en: "", de: ["auf", "acc"], fr: "à" },
+    renunciar: { es: "a", en: "", de: ["auf", "acc"], fr: "à" },
+    prepararse: { es: "para", en: "for", de: ["auf", "acc"], fr: "à" },
+    preparar: { es: "para", en: "for", de: ["auf", "acc"], fr: "à" },
+    decidirse: { es: "por", en: "on", de: ["für", "acc"], fr: "pour" },
+    disculparse: { es: "por", en: "for", de: ["für", "acc"], fr: "de" },
+    luchar: { es: "por", en: "for", de: ["für", "acc"], fr: "pour" },
+    protestar: { es: "contra", en: "against", de: ["gegen", "acc"], fr: "contre" },
+    invertir: { es: "en", en: "in", de: ["in", "acc"], fr: "dans" },
+    disfrutar: { es: "de", en: "", de: ["", "gen"], fr: "de" },
+    enamorarse: { es: "de", en: "with", de: ["in", "acc"], fr: "de" },
+    enfadarse: { es: "por", en: "about", de: ["über", "acc"], fr: "de" },
+    informar: { es: "sobre", en: "on", de: ["über", "acc"], fr: "sur" },
+    quejarse: { es: "de", en: "about", de: ["über", "acc"], fr: "de" },
+    discutir: { es: "sobre", en: "", de: ["über", "acc"], fr: "de" },
+    reírse: { es: "de", en: "at", de: ["über", "acc"], fr: "de" },
+    sorprenderse: { es: "de", en: "at", de: ["über", "acc"], fr: "de" },
+    informarse: { es: "sobre", en: "about", de: ["über", "acc"], fr: "sur" },
+    ocuparse: { es: "de", en: "of", de: ["um", "acc"], fr: "de" },
+    preocuparse: { es: "por", en: "about", de: ["um", "acc"], fr: "de" },
+    quedar: { es: "con", en: "", de: ["mit", "dat"], fr: "" },
+    unir: { es: "con", en: "with", de: ["mit", "dat"], fr: "à" },
+    recuperarse: { es: "de", en: "from", de: ["von", "dat"], fr: "de" },
+    contar: { es: "de", en: "about", de: ["von", "dat"], fr: "de" },
+    tratar: { es: "de", en: "with", de: ["von", "dat"], fr: "de" },
+    separarse: { es: "de", en: "from", de: ["von", "dat"], fr: "de" },
+    convencer: { es: "de", en: "of", de: ["von", "dat"], fr: "de" },
+    diferir: { es: "de", en: "from", de: ["von", "dat"], fr: "de" },
+    despedirse: { es: "de", en: "to", de: ["von", "dat"], fr: "de" },
+    tender: { es: "a", en: "to", de: ["zu", "dat"], fr: "à" },
+    sufrir: { es: "de", en: "from", de: ["an", "dat"], fr: "de" },
+    ayudar: { es: "con", en: "with", de: ["bei", "dat"], fr: "à" },
+    pensar: { es: "en", en: "about", de: ["an", "acc"], fr: "à" }
+  };
   return {
+    PV: PV,
+    GENP: GENP,
     L: L, fold: fold, low: low, cap: cap, has: has, split6: split6, normKey: normKey, enKey: enKey, stripAcc: stripAcc,
     NOUN: NOUN, NIDX: NIDX, PERSON: PERSON, PROF: PROF, enPlural: enPlural, frPlural: frPlural, dePlural: dePlural,
     esFem: esFem, esPlural: esPlural, esArt: esArt, esAdj: esAdj, STRESSED_A: STRESSED_A,

@@ -143,7 +143,7 @@ var ZINO = (function () {
     if (c.sp === "hay") {
       var npH = enNP(c.o, "obj"); if (!npH) return null;
       var plH = c.o.pl || (c.o.num > 1);
-      var beH = c.t === "past" || c.t === "impf" ? (plH ? "were" : "was") : (plH ? "are" : "is");
+      var beH = c.t === "fut" ? "will be" : (c.t === "past" || c.t === "impf" ? (plH ? "were" : "was") : (plH ? "are" : "is"));
       if (neg) {
         var npN = enNP(Object.assign({}, c.o, { det: c.o.det === "def" ? "def" : "neg", num: null }), "obj");
         if (c.o.det === "def") return null;
@@ -227,6 +227,7 @@ var ZINO = (function () {
     if (lemma === "tomar" && ((c.o && c.o.k === "n" && NOUN[c.o.n] && NOUN[c.o.n].enMass) || (!c.o && c.type === "wh" && c.wh === "que"))) ve = { b: "have", s3: "has", past: "had", ing: "having" };
     var objS = "";
     if (c.o) { objS = enNP(c.o, "obj", false, c.neg || c.type === "yn"); if (!objS) return null; }
+    if (c.io && c.io.np) { var ioN = enNP(c.io.np, "obj"); if (!ioN || !c.o) return null; objS = (objS || "") + " to " + ioN; } else if (c.io) { var ioE = enPron(c.io, "obj"); if (!ioE || (!c.o && c.v !== "decir")) return null; objS = (c.o && c.o.k === "pron") ? (objS + " to " + ioE) : (ioE + " " + (objS || "")).trim(); }
     if (c.lng) objS = C.LANG[c.lng][0];
     var vbody = function (form) {
       var parts = [form];
@@ -355,11 +356,13 @@ var ZINO = (function () {
   var EN_BY = { tren: "by train", "autobús": "by bus", coche: "by car", "avión": "by plane", bici: "by bike", bicicleta: "by bike", metro: "by underground", taxi: "by taxi", barco: "by boat" };
   var MOTION = { ir: 1, venir: 1, volver: 1, viajar: 1, llegar: 1, salir: 1, caminar: 1, correr: 1, conducir: 1, acostarse: 1 };
   function enObl(c) {
-    var out = [];
+    var out = [], late = [];
     var obl = c.obl || [];
     for (var i = 0; i < obl.length; i++) {
       var pp = obl[i], np = pp.np, r = null;
       if (pp.prep === "idiom") { out.push(IDIOM[pp.key].en); continue; }
+      if (C.GENP[pp.prep]) { var wgp = enNP(np, "obj"); if (!wgp) return null; late.push(C.GENP[pp.prep].en + " " + wgp); continue; }
+      if (C.PV[c.v] && pp.prep === C.PV[c.v].es) { var wpv = enNP(np, "obj"); if (!wpv) return null; out.push((C.PV[c.v].en ? C.PV[c.v].en + " " : "") + wpv); continue; }
       var bare = np.k === "n" && np.det === "def" && !np.pl && !(np.adjs || []).length && !np.of;
       if (pp.prep === "en" && np.k === "n" && np.det === "none" && has(EN_BY, np.n)) r = EN_BY[np.n];
       else if (pp.prep === "a" && MOTION[c.v]) {
@@ -367,6 +370,8 @@ var ZINO = (function () {
         else if (bare && has(EN_TO, np.n) && np.n !== "casa") r = EN_TO[np.n];
         else if (c.v === "llegar") { var w1 = enNP(np, "obj"); r = w1 ? (np.k === "place" ? "in " : "at ") + w1 : null; }
         else { var w2 = enNP(np, "obj"); r = w2 ? "to " + w2 : null; }
+      } else if (pp.prep === "en" && c.v === "pensar") {
+        var wp = enNP(np, "obj"); r = wp ? "about " + wp : null;
       } else if (pp.prep === "en") {
         if (np.k === "n" && np.n === "casa" && np.det === "none") r = "at home";
         else if (bare && has(EN_AT, np.n)) r = EN_AT[np.n];
@@ -380,7 +385,7 @@ var ZINO = (function () {
       if (!r) return null;
       out.push(r);
     }
-    return out;
+    return out.concat(late);
   }
 
   // ================= DUITS =================
@@ -389,6 +394,7 @@ var ZINO = (function () {
   var DE_REFL = ["mich", "dich", "sich", "uns", "euch", "sich"];
   var DEF = { nom: { m: "der", f: "die", n: "das", pl: "die" }, acc: { m: "den", f: "die", n: "das", pl: "die" }, dat: { m: "dem", f: "der", n: "dem", pl: "den" } };
   var EINE = { nom: { m: "", f: "e", n: "", pl: "e" }, acc: { m: "en", f: "e", n: "", pl: "e" }, dat: { m: "em", f: "er", n: "em", pl: "en" } };
+  var GEN_DEF = { m: "des", f: "der", n: "des", pl: "der" }, GEN_END = { m: "es", f: "er", n: "es", pl: "er" };
   var DIES = { nom: { m: "er", f: "e", n: "es", pl: "e" }, acc: { m: "en", f: "e", n: "es", pl: "e" }, dat: { m: "em", f: "er", n: "em", pl: "en" } };
   var ADJ_WEAK = { nom: { m: "e", f: "e", n: "e", pl: "en" }, acc: { m: "en", f: "e", n: "e", pl: "en" }, dat: { m: "en", f: "en", n: "en", pl: "en" } };
   var ADJ_MIX = { nom: { m: "er", f: "e", n: "es", pl: "en" }, acc: { m: "en", f: "e", n: "es", pl: "en" }, dat: { m: "en", f: "en", n: "en", pl: "en" } };
@@ -427,8 +433,8 @@ var ZINO = (function () {
   function deNP(np, cas, neg) {
     if (!np) return null;
     if (np.k === "coord") { if (neg) return null; var parts = np.items.map(function (x) { return deNP(x, cas); }); if (parts.some(function (x) { return !x; })) return null; return parts.slice(0, -1).join(", ") + " und " + parts[parts.length - 1]; }
-    if (np.k === "pron") return dePron(np, cas);
-    if (np.k === "this" || np.k === "that") return cas === "dat" ? "dem" : "das";
+    if (np.k === "pron") return dePron(np, cas === "gen" ? "dat" : cas);
+    if (np.k === "this" || np.k === "that") return cas === "gen" ? "dieses" : (cas === "dat" ? "dem" : "das");
     if (np.k === "name") return np.s;
     if (np.k === "place") { var pl = C.PLACE[np.key].de; if (/^die /.test(pl) && cas === "dat") return (C.PLACE[np.key].ft === "pl" ? "den " + pl.slice(4) + "n" : "der " + pl.slice(4)); return pl; }
     if (np.k === "lang") return C.LANG[np.key][1];
@@ -442,10 +448,15 @@ var ZINO = (function () {
     if (!w) return null;
     if (plur && cas === "dat" && !/[ns]$/.test(w)) w = w + "n";
     if (!plur && cas !== "nom" && has(DE_WEAK, w)) w = DE_WEAK[w];
+    if (cas === "gen" && !plur) {
+      if (has(DE_WEAK, w)) { /* zwak: Studenten */ }
+      else if (g === "m" || g === "n") w = w + ((/(s|ß|x|z|sch|tz)$/.test(w) || (w.match(/[aeiouäöüy]+/gi) || []).length <= 1) ? "es" : "s");
+    }
     var det = "", adjT = ADJ_STR;
-    if (np.num) { det = np.num === 1 ? "ein" + EINE[cas][g] : deNumW(np.num); adjT = np.num === 1 ? ADJ_MIX : ADJ_STR; }
-    else if (np.qty === "mucho") { det = plur ? "viel" + ADJ_STR[cas].pl : "viel"; adjT = ADJ_STR; }
-    else if (np.qty === "poco") { det = plur ? "wenig" + ADJ_STR[cas].pl : "wenig"; adjT = ADJ_STR; }
+    if (np.num && cas !== "gen") { det = np.num === 1 ? "ein" + EINE[cas][g] : deNumW(np.num); adjT = np.num === 1 ? ADJ_MIX : ADJ_STR; }
+    else if (np.qty === "mucho" && cas !== "gen") { det = plur ? "viel" + ADJ_STR[cas].pl : "viel"; adjT = ADJ_STR; }
+    else if (np.qty === "poco" && cas !== "gen") { det = plur ? "wenig" + ADJ_STR[cas].pl : "wenig"; adjT = ADJ_STR; }
+    else if (cas === "gen") { det = null; }
     else if (neg && (np.det === "ind" || np.det === "none")) { det = "kein" + EINE[cas][g]; adjT = ADJ_MIX; }
     else if (np.det === "def") { det = DEF[cas][g]; adjT = ADJ_WEAK; }
     else if (np.det === "ind") { if (plur) det = ""; else { det = "ein" + EINE[cas][g]; adjT = ADJ_MIX; } }
@@ -458,10 +469,22 @@ var ZINO = (function () {
       det = st + en; adjT = ADJ_MIX;
     } else if (np.det === "dem") { det = "dies" + DIES[cas][g]; adjT = ADJ_WEAK; }
     else if (np.det === "all") { det = "all" + DIES[cas][g === "pl" ? "pl" : g]; adjT = ADJ_WEAK; }
-    else return null;
+    else if (cas !== "gen") return null;
+    if (cas === "gen") {
+      var gE = GEN_END[g];
+      if (np.num) { det = np.num === 1 ? "ein" + gE : deNumW(np.num); adjT = np.num === 1 ? "MIXG" : "STRG"; }
+      else if (np.det === "def") { det = GEN_DEF[g]; adjT = "WEAKG"; }
+      else if (np.det === "ind") { if (plur) det = ""; else { det = "ein" + gE; adjT = "MIXG"; } }
+      else if (np.det === "none") { det = ""; adjT = "STRG"; }
+      else if (np.det === "neg") { det = "kein" + gE; adjT = "MIXG"; }
+      else if (np.det === "poss") { var stg = dePossStem(np.own, np.ownG, np.ownFormal); if (!stg) return null; if (stg === "euer") stg = "eur"; det = stg + gE; adjT = "MIXG"; }
+      else if (np.det === "dem") { det = "dies" + gE; adjT = "WEAKG"; }
+      else return null;
+    }
     var adjs = [];
     for (var i = 0; i < (np.adjs || []).length; i++) {
       var a = deAdjForm(np.adjs[i]); if (!a) return null;
+      if (cas === "gen") { var ge = (adjT === "STRG") ? (g === "f" || g === "pl" ? "er" : "en") : "en"; adjs.push(C.deAdjStem(a) + ge); continue; }
       var end = (adjT === ADJ_MIX && (det === "" )) ? ADJ_STR[cas][g] : adjT[cas][g];
       if (adjT === ADJ_MIX && !det) end = ADJ_STR[cas][g];
       adjs.push(C.deAdjStem(a) + end);
@@ -479,7 +502,7 @@ var ZINO = (function () {
   var DE_BY = { tren: "Zug", "autobús": "Bus", coche: "Auto", "avión": "Flugzeug", bici: "Fahrrad", bicicleta: "Fahrrad", metro: "U-Bahn", taxi: "Taxi", barco: "Boot" };
   function dePP(prep, np, cas) {
     var o = deNP(np, cas); if (!o) return null;
-    var s = prep + " " + o;
+    var s = (prep ? prep + " " : "") + o;
     s = s.replace(/^in dem /, "im ").replace(/^in das /, "ins ").replace(/^an dem /, "am ").replace(/^an das /, "ans ")
       .replace(/^zu dem /, "zum ").replace(/^zu der /, "zur ").replace(/^von dem /, "vom ").replace(/^bei dem /, "beim ");
     return s;
@@ -490,6 +513,10 @@ var ZINO = (function () {
     for (var i = 0; i < obl.length; i++) {
       var pp = obl[i], np = pp.np, r = null;
       if (pp.prep === "idiom") { out.push(MOTION[c.v] || c.v === "irse" ? IDIOM[pp.key].deDir : IDIOM[pp.key].de); continue; }
+      if (C.GENP[pp.prep]) { var rgp = dePP(C.GENP[pp.prep].de, np, "gen"); if (!rgp) return null; manner.push(rgp); continue; }
+      if (C.PV[c.v] && C.PV[c.v].de && pp.prep === C.PV[c.v].es) { var rpv = dePP(C.PV[c.v].de[0], np, C.PV[c.v].de[1]); if (!rpv) return null; out.push(rpv); continue; }
+      if (pp.prep === "en" && c.v === "pensar") { var rpn = dePP("an", np, "acc"); if (!rpn) return null; out.push(rpn); continue; }
+      if (pp.prep === "en" && c.v === "sentarse") { var rsn = dePP("auf", np, "acc"); if (!rsn) return null; out.push(rsn); continue; }
       if (pp.prep === "con") { var rc = dePP("mit", np, "dat"); if (!rc) return null; manner.push(rc); continue; }
       if (pp.prep === "en" && np.k === "n" && np.det === "none" && has(DE_BY, np.n)) {
         var bn = deNP({ k: "n", n: np.n, det: "def" }, "dat"); r = bn ? dePP("mit", { k: "n", n: np.n, det: "def" }, "dat") : null;
@@ -553,7 +580,12 @@ var ZINO = (function () {
       var useKein = neg && !never && deIsIndef(c.o);
       var o = deNP(c.o, "acc", useKein); if (!o) return null;
       if (neg && !useKein && !never) return null;
-      var gibt = (c.t === "past" || c.t === "impf") ? "gab" : "gibt";
+      var gibt = c.t === "fut" ? "geben" : ((c.t === "past" || c.t === "impf") ? "gab" : "gibt");
+      if (c.t === "fut") {
+        if (c.type === "yn") return finDe("Wird es " + mid([].concat(tAdv), never ? "nie" : null, [o], obl, pAdv) + " geben?", c);
+        if (c.type === "wh") return null;
+        return finDe("Es wird " + mid(tAdv, never ? "nie" : null, [o], obl, pAdv) + " geben", c);
+      }
       if (c.type === "yn") return finDe(cap(gibt) + " es " + mid([].concat(tAdv), never ? "nie" : null, [o], obl, pAdv) + "?", c);
       if (c.type === "wh") return null;
       return finDe("Es " + gibt + " " + mid(tAdv, never ? "nie" : null, [o], obl, pAdv), c);
@@ -655,7 +687,7 @@ var ZINO = (function () {
   function deVerbClause(c, subj, pp, dv, negW, tAdv, fAdv, dAdv, pAdv, obl, auch, gern) {
     var part = {};
     if (c.o) {
-      var cas = dv.obj === "d" ? "dat" : "acc";
+      var cas = dv.obj === "d" ? "dat" : (dv.obj === "g" ? "gen" : "acc");
       var useK = negW === "nicht" && deIsIndef(c.o) && !dv.obj;
       var o = deNP(c.o, cas, useK);
       if (!o) return null;
@@ -665,6 +697,7 @@ var ZINO = (function () {
       else if (useK || deIsIndef(c.o) || c.o.qty || c.o.num) part.indefObj = o;
       else part.defObj = o;
     }
+    if (c.io && c.io.np) { var ion = deNP(c.io.np, "dat"); if (!ion || !c.o) return null; part.ioObj = ion; } else if (c.io) { var iop = dePron(c.io, "dat"); if (!iop || (!c.o && c.v !== "decir")) return null; part.pron = part.pron ? part.pron + " " + iop : iop; }
     if (c.lng) part.indefObj = C.LANG[c.lng][1];
     if (gern) part.gern = gern;
     if (dv.tail) part.tail = dv.tail;
@@ -702,6 +735,7 @@ var ZINO = (function () {
     if (part.pron) M.push(part.pron);
     if (auch) M.push("auch");
     M = M.concat(tAdv, fAdv);
+    if (part.ioObj) M.push(part.ioObj);
     if (part.defObj) M.push(part.defObj);
     if (negW) M.push(negW);
     if (part.gern) M.push(part.gern);
@@ -843,11 +877,13 @@ var ZINO = (function () {
   var FR_IN = { "habitación": 1, cocina: 1, "baño": 1, coche: 1, "jardín": 1, ciudad: 0, centro: 0 };
   var FR_BY = { tren: "en train", "autobús": "en bus", coche: "en voiture", "avión": "en avion", bici: "à vélo", bicicleta: "à vélo", metro: "en métro", taxi: "en taxi", barco: "en bateau" };
   function frObl(c) {
-    var out = [];
+    var out = [], late = [];
     var obl = c.obl || [];
     for (var i = 0; i < obl.length; i++) {
       var pp = obl[i], np = pp.np, r = null;
       if (pp.prep === "idiom") { out.push(IDIOM[pp.key].fr); continue; }
+      if (C.GENP[pp.prep]) { var wgf = frNP(np); if (!wgf) return null; var gf = C.GENP[pp.prep].fr; late.push(/ de$/.test(gf) ? gf.slice(0, -3) + " " + frDe(wgf) : gf + " " + wgf); continue; }
+      if (C.PV[c.v] && pp.prep === C.PV[c.v].es) { var wf = frNP(np); if (!wf) return null; var fp = C.PV[c.v].fr; out.push(fp === "à" ? frA(wf) : (fp === "de" ? frDe(wf) : (fp ? fp + " " + wf : wf))); continue; }
       if (pp.prep === "en" && np.k === "n" && np.det === "none" && has(FR_BY, np.n)) r = FR_BY[np.n];
       else if ((pp.prep === "a" && MOTION[c.v]) || pp.prep === "en") {
         if (np.k === "n" && np.n === "casa" && np.det === "none") r = "à la maison";
@@ -863,7 +899,7 @@ var ZINO = (function () {
       if (!r) return null;
       out.push(r);
     }
-    return out;
+    return out.concat(late);
   }
   function frElide(s) {
     return s.replace(/\b(je|me|te|se|le|la|ne|de|que) (?=[aeiouyhàâéèêëîïôöùûœ])/gi, function (m, w) { return w.slice(0, -1) + "'"; })
@@ -896,7 +932,7 @@ var ZINO = (function () {
 
     if (c.sp === "hay") {
       var o = frNP(c.o, { negDe: neg }); if (!o) return null;
-      var a = (c.t === "past" || c.t === "impf") ? "avait" : "a";
+      var a = c.t === "fut" ? "aura" : ((c.t === "past" || c.t === "impf") ? "avait" : "a");
       var core = neg ? "il n'y " + a + " " + pas + " " + o : "il y " + a + " " + o;
       var tailH = rest([].concat(obl, pAdv, tAdv));
       if (c.type === "yn") return finFr("est-ce qu'" + core + tailH, c);
@@ -968,14 +1004,17 @@ var ZINO = (function () {
       return frClause(c, subj, pp, VERB.ser.fr, { tailObj: pr }, neg, pas, tAdv, vAdv, pAdv, obl);
     }
     var fv = VERB[c.v] && VERB[c.v].fr; if (!fv) return null;
+    if (c.v === "vivir" && c.wh !== "donde" && !(c.obl || []).some(function (x) { return x.prep === "en" || x.prep === "a"; }) && !(c.advs || []).some(function (x) { return /^(aquí|allí|allá|cerca|lejos)$/.test(x); })) fv = { inf: "vivre", pres: "vis vis vit vivons vivez vivent", imp: "vivais vivais vivait vivions viviez vivaient", pp: "vécu" };
     var part = {};
     if (c.o) {
       if (c.o.k === "pron") { part.clit = frObjPron(c.o); }
       else {
         var obj = frNP(c.o, { negDe: neg && (c.o.det === "ind" || c.o.det === "none") }); if (!obj) return null;
-        part.tailObj = obj;
+        part.tailObj = c.v === "responder" ? frA(obj) : obj;
       }
     }
+    if (fv.tail) part.fvTail = fv.tail;
+    if (c.io && c.io.np) { var ifr = frNP(c.io.np, {}); if (!ifr || !c.o) return null; part.tailObj = (part.tailObj ? part.tailObj + " " : "") + frA(ifr); } else if (c.io) { if (!c.o && c.v !== "decir") return null; var FRIO = ["me", "te", "lui", "nous", "vous", "leur"]; var frIoC = c.io.formal ? "vous" : FRIO[c.io.p]; if (c.o && c.o.k === "pron") { var frDc = frObjPron(c.o); if (!/^(le|la|les|l')$/.test(frDc)) return null; part.clit = /^(lui|leur)$/.test(frIoC) ? frDc + " " + frIoC : frIoC + " " + frDc; } else part.clit = frIoC; }
     if (c.lng) part.tailObj = C.LANG[c.lng][2];
     if (c.v === "jugar" && part.tailObj) { if (c.o.k === "n" && /^(fútbol|tenis|deporte)$/.test(c.o.n)) part.tailObj = frA(frNP(Object.assign({}, c.o, { det: "def" }))); }
     if (fv.besoin) {
@@ -1051,6 +1090,7 @@ var ZINO = (function () {
     after = after.concat(vAdv);
     if (nonfin) after.push(clitOnInf ? frElide(infPre.concat([nonfin]).join(" ")) : nonfin);
     if (part.besoin && part.tailObj) { var bo = c.o ? frNP(c.o, { bare: c.o.det === "none" }) : part.tailObj; if (!bo) return null; after.push(frDe(bo).replace(/^de des /, "de ").replace(/^des /, "de ")); part.tailObj = null; after.unshift("besoin"); }
+    if (part.fvTail) after.push(part.fvTail);
     if (part.tailObj) after.push(part.tailObj);
     after = after.concat(obl, pAdv, tAdv);
     var afterS = after.join(" ");
@@ -1167,6 +1207,7 @@ var ZINO = (function () {
     return "pres";
   }
   function genEs(c, gen) {
+    var ioNpStr = null;
     var s = c.s;
     var p = s.np ? (s.np.pl ? 5 : 2) : (s.formal ? (s.p >= 3 ? 5 : 2) : s.p);
     var subjG = s.np ? (s.np.k === "n" && C.esFem(s.np.n) ? "f" : "m") : (s.g === "f" || s.g === "m" ? s.g : (s.p === 0 ? gen : "m"));
@@ -1215,7 +1256,7 @@ var ZINO = (function () {
     if (c.sp === "hay") {
       var npH = esNP(c.o); if (!npH) return null;
       if (neg && c.o.det === "ind" && !c.o.pl) npH = npH.replace(/^(un|una) /, "");
-      var h = tense === "pres" ? "hay" : "había";
+      var h = tense === "pres" ? "hay" : (c.t === "fut" ? "habrá" : (c.t === "past" ? "hubo" : "había"));
       return assemble(h, [npH].concat(tail), { noSubj: true });
     }
     if (c.sp === "llamarse") {
@@ -1276,6 +1317,7 @@ var ZINO = (function () {
     var refl = C.esIsRefl(lemma);
     var clit = [];
     if (refl) clit.push(C.REFL_ES[p]);
+    if (c.io && c.io.np) { var ies = esNP(c.io.np); if (!ies || !c.o) return null; ioNpStr = esContr("a", ies); } else if (c.io) { if (!c.o && c.v !== "decir") return null; var ioS = esObjPron(c.io, true); if (!ioS) return null; if (c.o && c.o.k === "pron") { if (!(c.o.p === 2 || c.o.p === 5)) return null; if (/^les?$/.test(ioS)) ioS = "se"; } clit.push(ioS); }
     var objParts = [];
     if (c.o) {
       if (c.o.k === "pron") clit.push(esObjPron(c.o, lemma === "ayudar" ? false : false));
@@ -1287,6 +1329,7 @@ var ZINO = (function () {
         objParts.push(os);
       }
     }
+    if (ioNpStr) objParts.push(ioNpStr);
     if (c.lng) objParts.push(c.lng);
     var verbPart;
     if (c.mod) {
@@ -1343,8 +1386,10 @@ var ZINO = (function () {
     for (var i = 0; i < obl.length; i++) {
       var pp = obl[i], np = pp.np, r;
       if (pp.prep === "idiom") { out.push("de " + pp.key); continue; }
+      if (C.GENP[pp.prep]) { if (np.k === "pron") return null; var sgp = esNP(np); if (!sgp) return null; out.push(/ de$/.test(pp.prep) ? pp.prep.slice(0, -3) + " " + esContr("de", sgp) : pp.prep + " " + sgp); continue; }
       if (np.k === "n" && np.n === "casa" && np.det === "none") { r = (pp.prep === "a" ? "a casa" : "en casa"); out.push(r); continue; }
       if (pp.prep === "en" && np.k === "n" && np.det === "none") { out.push("en " + np.n); continue; }
+      if (np.k === "pron" && C.PV[c.v] && pp.prep === C.PV[c.v].es) { var TN = ["mí", "ti", null, "nosotros", "vosotros", "ellos"][np.p]; if (!TN) return null; out.push(pp.prep === "con" && np.p < 2 ? (np.p === 0 ? "conmigo" : "contigo") : pp.prep + " " + TN); continue; }
       if (np.k === "pron") { if (pp.prep !== "con" && pp.prep !== "para" && pp.prep !== "sin") return null; if (pp.prep === "con" && (np.p === 0 || np.p === 1) && !np.formal) { out.push(np.p === 0 ? "conmigo" : "contigo"); continue; } var tp = np.formal ? "usted" : (["mí", "ti", np.g === "f" ? "ella" : "él", "nosotros", "vosotros", np.g === "f" ? "ellas" : "ellos"][np.p]); out.push(pp.prep + " " + tp); continue; }
       var s = esNP(np); if (!s) return null;
       out.push(esContr(pp.prep === "cerca" ? "cerca de" : pp.prep, s).replace(/^cerca de el /, "cerca del "));
@@ -1352,5 +1397,134 @@ var ZINO = (function () {
     return out;
   }
 
-  return { en: genEn, de: genDe, fr: genFr, es: genEs, nounEntry: nounEntry, GEN: GEN };
+  // ---------------- Gebiedende wijs (tu/du/tú): de beweerzin met "you" wordt omgezet (en omgekeerd) ----------------
+  var DE_IMP = {"nehmen": "nimm", "brechen": "brich", "essen": "iss", "handeln": "handle", "helfen": "hilf", "lesen": "lies", "schmelzen": "schmilz", "sehen": "sieh", "treffen": "triff", "werfen": "wirf", "sein": "sei", "geben": "gib", "sprechen": "sprich", "vergessen": "vergiss", "werden": "werde"};
+  var ES_IMP = { decir: "di", oír: "oye", hacer: "haz", ir: "ve", poner: "pon", salir: "sal", ser: "sé", tener: "ten", venir: "ven" };
+  var ES_NEG_IRR = { ser: "seas", ir: "vayas", estar: "estés", dar: "des", saber: "sepas", haber: "hayas" };
+  function deImpOf(dv) {
+    if (!dv || dv.modal) return null;
+    var du = C.dePres(dv, 1); if (!du) return null;
+    var inf = dv.inf, stem = inf.replace(/e?n$/, ""), cand = du.replace(/e?st$/, "").replace(/ß$/, "ss");
+    if (has(DE_IMP, inf)) return DE_IMP[inf];
+    if (cand !== stem && cand.replace(/ie|i/, "e") === stem) return cand;
+    return stem + (/(d|t|chn|ffn|gn|dm|tm|ln|rn|ig)$/.test(stem) ? "e" : "");
+  }
+  function frImpOf(v) {
+    var map = { es: "sois", as: "aie", sais: "sache" };
+    if (v === "peux") return null;
+    if (has(map, v)) return map[v];
+    if (/(es|vas)$/.test(v)) return v.slice(0, -1);
+    return v;
+  }
+  function esNegOf(lemma) {
+    if (has(ES_NEG_IRR, lemma)) return ES_NEG_IRR[lemma];
+    var yo = C.esForm(lemma, "pres", 0); if (!yo || !/o$/.test(yo)) return null;
+    var stem = yo.slice(0, -1), ar = /ar$/.test(C.esBase(lemma));
+    if (!ar) return stem + "as";
+    if (/car$/.test(lemma) && /c$/.test(stem)) stem = stem.slice(0, -1) + "qu";
+    else if (/gar$/.test(lemma) && /g$/.test(stem)) stem += "u";
+    else if (/zar$/.test(lemma) && /z$/.test(stem)) stem = stem.slice(0, -1) + "c";
+    return stem + "es";
+  }
+  function esImpOf(lemma) { if (has(ES_IMP, lemma)) return ES_IMP[lemma]; return C.esForm(lemma, "pres", 2); }
+  // klinker achter het bevel: dame, quítame, tráeme, muéstrame
+  function esEnclitic(imp, cl) {
+    var groups = imp.match(/[aeiouáéíóú]+/g) || [], syl = 0;
+    groups.forEach(function (g) { syl += /^[aeo][aeo]$/.test(g) ? 2 : 1; });
+    if (syl <= 1 && cl.length > 3 && /^[^aeiouáéíóú]*[aeiou][^aeiouáéíóú]*$/.test(imp)) return imp.replace(/[aeiou]/, function (v) { return { a: "á", e: "é", i: "í", o: "ó", u: "ú" }[v]; }) + cl;
+    if (syl <= 1 || /[áéíóú]/.test(imp)) return imp + cl;
+    // klemtoon van de gebiedende wijs: voorlaatste lettergreep
+    var gi = groups.length - 1, lastG = groups[gi];
+    if (!/^[aeo][aeo]$/.test(lastG)) gi = gi - 1;
+    if (gi < 0) return imp + cl;
+    var n = -1, accented = function (g) {
+      if (/^(ue|ie|ua|uo|ia|io)$/.test(g)) return g.charAt(0) + { e: "é", a: "á", o: "ó" }[g.charAt(1)];
+      if (/^[aeo][aeo]$/.test(g)) return { a: "á", e: "é", o: "ó" }[g.charAt(0)] + g.charAt(1);
+      if (/^(ui|iu)$/.test(g)) return g.charAt(0) + { i: "í", u: "ú" }[g.charAt(1)];
+      if (g.length === 1) return { a: "á", e: "é", i: "í", o: "ó", u: "ú" }[g];
+      return g;
+    };
+    var w = imp.replace(/[aeiouáéíóú]+/g, function (g) { n++; return n === gi ? accented(g) : g; });
+    return w + cl;
+  }
+  function impDe(out, c) {
+    var dv = VERB[c.v] && VERB[c.v].de; if (!dv || dv.modal) return null;
+    out = String(out).replace(/[.!?]+$/, "");
+    var du = C.dePres(dv, 1), m = /^Du (\S+)(.*)$/.exec(out);
+    if (!m || !du || m[1] !== du) return null;
+    var imp = deImpOf(dv), rest = m[2];
+    if ((c.v === "venir" || c.v === "ir") && / hier[.!?]*$/.test(rest)) rest = rest.replace(/ hier([.!?]*)$/, " hierher$1");
+    return cap(imp) + rest;
+  }
+  function impFr(out, c) {
+    out = String(out).replace(/[.!?]+$/, "");
+    var CL = { me: "moi", te: "toi", lui: "lui", nous: "nous", vous: "vous", leur: "leur" };
+    var pm = /^Tu (ne )?(me|te|nous|vous) (le|la|les|l') ?(\S+)(.*)$/.exec(out) || null, pl2 = /^Tu (ne )?(le|la|les|l') ?(lui|leur) (\S+)(.*)$/.exec(out) || null;
+    if (pm || pl2) {
+      var kio, kd, kv, kr, kn;
+      if (pm) { kn = pm[1]; kio = pm[2]; kd = pm[3]; kv = pm[4]; kr = pm[5]; } else { kn = pl2[1]; kd = pl2[2]; kio = pl2[3]; kv = pl2[4]; kr = pl2[5]; }
+      var kcl = c && c.o && c.o.p === 5 ? "les" : (c && c.o && c.o.g === "f" ? "la" : "le");
+      var kvi = frImpOf(kv); if (!kvi || !/^[a-zéèêëàâîïôùûç]+$/.test(kv)) return null;
+      var KM = { me: "moi", te: "toi", nous: "nous", vous: "vous", lui: "lui", leur: "leur" };
+      if (kn) return "Ne " + (kio === "me" || kio === "te" ? kio : kio) + " " + kcl + " " + kvi + kr;
+      return cap(kvi) + "-" + kcl + "-" + KM[kio] + kr;
+    }
+    if (c && c.o && c.o.k === "pron" && c.o.p === 2 || c && c.o && c.o.k === "pron" && c.o.p === 5) {
+      var lm = /^Tu (ne )?(le |la |les |l')(\S+)(.*)$/.exec(out);
+      if (lm) {
+        var lcl = c.o.p === 5 ? "les" : (c.o.g === "f" ? "la" : "le");
+        var lv = frImpOf(lm[3]); if (!lv || !/^[a-zéèêëàâîïôùûç]+$/.test(lm[3])) return null;
+        if (lm[1]) return "Ne " + (/^[aeiouhéèêàâîôù]/i.test(lv) && lcl !== "les" ? "l'" : lcl + " ") + lv + lm[4];
+        return cap(lv) + "-" + lcl + lm[4];
+      }
+    }
+    var mc = /^Tu (ne )?(me |te |lui |nous |vous |leur |m'|t')(\S+)(.*)$/.exec(out);
+    if (mc) {
+      var vi = frImpOf(mc[3]); if (!vi || !/^[a-zéèêëàâîïôùûç]+$/.test(mc[3])) return null;
+      var cl = mc[2].trim().replace(/'$/, "");
+      if (cl === "m") cl = "me"; if (cl === "t") cl = "te";
+      if (mc[1]) return "Ne " + (/^[aeiouhéèêàâîôù]/i.test(vi) && (cl === "me" || cl === "te") ? cl.charAt(0) + "'" : cl + " ") + vi + mc[4];
+      return cap(vi) + "-" + CL[cl] + mc[4];
+    }
+    var m = /^Tu (ne |n')?(\S+)(.*)$/.exec(out);
+    if (!m) return null;
+    var v = m[2];
+    if (/'|^(le|la|les|me|te|se|nous|vous|lui|leur|y|en)$/.test(v) || !/^[a-zéèêëàâîïôùûç]+$/.test(v)) return null;
+    var imp = frImpOf(v); if (!imp) return null;
+    var neg = m[1] ? (m[1] === "n'" ? "n'" : "ne ") : "";
+    return cap(neg + imp) + m[3];
+  }
+  function impEs(out, c) {
+    var tu = C.esForm(c.v, "pres", 1), el = C.esForm(c.v, "pres", 2);
+    if (!tu || !el || c.never) return null;
+    var body = out.replace(/^Tú /, "").replace(/[.!]+$/, "");
+    var CLS = "me|te|se|le|nos|os|les|lo|la|los|las";
+    if (c.neg) {
+      var ng = esNegOf(c.v); if (!ng) return null;
+      var mn = new RegExp("^no (?:((?:" + CLS + ")(?: (?:lo|la|los|las))?) )?(\\S+)(.*)$", "i").exec(body);
+      if (!mn || mn[2].toLowerCase() !== tu.toLowerCase()) return null;
+      return "¡No " + (mn[1] ? mn[1].toLowerCase() + " " : "") + ng + mn[3].replace(/[.!]+$/, "") + "!";
+    }
+    var mp = new RegExp("^(?:((?:" + CLS + ")(?: (?:lo|la|los|las))?) )?(\\S+)(.*)$", "i").exec(body);
+    if (!mp || mp[2].toLowerCase() !== tu.toLowerCase()) return null;
+    var imp = esImpOf(c.v), w = mp[1] ? esEnclitic(imp, mp[1].toLowerCase().replace(" ", "")) : imp;
+    return "¡" + cap(w) + mp[3].replace(/[.!]+$/, "") + "!";
+  }
+  function impEn(out) {
+    var m = /^You (don't |do not )?(.*)$/.exec(out);
+    if (!m) return null;
+    var body = m[2].replace(/[.!]+$/, "");
+    return (m[1] ? "Don't " : "") + (m[1] ? body : cap(body)) + "!";
+  }
+  function imp(out, to, c) {
+    if (!out) return null;
+    var r = null;
+    if (to === "de") r = impDe(out, c); else if (to === "fr") r = impFr(out, c); else if (to === "es") r = impEs(out, c); else if (to === "en") r = impEn(out);
+    if (!r) return null;
+    if (to === "es") return r;
+    return r.replace(/[.?!]+$/, "") + "!";
+  }
+  function genEnW(c) { var o = genEn(c); if (o && c && c.v === "mirar" && c.o && !(c.o.k === "n" && /^(televisión|película|partido|programa|serie)$/.test(c.o.n))) o = o.replace(/\bwatches\b/, "looks at").replace(/\bwatching\b/, "looking at").replace(/\bwatched\b/, "looked at").replace(/\bwatch\b/, "look at"); if (o && c && c.v === "decir" && c.io) o = o.replace(/\bsays\b/, "tells").replace(/\bsay\b/, "tell").replace(/\bsaid\b/, "told").replace(/\bsaying\b/, "telling"); return o; }
+  function genDeW(c) { if (c && c.v === "escuchar" && c.o && c.o.k === "n" && c.o.det === "none") c = Object.assign({}, c, { o: Object.assign({}, c.o, { det: "def" }) }); return genDe(c); }
+  return { en: genEnW, de: genDeW, fr: genFr, es: genEs, imp: imp, impOf: { es: esImpOf, esNeg: esNegOf, de: deImpOf, fr: frImpOf }, nounEntry: nounEntry, GEN: GEN };
 })();

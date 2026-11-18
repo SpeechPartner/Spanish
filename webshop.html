@@ -20,17 +20,40 @@
 <h1>Tienda</h1>
 <p class="small">SpeechPartner.Spanish</p>
 
-<p>Deze app is gratis en blijft gratis. Vind je hem nuttig? Dan kun je de ontwikkelaar een kop koffie aanbieden voor 1,99 euro. Dat is helemaal vrijwillig; je krijgt er geen product of dienst voor terug.</p>
+<p id="intro">Deze app is gratis en blijft gratis. Vind je hem nuttig? Dan kun je de ontwikkelaar een kop koffie aanbieden voor 1,99 euro. Dat is helemaal vrijwillig; je krijgt er geen product of dienst voor terug.</p>
 
 <p><a class="koop" href="#" target="_blank" rel="noopener">Cómprame un café (1,99 €)</a></p>
 
-<p class="small">De betaling loopt via PayPal, een externe betaaldienst. PayPal verwerkt je betaalgegevens; de app ontvangt daar niets van.</p>
+<p class="small" id="betaal">De betaling loopt via PayPal, een externe betaaldienst. PayPal verwerkt je betaalgegevens; de app ontvangt daar niets van.</p>
 
-<div class="en">
+<div class="en" id="en-blok">
 <p><strong>English.</strong> This app is free and will stay free. Do you find it useful? You can buy the developer a coffee for 1.99 euro. This is entirely voluntary; you receive no product or service in return.</p>
 <p class="small">Payment goes through PayPal, an external payment provider. PayPal processes your payment details; the app receives nothing from it.</p>
 </div>
 
+<script>
+// Taal van de app (dezelfde instelling als in de app zelf); bij onbekend: de taal waarin deze pagina is gebouwd.
+var WEBSHOP_TEKST = {
+  nl: { sluit: "Sluiten", intro: "Deze app is gratis en blijft gratis. Vind je hem nuttig? Dan kun je de ontwikkelaar een kop koffie aanbieden voor 1,99 euro. Dat is helemaal vrijwillig; je krijgt er geen product of dienst voor terug.", betaal: "De betaling loopt via PayPal, een externe betaaldienst. PayPal verwerkt je betaalgegevens; de app ontvangt daar niets van." },
+  en: { sluit: "Close", intro: "This app is free and will stay free. Do you find it useful? You can buy the developer a coffee for 1.99 euro. This is entirely voluntary; you receive no product or service in return.", betaal: "Payment goes through PayPal, an external payment provider. PayPal processes your payment details; the app receives nothing from it." },
+  de: { sluit: "Schließen", intro: "Diese App ist kostenlos und bleibt kostenlos. Findest du sie nützlich? Dann kannst du dem Entwickler einen Kaffee spendieren, für 1,99 Euro. Das ist völlig freiwillig; dafür bekommst du kein Produkt und keine Dienstleistung zurück.", betaal: "Die Zahlung läuft über PayPal, einen externen Zahlungsdienst. PayPal verarbeitet deine Zahlungsdaten; die App erhält davon nichts." },
+  fr: { sluit: "Fermer", intro: "Cette app est gratuite et le restera. Tu la trouves utile ? Tu peux offrir un café au développeur pour 1,99 €. C'est tout à fait facultatif ; tu ne reçois ni produit ni service en retour.", betaal: "Le paiement passe par PayPal, un prestataire de paiement externe. PayPal traite tes données de paiement ; l'app n'en reçoit rien." }
+};
+(function () {
+  var lang = "nl";
+  var PFX = "gg_";
+  try { var v = localStorage.getItem(PFX + "lang"); if (v) lang = JSON.parse(v); } catch (e) {}
+  if (!WEBSHOP_TEKST[lang]) lang = "nl";
+  if (!WEBSHOP_TEKST[lang]) lang = "nl";
+  var t = WEBSHOP_TEKST[lang];
+  document.documentElement.lang = lang;
+  document.getElementById("closeBtn").setAttribute("aria-label", t.sluit);
+  document.getElementById("intro").textContent = t.intro;
+  document.getElementById("betaal").textContent = t.betaal;
+  // Het Engelse blok staat er voor de niet-Engelse talen onder; in het Engels zelf niet dubbel.
+  if (lang === "en") document.getElementById("en-blok").style.display = "none";
+})();
+</script>
 <script src="js/koffie.js"></script>
 <script>document.querySelector("a.koop").href = KOFFIE_LINK;</script>
 </body>
