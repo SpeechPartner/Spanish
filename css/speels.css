@@ -329,7 +329,7 @@ body.speels:not(.cafe) .dock-l, body.speels:not(.cafe) .dock-r, body.speels:not(
 /* Kleuren per taal (landen) */
 /* Landskleuren (vlaggen) en themakleuren: alleen deze drie kleuren komen in de knoppen */
 body.speels:not(.cafe)[data-lang="nl"] { --bt1: #AE1C28; --bt2: #111111; --bt3: #D62B3A; }
-body.speels:not(.cafe)[data-lang="en"] { --bt1: #012169; --bt2: #C8102E; --bt3: #111111; }
+body.speels:not(.cafe)[data-lang="en"] { --bt1: #012169; --bt2: #C8102E; --bt3: #FFFFFF; }
 body.speels:not(.cafe)[data-lang="de"] { --bt1: #000000; --bt2: #DD0000; --bt3: #FFCE00; }
 body.speels:not(.cafe)[data-lang="fr"] { --bt1: #002395; --bt2: #111111; --bt3: #ED2939; }
 
