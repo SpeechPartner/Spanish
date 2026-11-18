@@ -496,6 +496,28 @@
   }
 
   // ---------- Zin bouwen (vervolgmenu) ----------
+  // Vervoegd werkwoord in de gebruikerstaal (de uitleg tussen haakjes), passend bij het gekozen voornaamwoord
+  var GLOSS_VORM = {
+    en: { ir: ["go", "go", "goes", "go", "go"], tener: ["have", "have", "has", "have", "have"], querer: ["want", "want", "wants", "want", "want"], estar: ["am", "are", "is", "are", "are"],
+          trabajar: ["work", "work", "works", "work", "work"], hacer: ["do", "do", "does", "do", "do"], comer: ["eat", "eat", "eats", "eat", "eat"], ir_past: ["went", "went", "went", "went", "went"] },
+    de: { ir: ["gehe", "gehst", "geht", "gehen", "gehen"], tener: ["habe", "hast", "hat", "haben", "haben"], querer: ["will", "willst", "will", "wollen", "wollen"], estar: ["bin", "bist", "ist", "sind", "sind"],
+          trabajar: ["arbeite", "arbeitest", "arbeitet", "arbeiten", "arbeiten"], hacer: ["mache", "machst", "macht", "machen", "machen"], comer: ["esse", "isst", "isst", "essen", "essen"],
+          ir_past: ["bin gegangen", "bist gegangen", "ist gegangen", "sind gegangen", "sind gegangen"] },
+    fr: { ir: ["vais", "vas", "va", "allons", "vont"], tener: ["ai", "as", "a", "avons", "ont"], querer: ["veux", "veux", "veut", "voulons", "veulent"], estar: ["suis", "es", "est", "sommes", "sont"],
+          trabajar: ["travaille", "travailles", "travaille", "travaillons", "travaillent"], hacer: ["fais", "fais", "fait", "faisons", "font"], comer: ["mange", "manges", "mange", "mangeons", "mangent"],
+          ir_past: ["suis allé", "es allé", "est allé", "sommes allés", "sont allés"] },
+    nl: { ir: ["ga", "gaat", "gaat", "gaan", "gaan"], tener: ["heb", "hebt", "heeft", "hebben", "hebben"], querer: ["wil", "wilt", "wil", "willen", "willen"], estar: ["ben", "bent", "is", "zijn", "zijn"],
+          trabajar: ["werk", "werkt", "werkt", "werken", "werken"], hacer: ["doe", "doet", "doet", "doen", "doen"], comer: ["eet", "eet", "eet", "eten", "eten"], ir_past: ["ging", "ging", "ging", "gingen", "gingen"] }
+  };
+  function glossVorm(verb, subj) {
+    var g = GLOSS_VORM[lang], base = L(verb.m);
+    if (!g || !g[verb.id]) return base;
+    var f = g[verb.id][subj.i];
+    if (lang === "fr" && verb.id === "ir_past" && subj.es === "ella") f += "e";
+    var pm = /\s*(\([^)]*\))\s*$/.exec(base);   // bijv. "(toestand)" blijft staan
+    return f + (pm ? ", " + pm[1].slice(1, -1) : "");   // "ben (toestand)" wordt "ben, toestand" (geen dubbele haakjes in de knop)
+  }
+  function verbFormEs(v, s) { return v.forms[s.i]; }
   function viewBuilder() {
     var b = S.build;
     var st = BUILD_STEMS[b.start];
@@ -530,7 +552,7 @@
     var vr = el("div", "chips");
     VERBS.forEach(function (v) {
       if (isUnderstood("verb:" + v.id)) return;
-      vr.appendChild(btn(L(v.m), b.verb === v.id ? "primary small" : "small", function () { b.verb = v.id; render(); }));
+      vr.appendChild(btn(verbFormEs(v, SUBJ[b.subj]) + " (" + glossVorm(v, SUBJ[b.subj]) + ")", b.verb === v.id ? "primary small" : "small", function () { b.verb = v.id; render(); }));
     });
     w.appendChild(vr);
     if (b.verb === null) return w;
@@ -553,7 +575,8 @@
       clause.push(verb.forms[subj.i]);
       clause.push(comp.es);
       var NEG_M = { nl: "niet", en: "not", de: "nicht", fr: "ne … pas" };
-      var gloss = L(subj.m) + (b.neg ? " · " + L(NEG_M) : "") + " · " + L(verb.m) + " · " + L(comp.m);
+      var gloss = L(subj.m) + (b.neg ? " · " + L(NEG_M) : "") + " · " + glossVorm(verb, subj) + " · " + L(comp.m);
+      if (lang === "fr") gloss = gloss.replace(/^je · (?=[aeéiouhàâ])/i, "j'").replace(/^Je · (?=[aeéiouhàâ])/, "J'");   // j'ai (elisie)
       var es, nlParts;
       if (b.conn !== null) {
         var base = b.start.replace(/[.…\s]+$/, "");
@@ -952,49 +975,59 @@
     return w;
   }
 
+  function quizCtx() {
+    var isEs = (typeof IS_ES !== "undefined") ? IS_ES : true, tgt = isEs ? "es" : DOELC;
+    var forms = {}; VERBS.forEach(function (v) { forms[v.id] = v.forms; });
+    return { T: tgt, L: lang, SUBJ: SUBJ, VERBS: VERBS, esForms: forms,
+      comp: function (X, vid, ci) {
+        var v = null; VERBS.forEach(function (x) { if (x.id === vid) v = x; });
+        var c = v && v.comps[ci]; if (!c) return null;
+        if (X === tgt) return c.es;
+        if (X === "es") return c.bron !== undefined ? c.bron : c.es;
+        return c.m ? (c.m[X] || null) : null;
+      } };
+  }
+
+  // Quiz: drie zinnen in de taal die je leert. Eén goed, één met een grammaticafout, één met een andere betekenis.
   function viewQuiz() {
-    var deck = allItems();
     var w = el("div");
-    if (!S.quiz) {
-      var it = deck[Math.floor(Math.random() * deck.length)];
-      var others = shuffle(deck.filter(function (d) { return d.es !== it.es; })).slice(0, 2);
-      S.quiz = { it: it, opts: shuffle([it].concat(others)), answered: null };
-    }
-    var q = S.quiz;
+    if (!S.quiz || !S.quiz.q) { var nq = QUIZ.next(quizCtx()); S.quiz = nq ? { q: nq, answered: null } : null; }
+    if (!S.quiz) return w;
+    var q = S.quiz.q, A = S.quiz.answered, U = QUIZ.UI;
     w.appendChild(el("div", "stat", T("Score:") + " " + S.score[0] + " / " + S.score[1]));
     var big = el("div", "card big");
-    big.appendChild(el("div", "nl", T("Wat betekent dit?")));
-    big.appendChild(el("div", "big-es", q.it.es));
+    big.appendChild(el("div", "nl", QUIZ.tx(U.title, lang)));
+    big.appendChild(el("div", "nl", QUIZ.tx(U.meaning, lang)));
+    big.appendChild(el("div", "big-es", q.meaning));
     w.appendChild(big);
-    var r = el("div", "row");
-    r.appendChild(speakBtn(q.it.es));
-    w.appendChild(r);
-    var opts = el("div", "row quiz-opts");
-    q.opts.forEach(function (o) {
-      var isRight = o.es === q.it.es;
-      var b = btn(L(o.m), (q.answered && isRight) ? "primary" : "", function () {
-        if (q.answered) return;
-        q.answered = o.es;
-        S.score[1]++;
-        if (isRight) S.score[0]++;
+    var list = el("div", "quiz-list");
+    q.opts.forEach(function (o, idx) {
+      var cls = A === null ? "" : (o.role === "good" ? "primary" : "");
+      var b = btn(o.txt, cls, function () {
+        if (S.quiz.answered !== null) return;
+        S.quiz.answered = idx; S.score[1]++;
+        if (o.role === "good") S.score[0]++;
         render();
       });
-      b.disabled = !!q.answered;
-      opts.appendChild(b);
+      b.disabled = A !== null;
+      list.appendChild(b);
     });
-    w.appendChild(opts);
-    if (q.answered) {
+    w.appendChild(list);
+    if (A !== null) {
       var fb = el("div", "card");
-      if (q.answered === q.it.es) fb.appendChild(el("div", "ok", T("Goed!")));
-      else fb.appendChild(el("div", "bad", T("Niet helemaal. Het juiste antwoord is:") + " " + L(q.it.m)));
-      fb.appendChild(el("div", "nl", T("Onthoud:") + " " + q.it.es + " = " + L(q.it.m)));
-      if (q.answered !== q.it.es) {
-        // Bij een fout antwoord: wat de gekozen optie betekende, en de woord-voor-woord-vertaling van de juiste zin
-        var keuze = q.opts.filter(function (x) { return x.es === q.answered; })[0];
-        if (keuze) fb.appendChild(el("div", "nl", T("Jouw keuze betekende:") + " " + L(keuze.m)));
-        var qg = glossBlock(q.it.es);
-        if (qg) fb.appendChild(qg);
-      }
+      fb.appendChild(el(q.opts[A].role === "good" ? "div" : "div", q.opts[A].role === "good" ? "ok" : "bad", QUIZ.tx(q.opts[A].role === "good" ? U.ok : U.no, lang)));
+      q.opts.forEach(function (o, idx) {
+        var row = el("div", "quiz-expl");
+        var head = el("div", "line-row");
+        var tx = el("div", "txt");
+        tx.appendChild(el("div", "es", o.txt));
+        tx.appendChild(el("div", "nl", QUIZ.tx(o.role === "good" ? U.tagGood : (o.role === "gram" ? U.tagGram : U.tagMean), lang) + (idx === A ? "  ←" : "")));
+        if (o.role !== "good") tx.appendChild(el("div", "nl", QUIZ.explain(o.e, lang)));
+        head.appendChild(tx);
+        if (o.role === "good") head.appendChild(speakBtn(o.txt));
+        row.appendChild(head);
+        fb.appendChild(row);
+      });
       w.appendChild(fb);
       w.appendChild(btn(T("Volgende vraag →"), "primary", function () { S.quiz = null; render(); }));
     }
@@ -1654,7 +1687,7 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "2.32";
+  var APP_VERSION = "2.35";
   // Versies waarvoor gebruikers de app opnieuw op hun beginscherm moeten zetten (oude icoon weg, nieuwe erop).
   // Bij zo'n update verschijnt eenmalig een melding met uitleg.
   var REINSTALL_VERSIONS = ["1.8"];
@@ -2085,7 +2118,7 @@
     { n: m("Leren", "Learn", "Lernen", "Apprendre"),
       w: m("Oefenen met kaarten, een quiz en grammatica.", "Practise with flashcards, a quiz and grammar.", "Üben mit Karteikarten, einem Quiz und Grammatik.", "S'entraîner avec des cartes, un quiz et la grammaire."),
       k: [m("Kaarten: markeer wat je al kent als 'gekend'.", "Flashcards: mark what you already know with 'Known'.", "Karten: markiere, was du schon kannst, mit 'Gekonnt'.", "Cartes : marque ce que tu connais déjà avec « Acquis »."),
-          m("Quiz: kies de juiste vertaling uit drie opties.", "Quiz: choose the right translation from three options.", "Quiz: wähle die richtige Übersetzung aus drei Optionen.", "Quiz : choisis la bonne traduction parmi trois options."),
+          m("Quiz: je krijgt de betekenis en kiest uit drie zinnen: één is goed, één bevat een grammaticafout en één betekent iets anders. Bij elk fout antwoord krijg je uitleg.", "Quiz: you see the meaning and choose from three sentences: one is correct, one contains a grammar mistake and one means something else. Every wrong answer comes with an explanation.", "Quiz: Du siehst die Bedeutung und wählst aus drei Sätzen: einer ist richtig, einer enthält einen Grammatikfehler und einer bedeutet etwas anderes. Zu jeder falschen Antwort gibt es eine Erklärung.", "Quiz : tu vois le sens et tu choisis parmi trois phrases : une est correcte, une contient une faute de grammaire et une veut dire autre chose. Chaque mauvaise réponse est expliquée."),
           m("Grammatica: korte regels met voorbeelden en het waarom.", "Grammar: short rules with examples and the reason.", "Grammatik: kurze Regeln mit Beispielen und dem Warum.", "Grammaire : courtes règles avec exemples et explication.")] },
     { n: m("Regels", "Rules", "Regeln", "Règles"),
       w: m("Grammatica in het kort, met voorbeelden en een korte test.", "Grammar in brief, with examples and a short test.", "Grammatik kurz gefasst, mit Beispielen und einem kurzen Test.", "La grammaire en bref, avec exemples et un court test."),
@@ -2877,7 +2910,7 @@
 
   // Logo: ring in de kleuren van alle talen met SP in schrijfletters (als pad, dus overal gelijk).
   // Het kleine label rechtsonder toont de gekozen taal; een tik opent het taalmenu.
-  var LOGO_INNER = '<path d="M54.19,13.24 A37,37 0 0 1 83.67,34.66" fill="none" stroke="#D52B1E" stroke-width="6.5" stroke-linecap="round"/><path d="M86.26,42.62 A37,37 0 0 1 75.00,77.28" fill="none" stroke="#FCD116" stroke-width="6.5" stroke-linecap="round"/><path d="M68.22,82.20 A37,37 0 0 1 31.78,82.20" fill="none" stroke="#009E49" stroke-width="6.5" stroke-linecap="round"/><path d="M25.00,77.28 A37,37 0 0 1 13.74,42.62" fill="none" stroke="#0052B4" stroke-width="6.5" stroke-linecap="round"/><path d="M16.33,34.66 A37,37 0 0 1 45.81,13.24" fill="none" stroke="#1a1a1a" stroke-width="6.5" stroke-linecap="round"/><path d="M21.54 81.79Q17.08 81.79 12.89 80.27Q8.7 78.74 5.81 75.62Q2.92 72.51 2.36 67.83Q1.86 63.68 3.41 61.37Q4.97 59.05 7.61 58.14Q10.24 57.22 12.84 57.22Q10.71 59.81 9.78 62.56Q8.85 65.31 9.15 67.8Q9.46 70.42 11.07 72.67Q12.67 74.93 15.51 76.34Q18.35 77.75 22.32 77.75Q25.73 77.75 28.86 76.59Q31.98 75.44 33.8 73.16Q35.62 70.88 35.2 67.41Q34.83 64.3 32.77 62.06Q30.7 59.81 27.66 58.02Q24.62 56.23 21.3 54.59Q17.97 52.95 14.92 51.03Q11.87 49.11 9.78 46.61Q7.68 44.1 7.25 40.58Q6.88 37.45 8.02 33.9Q9.16 30.36 11.68 27.23Q14.21 24.1 18.09 22.15Q21.98 20.21 27.02 20.21Q32.28 20.21 34.69 22.42Q37.09 24.63 37.52 28.22Q37.85 31.01 37.25 34.23Q36.66 37.44 35.59 40.35Q34.52 43.25 33.47 45.31Q31.74 44.93 30.79 43.98Q29.83 43.02 29.64 41.42Q29.45 39.82 29.87 37.83Q30.3 35.85 30.89 33.71Q31.48 31.58 31.9 29.56Q32.32 27.53 32.14 26.01Q31.98 24.63 31.08 23.87Q30.19 23.11 27.72 23.11Q24.08 23.11 21.22 24.71Q18.36 26.31 16.42 28.76Q14.47 31.22 13.56 33.92Q12.66 36.62 12.92 38.83Q13.25 41.57 15.24 43.53Q17.24 45.49 20.21 47.08Q23.18 48.67 26.47 50.27Q29.75 51.88 32.77 53.88Q35.79 55.88 37.88 58.61Q39.97 61.35 40.44 65.27Q40.92 69.28 39.49 72.33Q38.07 75.38 35.27 77.48Q32.46 79.58 28.9 80.69Q25.33 81.79 21.54 81.79ZM52.9 81.79Q50.61 81.79 48.44 80.57Q46.27 79.35 46.04 77.44Q45.93 76.45 46.13 75.31Q46.34 74.16 46.52 73.17Q48.02 65.92 49.33 59.62Q50.63 53.33 52.03 47.49Q53.43 41.65 55.05 35.77Q56.67 29.9 58.8 23.49Q55.98 24.1 54.03 25.05Q52.08 26.01 50.87 26.73Q49.66 27.46 49.05 27.46Q48.67 27.46 47.88 26.92Q47.09 26.39 46.48 25.7Q45.86 25.01 45.79 24.48Q47.82 23.56 50.56 22.57Q53.31 21.58 56.58 20.89Q59.86 20.21 63.22 20.21Q66.8 20.21 70.66 21.16Q74.51 22.11 77.9 23.98Q81.29 25.85 83.58 28.64Q85.86 31.42 86.3 35.16Q86.79 39.21 85.31 42.11Q83.82 45.01 81.05 46.99Q78.27 48.98 74.91 50.2Q71.54 51.42 68.14 52.03Q64.74 52.64 62.02 52.87Q59.3 53.1 57.93 53.1H57.47Q56.24 60.65 55.08 68.17Q53.92 75.69 52.9 81.79ZM57.87 50.73Q62.11 50.43 66.25 49.28Q70.38 48.14 73.61 46.12Q76.84 44.09 78.58 41.04Q80.31 37.99 79.82 33.94Q79.37 30.13 77.06 27.76Q74.75 25.4 71.44 24.17Q68.13 22.95 64.61 22.88Q62.5 28.22 60.86 35.51Q59.21 42.8 57.87 50.73Z" fill="#1b1b1b" stroke="#ffffff" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"/>';
+  var LOGO_INNER = '<path d="M54.19,13.24 A37,37 0 0 1 83.67,34.66" fill="none" stroke="#D52B1E" stroke-width="6.5" stroke-linecap="round"/><path d="M86.26,42.62 A37,37 0 0 1 75.00,77.28" fill="none" stroke="#FCD116" stroke-width="6.5" stroke-linecap="round"/><path d="M68.22,82.20 A37,37 0 0 1 31.78,82.20" fill="none" stroke="#009E49" stroke-width="6.5" stroke-linecap="round"/><path d="M25.00,77.28 A37,37 0 0 1 13.74,42.62" fill="none" stroke="#0052B4" stroke-width="6.5" stroke-linecap="round"/><path d="M16.33,34.66 A37,37 0 0 1 45.81,13.24" fill="none" stroke="#1a1a1a" stroke-width="6.5" stroke-linecap="round"/><path d="M21.54 81.79Q17.08 81.79 12.89 80.27Q8.7 78.74 5.81 75.62Q2.92 72.51 2.36 67.83Q1.86 63.68 3.41 61.37Q4.97 59.05 7.61 58.14Q10.24 57.22 12.84 57.22Q10.71 59.81 9.78 62.56Q8.85 65.31 9.15 67.8Q9.46 70.42 11.07 72.67Q12.67 74.93 15.51 76.34Q18.35 77.75 22.35 77.75Q25.73 77.75 28.86 76.59Q31.98 75.44 33.8 73.16Q35.62 70.88 35.2 67.41Q34.83 64.3 32.77 62.06Q30.7 59.81 27.66 58.02Q24.62 56.23 21.3 54.59Q17.97 52.95 14.92 51.03Q11.87 49.11 9.78 46.61Q7.68 44.1 7.25 40.58Q6.88 37.45 8.02 33.9Q9.16 30.36 11.68 27.23Q14.21 24.1 18.09 22.15Q21.98 20.21 27.02 20.21Q32.28 20.21 34.69 22.42Q37.09 24.63 37.52 28.22Q37.85 31.01 37.25 34.23Q36.66 37.44 35.59 40.35Q34.52 43.25 33.47 45.31Q31.74 44.93 30.79 43.98Q29.83 43.02 29.64 41.42Q29.45 39.82 29.87 37.83Q30.3 35.85 30.89 33.71Q31.48 31.58 31.9 29.56Q32.35 27.53 32.14 26.01Q31.98 24.63 31.08 23.87Q30.19 23.11 27.72 23.11Q24.08 23.11 21.22 24.71Q18.36 26.31 16.42 28.76Q14.47 31.22 13.56 33.92Q12.66 36.62 12.92 38.83Q13.25 41.57 15.24 43.53Q17.24 45.49 20.21 47.08Q23.18 48.67 26.47 50.27Q29.75 51.88 32.77 53.88Q35.79 55.88 37.88 58.61Q39.97 61.35 40.44 65.27Q40.92 69.28 39.49 72.35Q38.07 75.38 35.27 77.48Q32.46 79.58 28.9 80.69Q25.33 81.79 21.54 81.79ZM52.9 81.79Q50.61 81.79 48.44 80.57Q46.27 79.35 46.04 77.44Q45.93 76.45 46.13 75.31Q46.34 74.16 46.52 73.17Q48.02 65.92 49.33 59.62Q50.63 53.33 52.03 47.49Q53.43 41.65 55.05 35.77Q56.67 29.9 58.8 23.49Q55.98 24.1 54.03 25.05Q52.08 26.01 50.87 26.73Q49.66 27.46 49.05 27.46Q48.67 27.46 47.88 26.92Q47.09 26.39 46.48 25.7Q45.86 25.01 45.79 24.48Q47.82 23.56 50.56 22.57Q53.31 21.58 56.58 20.89Q59.86 20.21 63.22 20.21Q66.8 20.21 70.66 21.16Q74.51 22.11 77.9 23.98Q81.29 25.85 83.58 28.64Q85.86 31.42 86.3 35.16Q86.79 39.21 85.31 42.11Q83.82 45.01 81.05 46.99Q78.27 48.98 74.91 50.2Q71.54 51.42 68.14 52.03Q64.74 52.64 62.02 52.87Q59.3 53.1 57.93 53.1H57.47Q56.24 60.65 55.08 68.17Q53.92 75.69 52.9 81.79ZM57.87 50.73Q62.11 50.43 66.25 49.28Q70.38 48.14 73.61 46.12Q76.84 44.09 78.58 41.04Q80.31 37.99 79.82 33.94Q79.37 30.13 77.06 27.76Q74.75 25.4 71.44 24.17Q68.13 22.95 64.61 22.88Q62.5 28.22 60.86 35.51Q59.21 42.8 57.87 50.73Z" fill="#1b1b1b" stroke="#ffffff" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"/>';
   function renderLogo() {
     document.getElementById("logo").innerHTML =
       '<img class="logo-img" src="icons/logo.png" alt="" width="52" height="52">' +

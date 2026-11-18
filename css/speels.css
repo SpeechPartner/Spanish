@@ -462,7 +462,8 @@ body.speels.cafe .iconbtn.on { background: var(--accent) !important; color: #fff
    Is het beeld bij die breedte hoger, dan wordt het in de hoogte samengedrukt. Ligt achter alle inhoud. */
 #bgBand { position: fixed; left: 0; right: 0; bottom: 0; height: min(56.25vw, 50vh); z-index: -1; pointer-events: none;
   background-repeat: no-repeat; background-position: center bottom; background-size: 100% 100%;
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 45%); mask-image: linear-gradient(to bottom, transparent 0, #000 45%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, rgba(0,0,0,.18) 18%, rgba(0,0,0,.55) 42%, #000 60%); mask-image: linear-gradient(to bottom, transparent 0, rgba(0,0,0,.18) 18%, rgba(0,0,0,.55) 42%, #000 60%);
   opacity: 0; transition: opacity .4s ease; }
-#bgBand.on { opacity: .6; }
-body.th-donker #bgBand.on, body.th-nacht #bgBand.on { opacity: .35; }
+/* onderste 40% volledig helder; vanaf 40% hoogte vervaagt de band zacht naar de rest van de achtergrond (mask hierboven) */
+#bgBand.on { opacity: 1; }
+body.th-donker #bgBand.on, body.th-nacht #bgBand.on { opacity: 1; }

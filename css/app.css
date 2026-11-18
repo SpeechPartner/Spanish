@@ -118,6 +118,9 @@ nav.bottomnav .btn { flex-shrink: 0; font-size: 14px; }
 /* ---------- Tabellen en voortgang ---------- */
 .stat { font-size: 14px; color: var(--muted); margin-bottom: 8px; }
 .quiz-opts .btn { flex: 1 1 45%; }
+.quiz-list { display: flex; flex-direction: column; gap: 10px; margin: 10px 0; }
+.quiz-list .btn { width: 100%; text-align: left; }
+.quiz-expl { margin-top: 10px; padding-top: 8px; border-top: 1px dashed rgba(0,0,0,.2); }
 
 /* ---------- Thema café ---------- */
 body.cafe .card.panel { border-color: var(--accent); }
