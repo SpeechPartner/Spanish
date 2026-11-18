@@ -53,6 +53,7 @@ var UI = {
   "Stel zo'n vraag als het gesprek stilvalt. Lees hem hardop en luister na.": m("Stel zo'n vraag als het gesprek stilvalt. Lees hem hardop en luister na.", "Ask a question like this when the conversation stalls. Read it aloud and listen to the answer.", "Stell so eine Frage, wenn das Gespräch stockt. Lies sie laut vor und hör die Antwort an.", "Pose une question comme celle-ci quand la conversation ralentit. Lis-la à voix haute et écoute."),
   "Vul het patroon in met woorden die je al kent, en lees je zin hardop voor.": m("Vul het patroon in met woorden die je al kent, en lees je zin hardop voor.", "Fill in the pattern with words you know, and read your sentence aloud.", "Setze das Muster mit Wörtern ein, die du kennst, und lies deinen Satz laut vor.", "Complète le modèle avec des mots que tu connais, puis lis ta phrase à voix haute."),
   "Patronen": m("Patronen", "Patterns", "Muster", "Modèles"),
+  "Kies een startzin en bouw hem verder.": m("Kies een startzin en bouw hem verder.", "Choose a starter sentence and build it further.", "Wähle einen Startsatz und baue ihn weiter.", "Choisis une phrase de départ et construis-la."),
   "Jouw zin": m("Jouw zin", "Your sentence", "Dein Satz", "Ta phrase"),
   "Typ hier je zin in het Spaans…": m("Typ hier je zin in het Spaans…", "Type your sentence in Spanish…", "Schreibe deinen Satz auf Spanisch…", "Écris ta phrase en espagnol…"),
   "Analyseer mijn zin": m("Analyseer mijn zin", "Analyse my sentence", "Satz analysieren", "Analyser ma phrase"),

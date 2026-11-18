@@ -1,6 +1,6 @@
 // Service worker: maakt de app offline bruikbaar.
 // BELANGRIJK: verhoog CACHE_VERSION bij elke nieuwe versie, anders blijft de oude versie op het toestel.
-const CACHE_VERSION = "gespreksgids-v2.36";
+const CACHE_VERSION = "gespreksgids-v2.37";
 const ASSETS = [
   "./",
   "./index.html",

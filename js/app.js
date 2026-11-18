@@ -2,6 +2,7 @@
 (function () {
   "use strict";
 
+  var IS_ES = true;   // dit is de Spaanse app (de andere apps delen dezelfde logica via bron-nieuwe-talen)
   // Opzoektabellen zonder ingebouwde eigenschappen (zodat een woord als "constructor" niets oplevert)
   function nullProto(o) { Object.setPrototypeOf(o, null); return o; }
   [GLOSS, WHEN, BUILD_STEMS, DICTS.nl, DICTS.en, DICTS.de, DICTS.fr,
@@ -444,7 +445,7 @@
       row.appendChild(btn(T(cat), S.cat === cat ? "primary small" : "small", function () { S.cat = cat; render(); }));
     });
     w.appendChild(row);
-    var canBuild = BUILDABLE_CATS.indexOf(S.cat) >= 0;
+    var canBuild = false;   // Zin bouwen heeft een eigen pagina
     var shown = 0;
     if (S.cat === "Gesprek openen") { w.appendChild(openersCard()); shown++; }
     PHRASES[S.cat].forEach(function (it) {
@@ -603,9 +604,32 @@
   // ---------- Zin bouwen: patronen en analyse ----------
   function viewBouwen() {
     var w = el("div");
+    var stems = IS_ES ? BUILD_STEMS : globalThis.BOUW_SRC.stems, cats = IS_ES ? BUILDABLE_CATS : globalThis.BOUW_SRC.cats;
+    w.appendChild(el("div", "note", IS_ES ? T("Kies een startzin en bouw hem verder.") : T("Kies een startzin en bouw hem verder. Lukt de zin niet grammaticaal in deze taal, dan zie je alleen de woorden.")));
+    var any = 0;
+    cats.forEach(function (cat) {
+      (PHRASES[cat] || []).forEach(function (it) {
+        var src = it.bron !== undefined ? it.bron : it.es;
+        if (!stems[src] || isUnderstood(it.es)) return;
+        var row = el("div", "row");
+        row.appendChild(btn(T("Bouw verder →"), "primary small", function () {
+          S.build = { start: src, startM: it.m, startTx: it.es, conn: null, subj: null, verb: null, neg: stems[src].neg };
+          S.tab = "bouwen"; render();
+        }));
+        var c = phraseCard(it, row);
+        if (c) { w.appendChild(c); any++; }
+      });
+    });
+    if (!any) w.appendChild(el("div", "note", T("Alles in deze groep is begrepen. Zet de begrepen items terug in de instellingen.")));
+    return w;
+  }
+
+  // ---------- Leren > Patronen: patroon invullen en je eigen zin ----------
+  function viewPatronen() {
+    var w = el("div");
     w.appendChild(el("h2", "", T("Patronen")));
     w.appendChild(el("div", "note", T("Vul het patroon in met woorden die je al kent, en lees je zin hardop voor.")));
-    PATTERNS.forEach(function (pt) {
+    (IS_ES ? PATTERNS : (globalThis.PATRONEN || [])).forEach(function (pt) {
       var c = el("div", "card");
       c.appendChild(el("div", "sec-title", L(pt.label)));
       var line = el("div", "line-row");
@@ -615,7 +639,7 @@
       line.appendChild(tx);
       line.appendChild(speakBtn(pt.ex.es));
       c.appendChild(line);
-      c.appendChild(explainBox(pt.ex.es, { noUnderstood: true }));
+      if (IS_ES) c.appendChild(explainBox(pt.ex.es, { noUnderstood: true }));
       w.appendChild(c);
     });
 
@@ -627,7 +651,7 @@
     var out = el("div");
     var row = el("div", "row");
     row.appendChild(btn("🔊 " + T("Luister"), "primary", function () { if (ta.value.trim()) speak(ta.value.trim()); }));
-    row.appendChild(btn(T("Analyseer mijn zin"), "primary", function () {
+    if (IS_ES) row.appendChild(btn(T("Analyseer mijn zin"), "primary", function () {
       out.innerHTML = "";
       out.appendChild(analyse(ta.value));
     }));
@@ -1059,7 +1083,7 @@
   function viewLeren() {
     var w = el("div");
     var row = el("div", "chips");
-    [["kaarten", "Kaarten"], ["quiz", "Quiz"], ["grammatica", "Grammatica"]].forEach(function (k) {
+    [["kaarten", "Kaarten"], ["quiz", "Quiz"], ["grammatica", "Grammatica"], ["patronen", "Patronen"]].forEach(function (k) {
       row.appendChild(btn(T(k[1]), S.lMode === k[0] ? "primary small" : "small", function () {
         S.lMode = k[0]; S.lShow = false; render();
       }));
@@ -1067,6 +1091,7 @@
     w.appendChild(row);
     if (S.lMode === "kaarten") w.appendChild(viewKaarten());
     else if (S.lMode === "quiz") w.appendChild(viewQuiz());
+    else if (S.lMode === "patronen") w.appendChild(viewPatronen());
     else w.appendChild(viewGrammatica());
     return w;
   }
@@ -1687,7 +1712,7 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "2.36";
+  var APP_VERSION = "2.37";
   // Versies waarvoor gebruikers de app opnieuw op hun beginscherm moeten zetten (oude icoon weg, nieuwe erop).
   // Bij zo'n update verschijnt eenmalig een melding met uitleg.
   var REINSTALL_VERSIONS = ["1.8"];
@@ -2107,19 +2132,20 @@
           m("'Andere zin' laat een nieuwe zin zien.", "'Another phrase' shows a new one.", "'Anderer Satz' zeigt einen neuen.", "« Autre phrase » en affiche une nouvelle."),
           m("Onderaan staat de volledige lijst.", "The full list is at the bottom.", "Unten steht die vollständige Liste.", "La liste complète est en bas.")] },
     { n: m("Zin bouwen", "Build a sentence", "Satz bauen", "Construire une phrase"),
-      w: m("Maak zelf zinnen met een patroon uit woorden die je al kent.", "Make your own sentences with a pattern from words you already know.", "Baue eigene Sätze mit einem Muster aus Wörtern, die du schon kennst.", "Fais tes propres phrases avec un modèle à partir de mots que tu connais déjà."),
-      k: [m("Kies een patroon en vul het in.", "Choose a pattern and fill it in.", "Wähle ein Muster und fülle es aus.", "Choisis un modèle et complète-le."),
-          m("Lees je zin hardop voor.", "Read your sentence aloud.", "Lies deinen Satz laut vor.", "Lis ta phrase à voix haute.")] },
+      w: m("Bouw zelf zinnen vanuit een startzin, met het juiste werkwoord bij de gekozen persoon.", "Build your own sentences from a starter sentence, with the right verb form for the person you choose.", "Baue eigene Sätze aus einem Startsatz, mit der richtigen Verbform für die gewählte Person.", "Construis tes propres phrases à partir d'une phrase de départ, avec la bonne forme du verbe pour la personne choisie."),
+      k: [m("Kies een startzin en tik op 'Bouw verder →'.", "Choose a starter sentence and tap 'Continue →'.", "Wähle einen Startsatz und tippe auf 'Weiter →'.", "Choisis une phrase de départ et touche « Continuer → »."),
+          m("Kies een verbindingswoord, wie het doet en wat die persoon doet.", "Choose a connecting word, who does it and what that person does.", "Wähle ein Bindewort, wer es tut und was die Person tut.", "Choisis un mot de liaison, qui le fait et ce que fait cette personne.")] },
     { n: m("Reageren", "React", "Reagieren", "Réagir"),
       w: m("Antwoorden op wat je gesprekspartner vraagt, of op wat een vriend vertelt.", "Answers to what your partner asks, or to what a friend tells you.", "Antworten auf das, was dein Gesprächspartner fragt, oder auf das, was ein Freund erzählt.", "Réponses à ce que ton interlocuteur demande, ou à ce qu'un ami raconte."),
       k: [m("'Ik vraag': antwoorden op vragen van je partner.", "'I ask': answers to questions from your partner.", "'Ich frage': Antworten auf Fragen deines Partners.", "« Je demande » : réponses aux questions de ton interlocuteur."),
           m("'Vriend vertelt': reageer op een verhaal.", "'A friend tells': respond to a story.", "'Freund erzählt': reagiere auf eine Geschichte.", "« L'ami raconte » : réagis à une histoire."),
           m("Begrepen reacties verdwijnen uit de lijst.", "Understood responses disappear from the list.", "Verstandene Reaktionen verschwinden aus der Liste.", "Les réponses comprises disparaissent de la liste.")] },
     { n: m("Leren", "Learn", "Lernen", "Apprendre"),
-      w: m("Oefenen met kaarten, een quiz en grammatica.", "Practise with flashcards, a quiz and grammar.", "Üben mit Karteikarten, einem Quiz und Grammatik.", "S'entraîner avec des cartes, un quiz et la grammaire."),
+      w: m("Oefenen met kaarten, een quiz, grammatica en patronen.", "Practise with flashcards, a quiz, grammar and patterns.", "Üben mit Karteikarten, einem Quiz, Grammatik und Mustern.", "S'entraîner avec des cartes, un quiz, la grammaire et des modèles."),
       k: [m("Kaarten: markeer wat je al kent als 'gekend'.", "Flashcards: mark what you already know with 'Known'.", "Karten: markiere, was du schon kannst, mit 'Gekonnt'.", "Cartes : marque ce que tu connais déjà avec « Acquis »."),
           m("Quiz: je krijgt de betekenis en kiest uit drie zinnen: één is goed, één bevat een grammaticafout en één betekent iets anders. Bij elk fout antwoord krijg je uitleg.", "Quiz: you see the meaning and choose from three sentences: one is correct, one contains a grammar mistake and one means something else. Every wrong answer comes with an explanation.", "Quiz: Du siehst die Bedeutung und wählst aus drei Sätzen: einer ist richtig, einer enthält einen Grammatikfehler und einer bedeutet etwas anderes. Zu jeder falschen Antwort gibt es eine Erklärung.", "Quiz : tu vois le sens et tu choisis parmi trois phrases : une est correcte, une contient une faute de grammaire et une veut dire autre chose. Chaque mauvaise réponse est expliquée."),
-          m("Grammatica: korte regels met voorbeelden en het waarom.", "Grammar: short rules with examples and the reason.", "Grammatik: kurze Regeln mit Beispielen und dem Warum.", "Grammaire : courtes règles avec exemples et explication.")] },
+          m("Grammatica: korte regels met voorbeelden en het waarom.", "Grammar: short rules with examples and the reason.", "Grammatik: kurze Regeln mit Beispielen und dem Warum.", "Grammaire : courtes règles avec exemples et explication."),
+          m("Patronen: kies een patroon, vul het in met woorden die je al kent en lees je zin hardop voor.", "Patterns: pick a pattern, fill it in with words you already know and read your sentence aloud.", "Muster: wähle ein Muster, fülle es mit Wörtern, die du schon kennst, und lies deinen Satz laut vor.", "Modèles : choisis un modèle, complète-le avec des mots que tu connais déjà et lis ta phrase à voix haute.")] },
     { n: m("Regels", "Rules", "Regeln", "Règles"),
       w: m("Grammatica in het kort, met voorbeelden en een korte test.", "Grammar in brief, with examples and a short test.", "Grammatik kurz gefasst, mit Beispielen und einem kurzen Test.", "La grammaire en bref, avec exemples et un court test."),
       k: [m("Tik op het luidsprekertje om een voorbeeld te horen.", "Tap the speaker icon to hear an example.", "Tippe auf das Lautsprechersymbol, um ein Beispiel zu hören.", "Touche le haut-parleur pour entendre un exemple."),
@@ -2910,7 +2936,7 @@
 
   // Logo: ring in de kleuren van alle talen met SP in schrijfletters (als pad, dus overal gelijk).
   // Het kleine label rechtsonder toont de gekozen taal; een tik opent het taalmenu.
-  var LOGO_INNER = '<path d="M54.19,13.24 A37,37 0 0 1 83.67,34.66" fill="none" stroke="#D52B1E" stroke-width="6.5" stroke-linecap="round"/><path d="M86.26,42.62 A37,37 0 0 1 75.00,77.28" fill="none" stroke="#FCD116" stroke-width="6.5" stroke-linecap="round"/><path d="M68.22,82.20 A37,37 0 0 1 31.78,82.20" fill="none" stroke="#009E49" stroke-width="6.5" stroke-linecap="round"/><path d="M25.00,77.28 A37,37 0 0 1 13.74,42.62" fill="none" stroke="#0052B4" stroke-width="6.5" stroke-linecap="round"/><path d="M16.33,34.66 A37,37 0 0 1 45.81,13.24" fill="none" stroke="#1a1a1a" stroke-width="6.5" stroke-linecap="round"/><path d="M21.54 81.79Q17.08 81.79 12.89 80.27Q8.7 78.74 5.81 75.62Q2.92 72.51 2.36 67.83Q1.86 63.68 3.41 61.37Q4.97 59.05 7.61 58.14Q10.24 57.22 12.84 57.22Q10.71 59.81 9.78 62.56Q8.85 65.31 9.15 67.8Q9.46 70.42 11.07 72.67Q12.67 74.93 15.51 76.34Q18.35 77.75 22.36 77.75Q25.73 77.75 28.86 76.59Q31.98 75.44 33.8 73.16Q35.62 70.88 35.2 67.41Q34.83 64.3 32.77 62.06Q30.7 59.81 27.66 58.02Q24.62 56.23 21.3 54.59Q17.97 52.95 14.92 51.03Q11.87 49.11 9.78 46.61Q7.68 44.1 7.25 40.58Q6.88 37.45 8.02 33.9Q9.16 30.36 11.68 27.23Q14.21 24.1 18.09 22.15Q21.98 20.21 27.02 20.21Q32.28 20.21 34.69 22.42Q37.09 24.63 37.52 28.22Q37.85 31.01 37.25 34.23Q36.66 37.44 35.59 40.35Q34.52 43.25 33.47 45.31Q31.74 44.93 30.79 43.98Q29.83 43.02 29.64 41.42Q29.45 39.82 29.87 37.83Q30.3 35.85 30.89 33.71Q31.48 31.58 31.9 29.56Q32.36 27.53 32.14 26.01Q31.98 24.63 31.08 23.87Q30.19 23.11 27.72 23.11Q24.08 23.11 21.22 24.71Q18.36 26.31 16.42 28.76Q14.47 31.22 13.56 33.92Q12.66 36.62 12.92 38.83Q13.25 41.57 15.24 43.53Q17.24 45.49 20.21 47.08Q23.18 48.67 26.47 50.27Q29.75 51.88 32.77 53.88Q35.79 55.88 37.88 58.61Q39.97 61.35 40.44 65.27Q40.92 69.28 39.49 72.36Q38.07 75.38 35.27 77.48Q32.46 79.58 28.9 80.69Q25.33 81.79 21.54 81.79ZM52.9 81.79Q50.61 81.79 48.44 80.57Q46.27 79.35 46.04 77.44Q45.93 76.45 46.13 75.31Q46.34 74.16 46.52 73.17Q48.02 65.92 49.33 59.62Q50.63 53.33 52.03 47.49Q53.43 41.65 55.05 35.77Q56.67 29.9 58.8 23.49Q55.98 24.1 54.03 25.05Q52.08 26.01 50.87 26.73Q49.66 27.46 49.05 27.46Q48.67 27.46 47.88 26.92Q47.09 26.39 46.48 25.7Q45.86 25.01 45.79 24.48Q47.82 23.56 50.56 22.57Q53.31 21.58 56.58 20.89Q59.86 20.21 63.22 20.21Q66.8 20.21 70.66 21.16Q74.51 22.11 77.9 23.98Q81.29 25.85 83.58 28.64Q85.86 31.42 86.3 35.16Q86.79 39.21 85.31 42.11Q83.82 45.01 81.05 46.99Q78.27 48.98 74.91 50.2Q71.54 51.42 68.14 52.03Q64.74 52.64 62.02 52.87Q59.3 53.1 57.93 53.1H57.47Q56.24 60.65 55.08 68.17Q53.92 75.69 52.9 81.79ZM57.87 50.73Q62.11 50.43 66.25 49.28Q70.38 48.14 73.61 46.12Q76.84 44.09 78.58 41.04Q80.31 37.99 79.82 33.94Q79.37 30.13 77.06 27.76Q74.75 25.4 71.44 24.17Q68.13 22.95 64.61 22.88Q62.5 28.22 60.86 35.51Q59.21 42.8 57.87 50.73Z" fill="#1b1b1b" stroke="#ffffff" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"/>';
+  var LOGO_INNER = '<path d="M54.19,13.24 A37,37 0 0 1 83.67,34.66" fill="none" stroke="#D52B1E" stroke-width="6.5" stroke-linecap="round"/><path d="M86.26,42.62 A37,37 0 0 1 75.00,77.28" fill="none" stroke="#FCD116" stroke-width="6.5" stroke-linecap="round"/><path d="M68.22,82.20 A37,37 0 0 1 31.78,82.20" fill="none" stroke="#009E49" stroke-width="6.5" stroke-linecap="round"/><path d="M25.00,77.28 A37,37 0 0 1 13.74,42.62" fill="none" stroke="#0052B4" stroke-width="6.5" stroke-linecap="round"/><path d="M16.33,34.66 A37,37 0 0 1 45.81,13.24" fill="none" stroke="#1a1a1a" stroke-width="6.5" stroke-linecap="round"/><path d="M21.54 81.79Q17.08 81.79 12.89 80.27Q8.7 78.74 5.81 75.62Q2.92 72.51 2.37 67.83Q1.86 63.68 3.41 61.37Q4.97 59.05 7.61 58.14Q10.24 57.22 12.84 57.22Q10.71 59.81 9.78 62.56Q8.85 65.31 9.15 67.8Q9.46 70.42 11.07 72.67Q12.67 74.93 15.51 76.34Q18.35 77.75 22.37 77.75Q25.73 77.75 28.86 76.59Q31.98 75.44 33.8 73.16Q35.62 70.88 35.2 67.41Q34.83 64.3 32.77 62.06Q30.7 59.81 27.66 58.02Q24.62 56.23 21.3 54.59Q17.97 52.95 14.92 51.03Q11.87 49.11 9.78 46.61Q7.68 44.1 7.25 40.58Q6.88 37.45 8.02 33.9Q9.16 30.36 11.68 27.23Q14.21 24.1 18.09 22.15Q21.98 20.21 27.02 20.21Q32.28 20.21 34.69 22.42Q37.09 24.63 37.52 28.22Q37.85 31.01 37.25 34.23Q36.66 37.44 35.59 40.35Q34.52 43.25 33.47 45.31Q31.74 44.93 30.79 43.98Q29.83 43.02 29.64 41.42Q29.45 39.82 29.87 37.83Q30.3 35.85 30.89 33.71Q31.48 31.58 31.9 29.56Q32.37 27.53 32.14 26.01Q31.98 24.63 31.08 23.87Q30.19 23.11 27.72 23.11Q24.08 23.11 21.22 24.71Q18.36 26.31 16.42 28.76Q14.47 31.22 13.56 33.92Q12.66 36.62 12.92 38.83Q13.25 41.57 15.24 43.53Q17.24 45.49 20.21 47.08Q23.18 48.67 26.47 50.27Q29.75 51.88 32.77 53.88Q35.79 55.88 37.88 58.61Q39.97 61.35 40.44 65.27Q40.92 69.28 39.49 72.37Q38.07 75.38 35.27 77.48Q32.46 79.58 28.9 80.69Q25.33 81.79 21.54 81.79ZM52.9 81.79Q50.61 81.79 48.44 80.57Q46.27 79.35 46.04 77.44Q45.93 76.45 46.13 75.31Q46.34 74.16 46.52 73.17Q48.02 65.92 49.33 59.62Q50.63 53.33 52.03 47.49Q53.43 41.65 55.05 35.77Q56.67 29.9 58.8 23.49Q55.98 24.1 54.03 25.05Q52.08 26.01 50.87 26.73Q49.66 27.46 49.05 27.46Q48.67 27.46 47.88 26.92Q47.09 26.39 46.48 25.7Q45.86 25.01 45.79 24.48Q47.82 23.56 50.56 22.57Q53.31 21.58 56.58 20.89Q59.86 20.21 63.22 20.21Q66.8 20.21 70.66 21.16Q74.51 22.11 77.9 23.98Q81.29 25.85 83.58 28.64Q85.86 31.42 86.3 35.16Q86.79 39.21 85.31 42.11Q83.82 45.01 81.05 46.99Q78.27 48.98 74.91 50.2Q71.54 51.42 68.14 52.03Q64.74 52.64 62.02 52.87Q59.3 53.1 57.93 53.1H57.47Q56.24 60.65 55.08 68.17Q53.92 75.69 52.9 81.79ZM57.87 50.73Q62.11 50.43 66.25 49.28Q70.38 48.14 73.61 46.12Q76.84 44.09 78.58 41.04Q80.31 37.99 79.82 33.94Q79.37 30.13 77.06 27.76Q74.75 25.4 71.44 24.17Q68.13 22.95 64.61 22.88Q62.5 28.22 60.86 35.51Q59.21 42.8 57.87 50.73Z" fill="#1b1b1b" stroke="#ffffff" stroke-width="3.2" stroke-linejoin="round" paint-order="stroke"/>';
   function renderLogo() {
     document.getElementById("logo").innerHTML =
       '<img class="logo-img" src="icons/logo.png" alt="" width="52" height="52">' +
