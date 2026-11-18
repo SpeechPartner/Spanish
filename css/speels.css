@@ -65,7 +65,7 @@ body.speels:not(.cafe) .transbar input, body.speels:not(.cafe) textarea.big-inpu
   background: var(--card); border: 3px solid var(--ink-k); border-radius: 12px; box-shadow: inset 3px 3px 0 rgba(28,20,16,.12);
   color: var(--ink-k); font-weight: 700;
 }
-body.speels:not(.cafe) .transout, body.speels:not(.cafe) .settings.open, body.speels:not(.cafe) .langmenu { border: 3px solid var(--ink-k); border-radius: 14px; box-shadow: var(--hard); background: var(--card); }
+body.speels:not(.cafe) .transout, body.speels:not(.cafe) .settings.open, body.speels:not(.cafe) .langmenu { border: 3px solid var(--ink-k); border-radius: 14px; box-shadow: var(--hard); background: var(--card); color: var(--ink-k); }
 body.speels:not(.cafe) .note { background: var(--t2); color: var(--ink-k); border: 3px solid var(--ink-k); border-radius: 12px; font-weight: 700; }
 
 /* Onderste navigatie: losse blokjes op een achtergrond in de landskleur */

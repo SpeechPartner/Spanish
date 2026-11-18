@@ -38,6 +38,7 @@ header.top {
   text-overflow: ellipsis;
 }
 .transout {
+  color: var(--ink);
   margin-top: 8px; max-height: 38vh; overflow: auto; border: 1px solid var(--line);
   border-radius: var(--radius); background: var(--card); padding: 10px 12px; position: relative;
 }
