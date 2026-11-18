@@ -302,8 +302,17 @@ var NL_ES = (function () {
     komen: ["kwam", "kwamen", "gekomen", "z"], zien: ["zag", "zagen", "gezien", "h"], doen: ["deed", "deden", "gedaan", "h"], zeggen: ["zei", "zeiden", "gezegd", "h"],
     luisteren: ["luisterde", "luisterden", "geluisterd", "h"], openen: ["opende", "openden", "geopend", "h"], helpen: ["hielp", "hielpen", "geholpen", "h"],
     begrijpen: ["begreep", "begrepen", "begrepen", "h"], nemen: ["nam", "namen", "genomen", "h"], geven: ["gaf", "gaven", "gegeven", "h"], brengen: ["bracht", "brachten", "gebracht", "h"],
-    sturen: ["stuurde", "stuurden", "gestuurd", "h"]
+    sturen: ["stuurde", "stuurden", "gestuurd", "h"],
+    kopen: ["kocht", "kochten", "gekocht", "h"], maken: ["maakte", "maakten", "gemaakt", "h"], vinden: ["vond", "vonden", "gevonden", "h"],
+    schrijven: ["schreef", "schreven", "geschreven", "h"], slapen: ["sliep", "sliepen", "geslapen", "h"], betalen: ["betaalde", "betaalden", "betaald", "h"],
+    bellen: ["belde", "belden", "gebeld", "h"], vragen: ["vroeg", "vroegen", "gevraagd", "h"], halen: ["haalde", "haalden", "gehaald", "h"],
+    krijgen: ["kreeg", "kregen", "gekregen", "h"], denken: ["dacht", "dachten", "gedacht", "h"], horen: ["hoorde", "hoorden", "gehoord", "h"],
+    rijden: ["reed", "reden", "gereden", "hz"], lopen: ["liep", "liepen", "gelopen", "hz"], winnen: ["won", "wonnen", "gewonnen", "h"],
+    vergeten: ["vergat", "vergaten", "vergeten", "h"], bestellen: ["bestelde", "bestelden", "besteld", "h"], proberen: ["probeerde", "probeerden", "geprobeerd", "h"],
+    praten: ["praatte", "praatten", "gepraat", "h"], wachten: ["wachtte", "wachtten", "gewacht", "h"], reizen: ["reisde", "reisden", "gereisd", "hz"],
+    spelen2: null
   };
+  delete NL_PAST.spelen2;
   var NL_OVT = {}, NL_PP = {}, PAST_MODE = null;
   Object.keys(NL_PAST).forEach(function (l) {
     var d = NL_PAST[l];
@@ -332,7 +341,7 @@ var NL_ES = (function () {
       for (var b = a + 1; b < clean.length; b++) {
         var pl = NL_PP[clean[b]];
         if (pl === undefined) continue;
-        if ((NL_PAST[pl][3] === "h") !== !!AUX_H[clean[a]]) continue;
+        if (NL_PAST[pl][3] !== "hz" && (NL_PAST[pl][3] === "h") !== !!AUX_H[clean[a]]) continue;
         var o2 = toks.slice();
         var tailPunct = toks[b].slice(clean[b].length);
         o2[a] = presTokenOf(pl) + toks[a].slice(clean[a].length);

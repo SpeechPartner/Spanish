@@ -1137,7 +1137,7 @@
   }
 
   // ---------- Vertaalvak (bovenaan, op elke pagina) ----------
-  function translateText(text) {
+  function translateOne(text) {
     var t = clean(text);
     if (!t) return null;
     var hit = null;
@@ -1159,6 +1159,16 @@
     // Lukt dat niet, dan alleen woord voor woord, geen zin
     var wb = wordByWord(t);
     return { text: null, parts: wb.parts, missing: wb.missing, unsupported: true };
+  }
+
+  // Meerdere zinnen in één vak: elke zin apart vertalen en de uitkomst op volgorde samenvoegen.
+  function translateText(text) {
+    var raw = String(text || "").trim();
+    var parts = raw.replace(/([.!?…]+)\s+/g, "$1\u0001").split("\u0001").map(function (x) { return x.trim(); }).filter(function (x) { return clean(x); });
+    if (parts.length < 2) return translateOne(text);
+    var res = parts.map(function (p) { var r = translateOne(p); return r ? { src: p, text: r.text || null, parts: r.parts || [], missing: r.missing || [] } : { src: p, text: null, parts: [], missing: [] }; });
+    var ok = res.every(function (r) { return r.text; });
+    return { text: ok ? res.map(function (r) { return r.text; }).join(" ") : null, grammar: ok, sentences: res, parts: [], missing: ok ? [] : [].concat.apply([], res.map(function (r) { return r.missing; })) };
   }
 
   // Hoofdletter aan het begin van een zin (ook na een ¿ of ¡)
@@ -1246,6 +1256,17 @@
     box.appendChild(close);
     if (!r) {
       box.appendChild(el("div", "bad", T("Typ eerst iets.")));
+      return;
+    }
+    if (r.sentences) {
+      r.sentences.forEach(function (x) {
+        if (x.text) { box.appendChild(el("div", "es", x.text)); return; }
+        box.appendChild(el("div", "nl", "“" + x.src + "”: " + T("Deze zin kan ik nog niet grammaticaal vertalen. Woord voor woord:")));
+        if (x.parts.length) box.appendChild(el("div", "nl", x.parts.join(" · ")));
+        if (x.missing.length) box.appendChild(el("div", "bad", T("Niet in de lijst:") + " " + x.missing.join(", ")));
+      });
+      var okt = r.sentences.filter(function (x) { return x.text; }).map(function (x) { return x.text; }).join(" ");
+      if (okt) { var rw = el("div", "row"); rw.appendChild(speakBtn(okt)); box.appendChild(rw); }
       return;
     }
     if (r.text) {
@@ -1712,7 +1733,7 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "2.41";
+  var APP_VERSION = "2.42";
   // Versies waarvoor gebruikers de app opnieuw op hun beginscherm moeten zetten (oude icoon weg, nieuwe erop).
   // Bij zo'n update verschijnt eenmalig een melding met uitleg.
   var REINSTALL_VERSIONS = ["1.8"];
