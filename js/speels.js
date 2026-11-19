@@ -47,6 +47,9 @@
     de: { title: "App auf dein Telefon legen", android: "Installiere die App, damit sie wie eine eigene App auf dem Startbildschirm liegt.", button: "App installieren",
           ios: ["Öffne diese Seite in Safari.", "Tippe unten auf das Teilen-Symbol.", "Wähle 'Zum Home-Bildschirm'."],
           android: ["Öffne diese Seite in Chrome.", "Tippe oben rechts auf die drei Punkte.", "Wähle 'App installieren' oder 'Zum Startbildschirm hinzufügen'."] },
+    es: { title: "Pon la app en tu teléfono", android: "Instala la app para que aparezca en tu pantalla de inicio como una app propia.", button: "Instalar la app",
+          ios: ["Abre esta página en Safari.", "Toca el icono de compartir, abajo.", "Elige «Añadir a pantalla de inicio»."],
+          android: ["Abre esta página en Chrome.", "Toca los tres puntos, arriba a la derecha.", "Elige «Instalar aplicación» o «Añadir a pantalla de inicio»."] },
     fr: { title: "Installer l'application sur ton téléphone", android: "Installe l'application pour qu'elle apparaisse sur ton écran d'accueil comme une vraie application.", button: "Installer l'application",
           ios: ["Ouvre cette page dans Safari.", "Touche l'icône de partage en bas.", "Choisis « Sur l'écran d'accueil »."],
           android: ["Ouvre cette page dans Chrome.", "Touche les trois points en haut à droite.", "Choisis « Installer l'application » ou « Ajouter à l'écran d'accueil »."] }
@@ -81,6 +84,52 @@
     }
     slot.appendChild(card);
   }
+
+  // Eenmalige melding in de browser (Safari of Chrome): zet de app op het beginscherm.
+  // Na 'Begrepen' komt de melding niet meer terug; de uitleg blijft staan op de Info-pagina.
+  var HOME_TXT = {
+    nl: { title: "Zet de app op je beginscherm", body: "Dan opent hij als eigen app.", ios: "Tik in Safari onderin op het deelicoon en kies 'Zet op beginscherm'.", android: "Tik in Chrome rechtsboven op de drie puntjes en kies 'App installeren' of 'Toevoegen aan startscherm'.", install: "Installeer de app", ok: "Begrepen" },
+    en: { title: "Put the app on your home screen", body: "Then it opens like its own app.", ios: "In Safari, tap the share icon at the bottom and choose 'Add to Home Screen'.", android: "In Chrome, tap the three dots at the top right and choose 'Install app' or 'Add to Home screen'.", install: "Install the app", ok: "Got it" },
+    de: { title: "Leg die App auf deinen Home-Bildschirm", body: "Dann öffnet sie sich wie eine eigene App.", ios: "Tippe in Safari unten auf das Teilen-Symbol und wähle 'Zum Home-Bildschirm'.", android: "Tippe in Chrome oben rechts auf die drei Punkte und wähle 'App installieren' oder 'Zum Startbildschirm hinzufügen'.", install: "App installieren", ok: "Verstanden" },
+    fr: { title: "Mets l'app sur ton écran d'accueil", body: "Elle s'ouvrira alors comme une vraie application.", ios: "Dans Safari, touche l'icône de partage en bas et choisis « Sur l'écran d'accueil ».", android: "Dans Chrome, touche les trois points en haut à droite et choisis « Installer l'application » ou « Ajouter à l'écran d'accueil ».", install: "Installer l'application", ok: "Compris" },
+    es: { title: "Pon la app en tu pantalla de inicio", body: "Así se abrirá como una app propia.", ios: "En Safari, toca el icono de compartir, abajo, y elige «Añadir a pantalla de inicio».", android: "En Chrome, toca los tres puntos, arriba a la derecha, y elige «Instalar aplicación» o «Añadir a pantalla de inicio».", install: "Instalar la app", ok: "Entendido" }
+  };
+  var HOME_KEY = "thuisMeldingGezien";
+  function showHomeNotice() {
+    if (isStandalone()) return;
+    try { if (localStorage.getItem(HOME_KEY)) return; } catch (e) {}
+    if (document.querySelector(".thuis-note")) return;
+    var ios = isIOSDevice(), android = /Android/i.test(navigator.userAgent);
+    if (!ios && !android && !deferredPrompt) return;   // computer: geen melding
+    var t = HOME_TXT[document.body.getAttribute("data-lang") || "nl"] || HOME_TXT.nl;
+    var box = document.createElement("div");
+    box.className = "card reinstall-note thuis-note";
+    box.setAttribute("role", "dialog");
+    var h = document.createElement("div"); h.className = "sec-title"; h.textContent = t.title; box.appendChild(h);
+    var p = document.createElement("div"); p.textContent = t.body; box.appendChild(p);
+    if (!deferredPrompt || ios) {
+      var ol = document.createElement("ol"); ol.className = "guide-list";
+      var li = document.createElement("li"); li.textContent = ios ? t.ios : t.android; ol.appendChild(li);
+      box.appendChild(ol);
+    }
+    function klaar() { try { localStorage.setItem(HOME_KEY, "1"); } catch (e) {} if (box.parentNode) box.parentNode.removeChild(box); }
+    if (deferredPrompt && !ios) {
+      var b = document.createElement("button");
+      b.type = "button"; b.className = "btn primary"; b.textContent = t.install;
+      b.addEventListener("click", function () {
+        var ev = deferredPrompt; deferredPrompt = null;
+        ev.prompt();
+        ev.userChoice.then(function () { klaar(); fillInstall(); });
+      });
+      box.appendChild(b);
+    }
+    var ok = document.createElement("button");
+    ok.type = "button"; ok.className = "btn"; ok.textContent = t.ok; ok.addEventListener("click", klaar);
+    box.appendChild(ok);
+    document.body.appendChild(box);
+  }
+  setTimeout(showHomeNotice, 1200);
+  window.addEventListener("beforeinstallprompt", function () { setTimeout(showHomeNotice, 300); });
 
   // Hoogte van koptekst en onderste balk, zodat de vaste tabbladen en de ruimte onderaan kloppen
   var header = document.querySelector("header.top");
