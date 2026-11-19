@@ -114,7 +114,7 @@ var NL_ES = (function () {
 
   var PROPER = { amsterdam: "Ámsterdam", nederland: "los Países Bajos", spanje: "España", engeland: "Inglaterra",
     duitsland: "Alemania", frankrijk: "Francia", belgië: "Bélgica", belgie: "Bélgica", rotterdam: "Róterdam",
-    spaans: "español", nederlands: "neerlandés", engels: "inglés", frans: "francés" };
+    spaans: "español", nederlands: "neerlandés", engels: "inglés", frans: "francés" , berlijn: "Berlín", brussel: "Bruselas", wenen: "Viena", praag: "Praga", athene: "Atenas", moskou: "Moscú", lissabon: "Lisboa", rome: "Roma", parijs: "París", londen: "Londres", ierland: "Irlanda", schotland: "Escocia", polen: "Polonia", zweden: "Suecia", noorwegen: "Noruega", denemarken: "Dinamarca", oostenrijk: "Austria", zwitserland: "Suiza", griekenland: "Grecia", turkije: "Turquía", marokko: "Marruecos"};
 
   // Woorden die met estar gebruikt worden (tijdelijke toestand); de rest met ser
   var ESTAR_ADJ = { moe: 1, ziek: 1, blij: 1, boos: 1, verdrietig: 1, bezig: 1, klaar: 1, nerveus: 1, gestrest: 1,
@@ -251,6 +251,8 @@ var NL_ES = (function () {
     var nw = rest[0];
     // Eigennamen en plaatsen
     if (PROPER[nw] !== undefined) return { s: PROPER[nw], plural: false, fem: false, def: false, end: j + 1, proper: true };
+    if (CAPS[nw] && !det) { var cn = nounEs(nw, dict); if (cn) return { s: cn.es.charAt(0).toUpperCase() + cn.es.slice(1), plural: false, fem: false, def: false, end: j + 1, proper: true }; }
+    if (NAMES[nw] && !det) return { s: NAMES[nw], plural: false, fem: false, def: false, end: j + 1, proper: true, name: true };
     var nn = nounEs(nw, dict);
     var adjEs = null, adjEnd = 0;
     if (!nn && rest.length >= 2 && adjOf(nw, dict)) {
@@ -420,13 +422,44 @@ var NL_ES = (function () {
   }
 
   // Persoonlijke "a" op het eind: alleen als een werkwoord uit A_PERSONAL_V en een persoonlijk onderwerp (ik, je, we...) in de Nederlandse zin staan
+  // "Ik wil naar huis" = "Ik wil naar huis gaan" (Quiero ir a casa): modaal werkwoord + naar zonder tweede werkwoord
+  function modalNaar(text) {
+    var m = /^(.*?\b(?:wil|wilt|willen|kan|kun|kunt|kunnen|moet|moeten|mag|mogen)\b(?: (?:je|jij|u|ik|we|wij|jullie|hij|zij|ze|graag|nu|echt|even))*) naar (.+?)([.?!]*)$/i.exec(String(text).trim());
+    if (!m) return text;
+    var last = m[2].split(" ").pop().toLowerCase();
+    if (/en$/.test(last) && !/^(buiten|boven|binnen|beneden|achteren|voren|bijen|steden)$/.test(last) && !/^(de|het|een)$/.test(m[2].split(" ")[0]) || /(^| )gaan( |$)/.test(m[2])) return text;
+    return m[1] + " naar " + m[2] + " gaan" + m[3];
+  }
   var A_SUBJ = /^(ik|je|jij|u|we|wij|jullie|hij|zij|ze)$/;
+  var NAMES = {}, CAPS = {};   // voornamen in de huidige zin (hoofdletter, niet in het woordenboek)
+  function findNames(text, dict) {
+    NAMES = {}; CAPS = {};
+    var raw = String(text).replace(/[¿¡]/g, "").split(/\s+/).filter(Boolean);
+    raw.forEach(function (w, i) {
+      var c = w.replace(/[.,!?;:]+$/g, ""), lc = c.toLowerCase();
+      if (i > 0 && /^[A-ZÀ-Þ][a-zà-ÿ'-]+$/.test(c) && dict[lc] !== undefined && !/\s/.test(dict[lc]) && PROPER[lc] === undefined && !FORM[lc] && /^(Parijs|Londen|Berlijn|Rome|Brussel|Lissabon|Amsterdam|Rotterdam|Barcelona|Madrid|Sevilla|Valencia|Wenen|Praag|Athene|Moskou|Peking|Tokio|Nederland|Spanje|Duitsland|Frankrijk|Engeland|Italië|Portugal|België|Europa|Amerika|Afrika|Azië|Mexico|Argentinië|Colombia|Chili|Peru|Cuba|Marokko|Turkije|Griekenland|Zwitserland|Oostenrijk|Polen|Zweden|Noorwegen|Denemarken|Ierland|Schotland)$/.test(c)) CAPS[lc] = true;
+      if (!/^[A-ZÀ-Þ][a-zà-ÿ'-]+$/.test(c) || dict[lc] !== undefined || PROPER[lc] !== undefined || FORM[lc] || NL_PP[lc] || POSS[lc] !== undefined || /^(ik|je|jij|u|we|wij|jullie|hij|zij|ze|het|de|een|dit|dat|die|wat|waar|wie|hoe|wanneer|waarom|welke|is|zijn|ben|heb|ga|kan|mag|wil|moet|doe|zie|ken|bel|help|hou|mijn|jouw|uw|ons|onze|nee|ja)$/.test(lc)) return;
+      if (i === 0 && !(raw[1] && (FORM[raw[1].toLowerCase()] || NL_PP[raw[1].toLowerCase()]))) return;
+      NAMES[lc] = c;
+    });
+  }
   function translate(text, dict, gen) {
+    findNames(text, dict);
+    text = modalNaar(text);
     var r = translateCore(text, dict, gen);
     if (!r || typeof r !== "string") return r;
     var tk = String(text).toLowerCase().replace(/[.,!?¿¡]/g, " ").split(/\s+/).filter(Boolean);
     var verbHit = tk.some(function (w) { var l = FORM[w] || NL_PP[w] || NL_OVT[w]; return l && A_PERSONAL_V[l]; });
     if (!verbHit || !tk.some(function (w) { return A_SUBJ.test(w); })) return r;
+    var nmK = Object.keys(NAMES);
+    for (var ni = 0; ni < nmK.length; ni++) {
+      var rxN = new RegExp("(^|[¿ ])(" + NAMES[nmK[ni]] + ")(?![A-Za-zÀ-ÿ])");
+      var mN = rxN.exec(r);
+      if (mN) {
+        var beforeN = r.slice(0, mN.index + mN[1].length);
+        if (beforeN.trim() && beforeN.trim() !== "¿" && !/(^|\s)(a|de|con|para|en|por|sin|sobre|desde|hasta|entre)\s*$/i.test(beforeN)) r = beforeN + "a " + r.slice(mN.index + mN[1].length);
+      }
+    }
     var m = /(^|[¿ ])((?:el|la|los|las|mi|mis|tu|tus|su|sus|nuestro|nuestra|nuestros|nuestras|un|una|unos|unas|este|esta|estos|estas|ese|esa|esos|esas) (?:[a-záéíóúñ]+ )?(?:padre|madre|padres|hermano|hermana|hermanos|hermanas|hijo|hija|hijos|hijas|amigo|amiga|amigos|amigas|chico|chica|chicos|chicas|niño|niña|niños|niñas|hombre|mujer|hombres|mujeres|médico|médica|profesor|profesora|maestro|maestra|jefe|jefa|abuelo|abuela|esposo|esposa|marido|vecino|vecina|policía|camarero|camarera|señor|señora|doctor|doctora|colega|compañero|compañera|tío|tía|primo|prima|bebé|persona|personas|novio|novia|vecinos|colegas|compañeros|profesores|médicos))(?![a-záéíóúñ])/.exec(r);
     if (!m || m.index === 0 && !/^¿/.test(r) && m[1] === "") {
       return r;
@@ -702,7 +735,7 @@ var NL_ES = (function () {
     if (!words.some(function (w) { return PERSON_ES.test(w); })) return obj;
     return m[1] === "el" ? "al " + m[2] : "a " + obj;
   }
-  var VIND_ADJ = { leuk: "gusta", goed: "bien", slecht: "mal", mooi: "bonito", lelijk: "feo", prima: "bien", gek: "raro", raar: "raro", interessant: "interesante", moeilijk: "difícil", makkelijk: "fácil", duur: "caro", goedkoop: "barato", saai: "aburrido", geweldig: "genial" };
+  var VIND_ADJ = { leuk: "gusta", lekker: "rico", goed: "bien", slecht: "mal", mooi: "bonito", lelijk: "feo", prima: "bien", gek: "raro", raar: "raro", interessant: "interesante", moeilijk: "difícil", makkelijk: "fácil", duur: "caro", goedkoop: "barato", saai: "aburrido", geweldig: "genial" };
   function buildVerb(lem, v, subjInfo, rest, dict, fem, inverted, subjEs) {
     var p = subjInfo ? subjInfo.p : 2;
     var g = subjInfo && subjInfo.g ? subjInfo.g : (fem ? "f" : "m");
@@ -726,6 +759,15 @@ var NL_ES = (function () {
         if (restN.slice(ak + 1).length) return null;
         if (adjOp !== "leuk") {
           var adjEs = VIND_ADJ[adjOp];
+          if (adjOp === "lekker") {   // eten: está rico (niet "me parece rico")
+            if (!obj.length || obj.length === 1 && (obj[0] === "het" || DEM[obj[0]])) return prefix + "está " + inten + "rico.";
+            var npL = np(obj, 0, dict);
+            if (!npL || npL.end !== obj.length) return null;
+            var adjL = npL.fem ? "rica" : "rico";
+            if (npL.plural) adjL += "s";
+            var artL = /^(los|las|el|la|un|una|unos|unas|esta|este|estas|estos|ese|esa|esos|esas|mi|mis|tu|tus|su|sus) /.test(npL.s) ? npL.s : artFor(npL.es, npL.plural, true) + " " + npL.s;
+            return artL + " " + prefix + (npL.plural ? "están " : "está ") + inten + adjL + ".";
+          }
           if (!obj.length || obj.length === 1 && (obj[0] === "het" || DEM[obj[0]])) return prefix + datC + " parece " + inten + adjEs + ".";
           var npA = np(obj, 0, dict);
           if (!npA || npA.end !== obj.length) return null;
