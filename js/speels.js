@@ -60,6 +60,8 @@
     var slot = document.getElementById("installSlot");
     if (!slot || slot.childElementCount) return;
     if (isStandalone()) return;
+    // Op telefoons zorgt de melding (showHomeNotice) voor de uitleg; de kaart op de Info-pagina is dan overbodig
+    if (isIOSDevice() || /Android/i.test(navigator.userAgent)) return;
     var t = INSTALL_TXT[document.body.getAttribute("data-lang") || "nl"] || INSTALL_TXT.nl;
     var card = document.createElement("div");
     card.className = "card install-card";
