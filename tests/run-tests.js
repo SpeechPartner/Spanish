@@ -107,5 +107,26 @@ check("klank: accenten en leestekens tellen niet mee", k3.score === 100 && k3.wo
   check("achtergrond: kleurenkaart staat in de offline-cache", read("sw.js").includes("./img/achtergrond-kaart.png"));
 }
 
+// 11. Zinherstel: een herkende zin wordt alleen naar een bekende zin hersteld als die duidelijk de beste is
+const ZH = require(path.join(root, "js", "zin-herstel.js"));
+const zinnen = ["Vivo mañana.", "Camina hoy.", "Como pan.", "Hace mucho frío."];
+const h1 = ZH.corrigeer("Bebo mañana", zinnen);
+check("zinherstel: fout herkende zin wordt de bekende zin", h1.tekst === "Vivo mañana." && h1.gecorrigeerd === true, JSON.stringify(h1));
+const h2 = ZH.corrigeer("Vivo mañana.", zinnen);
+check("zinherstel: juiste zin blijft ongewijzigd", h2.tekst === "Vivo mañana." && h2.gecorrigeerd === false, JSON.stringify(h2));
+const h3 = ZH.corrigeer("zxq wvm", zinnen);
+check("zinherstel: onbekende tekst blijft staan", h3.tekst === "zxq wvm" && h3.gecorrigeerd === false, JSON.stringify(h3));
+const h4 = ZH.corrigeer("Vivo hoy", ["Vivo hoy.", "Vivo hoy!"]);
+check("zinherstel: gelijke kandidaten leveren niets op", h4.tekst === "Vivo hoy" && h4.gecorrigeerd === false, JSON.stringify(h4));
+const h5 = ZH.corrigeer("Como pan", []);
+check("zinherstel: zonder zinnen blijft de tekst staan", h5.tekst === "Como pan" && h5.gecorrigeerd === false, JSON.stringify(h5));
+check("zinherstel: klanken van b en v vallen samen", ZH.klank("vivo") === ZH.klank("bibo"), ZH.klank("vivo") + " / " + ZH.klank("bibo"));
+const zinLijst = (() => { const c = {}; vm.runInNewContext(read("js/zinnen-es.js"), c); return c.ZINNEN_ES || []; })();
+check("zinherstel: zinnenlijst heeft ruim 1500 zinnen, allemaal tekst", zinLijst.length > 1500 && zinLijst.every((z) => typeof z === "string" && z.trim().length > 0), "aantal: " + zinLijst.length);
+const zelfTest = zinLijst.filter((z, i) => i % 97 === 0).every((z) => ZH.corrigeer(z, zinLijst).tekst === z);
+check("zinherstel: een zin uit de lijst blijft zichzelf", zelfTest);
+check("zinherstel: correctie staat aan in de spraakinvoer", /var ZINHERSTEL_AAN = true/.test(read("js/app.js")) && /herstelZin\(text\)/.test(read("js/app.js")) && /herstelZin\(t\)/.test(read("js/app.js")));
+check("zinherstel: script staat in index.html en offline-cache", read("index.html").includes("js/zin-herstel.js") && read("sw.js").includes("./js/zinnen-es.js"));
+
 console.log(failures === 0 ? "\nAlles geslaagd." : `\n${failures} controle(s) mislukt.`);
 process.exit(failures === 0 ? 0 : 1);

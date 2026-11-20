@@ -510,7 +510,9 @@
     nl: { ir: ["ga", "gaat", "gaat", "gaan", "gaan"], tener: ["heb", "hebt", "heeft", "hebben", "hebben"], querer: ["wil", "wilt", "wil", "willen", "willen"], estar: ["ben", "bent", "is", "zijn", "zijn"],
           trabajar: ["werk", "werkt", "werkt", "werken", "werken"], hacer: ["doe", "doet", "doet", "doen", "doen"], comer: ["eet", "eet", "eet", "eten", "eten"], ir_past: ["ging", "ging", "ging", "gingen", "gingen"] }
   };
-  function glossVorm(verb, subj) {
+  function glossVorm(verb, subj, comp) {
+    // Per aanvulling kan de Nederlandse uitleg een ander werkwoord hebben (een pauze nemen, het avondeten maken)
+    if (lang === "nl" && comp && comp.vnl) return comp.vnl[subj.i];
     var g = GLOSS_VORM[lang], base = L(verb.m);
     if (!g || !g[verb.id]) return base;
     var f = g[verb.id][subj.i];
@@ -533,13 +535,19 @@
     top.appendChild(btn(T("Ontkennend (no)"), b.neg ? "primary small" : "small", function () { b.neg = !b.neg; render(); }));
     w.appendChild(top);
 
-    w.appendChild(el("h2", "", T("1. Verbindingswoord (optioneel)")));
-    var cr = el("div", "chips");
-    cr.appendChild(btn(T("geen"), b.conn === null ? "primary small" : "small", function () { b.conn = null; render(); }));
-    CONN.forEach(function (c, ci) {
-      cr.appendChild(btn(c.es + " (" + L(c.m) + ")", b.conn === ci ? "primary small" : "small", function () { b.conn = ci; render(); }));
-    });
-    w.appendChild(cr);
+    // Alleen de verbindingswoorden die na deze startzin logisch zijn (conns in BUILD_STEMS)
+    var okConn = st.conns || CONN.map(function (c, ci) { return ci; });
+    if (b.conn !== null && okConn.indexOf(b.conn) < 0) b.conn = null;
+    if (okConn.length) {
+      w.appendChild(el("h2", "", T("1. Verbindingswoord (optioneel)")));
+      var cr = el("div", "chips");
+      cr.appendChild(btn(T("geen"), b.conn === null ? "primary small" : "small", function () { b.conn = null; render(); }));
+      CONN.forEach(function (c, ci) {
+        if (okConn.indexOf(ci) < 0) return;
+        cr.appendChild(btn(c.es + " (" + L(c.m) + ")", b.conn === ci ? "primary small" : "small", function () { b.conn = ci; render(); }));
+      });
+      w.appendChild(cr);
+    }
 
     w.appendChild(el("h2", "", T("2. Wie?")));
     var sr = el("div", "chips");
@@ -576,7 +584,7 @@
       clause.push(verb.forms[subj.i]);
       clause.push(comp.es);
       var NEG_M = { nl: "niet", en: "not", de: "nicht", fr: "ne … pas" };
-      var gloss = L(subj.m) + (b.neg ? " · " + L(NEG_M) : "") + " · " + glossVorm(verb, subj) + " · " + L(comp.m);
+      var gloss = L(subj.m) + (b.neg ? " · " + L(NEG_M) : "") + " · " + glossVorm(verb, subj, comp) + " · " + L(comp.m);
       if (lang === "fr") gloss = gloss.replace(/^je · (?=[aeéiouhàâ])/i, "j'").replace(/^Je · (?=[aeéiouhàâ])/, "J'");   // j'ai (elisie)
       var es, nlParts;
       if (b.conn !== null) {
@@ -2022,7 +2030,7 @@
         S.note = "";
         // Whisper zet stilte of ruis soms om in (música) of [Music]: dat telt niet als zin.
         var junk = /^[\(\[\{].*[\)\]\}]$/.test(text) || /^[\W_]+$/.test(text);
-        if (text.length >= 2 && !junk) S.convo.push(makeTurn(text));
+        if (text.length >= 2 && !junk) S.convo.push(makeTurn(herstelZin(text)));
         else S.note = T("Geen spraak gehoord. Probeer het opnieuw.") + info + (text ? ", " + T("gehoord") + ": " + text.slice(0, 40) : "") + ")";
         go("gesprek"); scrollGesprekEnd();
       });
@@ -2037,6 +2045,16 @@
   // Opname via de spraakherkenning van de browser. Stopt de herkenning zelf (dat gebeurt na een stilte),
   // dan start de app hem opnieuw, tot de gebruiker op Stop tikt. Alles wat gehoord is, blijft bewaard.
   var micStop = null;
+  // Herkende zin naar de bekende zin uit de app (zin-herstel.js). Staat uit tot de steekproef van zinnen is gekeurd.
+  // Niet toegepast in de uitspraaktrainer: daar zou een verkeerde uitspraak dan goed lijken.
+  var ZINHERSTEL_AAN = true;
+  function herstelZin(t) {
+    try {
+      if (ZINHERSTEL_AAN && window.ZIN_HERSTEL && window.ZINNEN_ES) return ZIN_HERSTEL.corrigeer(t, ZINNEN_ES).tekst;
+    } catch (e) {}
+    return t;
+  }
+
   function startMic() {
     if (S.listening) return;
     if (typeof prRelease === "function") prRelease();
@@ -2052,7 +2070,7 @@
       if (ended) return; ended = true;
       S.listening = false; S.rec = null; micStop = null;
       if (heard.length) {
-        heard.forEach(function (t) { S.convo.push(makeTurn(t)); });
+        heard.forEach(function (t) { S.convo.push(makeTurn(herstelZin(t))); });
         S.note = "";
       } else if (!errored) {
         S.note = T("Geen spraak gehoord. Probeer het opnieuw.");

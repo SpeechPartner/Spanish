@@ -31,6 +31,8 @@ const ASSETS = [
   "./js/zin-in.js",
   "./js/uitspraak.js",
   "./js/klank.js",
+  "./js/zin-herstel.js",
+  "./js/zinnen-es.js",
   "./js/achtergrond.js",
   "./js/quizbank.js",
   "./img/achtergrond-kaart.png",

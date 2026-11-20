@@ -231,8 +231,8 @@ var REACT = [
     ],
     vervolg: [
       { es: "¿Y tú?", m: m("En jij?", "And you?", "Und du?", "Et toi ?"), styles: [
-        ["blij", "Yo también, muy bien.", m("Ik ook, heel goed.", "Me too, very well.", "Mir auch, sehr gut.", "Moi aussi, très bien.")],
-        ["eerlijk", "Yo estoy bien, gracias por preguntar.", m("Het gaat goed met mij, bedankt dat je vraagt.", "I'm fine, thanks for asking.", "Mir geht es gut, danke der Nachfrage.", "Ça va pour moi, merci de demander.")],
+        ["blij", "Yo también, muy bien.", m("Ik ook, heel goed.", "I'm doing well too.", "Mir auch, sehr gut.", "Moi aussi, très bien.")],
+        ["eerlijk", "Yo estoy bien, gracias por preguntar.", m("Met mij gaat het goed, bedankt dat je vraagt.", "I'm fine, thanks for asking.", "Mir geht es gut, danke der Nachfrage.", "Ça va bien, merci de demander.")],
         ["doorvragen", "¿Y tú qué tal el fin de semana?", m("En hoe was je weekend?", "And how was your weekend?", "Und wie war dein Wochenende?", "Et ton week-end, comment s'est-il passé ?")]
       ] }
     ] },
@@ -316,14 +316,16 @@ var REACT = [
 ];
 
 // Startzinnen die je kunt doorbouwen (Spaanse startzin -> stam, betekenis, ontkenning)
+// conns: welke verbindingswoorden (index in CONN) na deze startzin logisch zijn.
+// "dus" past niet na "Ik denk van wel"; na een stopwoord (Nou, dan / Even kijken / Wacht) past geen verbindingswoord.
 var BUILD_STEMS = {
-  "Creo que sí.": { stem: "Creo que", stemM: m("Ik denk dat", "I think that", "Ich glaube, dass", "Je crois que"), neg: false },
-  "Creo que no.": { stem: "Creo que", stemM: m("Ik denk dat", "I think that", "Ich glaube, dass", "Je crois que"), neg: true },
-  "Me parece bien.": { stem: "Me parece que", stemM: m("Ik vind dat", "I think that", "Ich finde, dass", "Il me semble que"), neg: false },
-  "Me parece un poco raro.": { stem: "Me parece que", stemM: m("Ik vind dat", "I think that", "Ich finde, dass", "Il me semble que"), neg: false },
-  "Bueno, pues...": { stem: "Bueno, pues", stemM: m("Nou, dan", "Well then", "Also dann", "Eh bien, alors"), neg: false },
-  "A ver...": { stem: "A ver,", stemM: m("Even kijken", "Let me see", "Mal sehen", "Voyons"), neg: false },
-  "Espera, lo pienso.": { stem: "Espera, creo que", stemM: m("Wacht, ik denk dat", "Wait, I think that", "Warte, ich glaube, dass", "Attends, je crois que"), neg: false }
+  "Creo que sí.": { stem: "Creo que", stemM: m("Ik denk dat", "I think that", "Ich glaube, dass", "Je crois que"), neg: false, conns: [0, 1, 4] },
+  "Creo que no.": { stem: "Creo que", stemM: m("Ik denk dat", "I think that", "Ich glaube, dass", "Je crois que"), neg: true, conns: [0, 1, 4] },
+  "Me parece bien.": { stem: "Me parece que", stemM: m("Ik vind dat", "I think that", "Ich finde, dass", "Il me semble que"), neg: false, conns: [0, 1, 3, 4] },
+  "Me parece un poco raro.": { stem: "Me parece que", stemM: m("Ik vind dat", "I think that", "Ich finde, dass", "Il me semble que"), neg: false, conns: [0, 1, 4] },
+  "Bueno, pues...": { stem: "Bueno, pues", stemM: m("Nou, dan", "Well then", "Also dann", "Eh bien, alors"), neg: false, conns: [] },
+  "A ver...": { stem: "A ver,", stemM: m("Even kijken", "Let me see", "Mal sehen", "Voyons"), neg: false, conns: [] },
+  "Espera, lo pienso.": { stem: "Espera, creo que", stemM: m("Wacht, ik denk dat", "Wait, I think that", "Warte, ich glaube, dass", "Attends, je crois que"), neg: false, conns: [] }
 };
 var BUILDABLE_CATS = ["Meningen geven", "Tijd winnen"];
 
@@ -359,7 +361,7 @@ var VERBS = [
   { id: "trabajar", inf: "trabajar", m: m("werken", "work", "arbeiten", "travailler"), forms: ["trabajo", "trabajas", "trabaja", "trabajamos", "trabajan"],
     comps: [p("mucho", "veel", "a lot", "viel", "beaucoup"), p("en una tienda", "in een winkel", "in a shop", "in einem Laden", "dans un magasin"), p("desde casa", "vanuit huis", "from home", "von zu Hause", "depuis chez moi"), p("en la ciudad", "in de stad", "in the city", "in der Stadt", "en ville")] },
   { id: "hacer", inf: "hacer", m: m("doen", "do", "machen", "faire"), forms: ["hago", "haces", "hace", "hacemos", "hacen"],
-    comps: [p("deporte", "sport", "sport", "Sport", "du sport"), p("la cena", "het avondeten", "dinner", "das Abendessen", "le dîner"), p("la compra", "boodschappen", "the shopping", "den Einkauf", "les courses"), p("una pausa", "een pauze", "a break", "eine Pause", "une pause")] },
+    comps: [p("deporte", "sport", "sport", "Sport", "du sport"), { es: "la cena", m: m("het avondeten", "dinner", "das Abendessen", "le dîner"), vnl: ["maak", "maakt", "maakt", "maken", "maken"] }, p("la compra", "boodschappen", "the shopping", "den Einkauf", "les courses"), { es: "una pausa", m: m("een pauze", "a break", "eine Pause", "une pause"), vnl: ["neem", "neemt", "neemt", "nemen", "nemen"] }] },
   { id: "comer", inf: "comer", m: m("eten", "eat", "essen", "manger"), forms: ["como", "comes", "come", "comemos", "comen"],
     comps: [p("pan", "brood", "bread", "Brot", "du pain"), p("fruta", "fruit", "fruit", "Obst", "des fruits"), p("tarde", "laat", "late", "spät", "tard"), p("en casa", "thuis", "at home", "zu Hause", "à la maison")] },
   { id: "ir_past", inf: "ir", past: true, m: m("gaan (verleden)", "went", "gehen (Vergangenheit)", "aller (passé)"), forms: ["fui", "fuiste", "fue", "fuimos", "fueron"],
@@ -582,7 +584,7 @@ var ALT = {
   ],
   "Me alegro de verte.": [
     p("Qué bueno verte.", "Wat fijn je te zien.", "Good to see you.", "Schön, dich zu sehen.", "Ravi de te voir."),
-    p("Me da gusto verte.", "Wat leuk je te zien.", "Nice to see you.", "Schön, dich zu sehen.", "Content de te voir.")
+    p("Me da gusto verte.", "Wat leuk om je te zien.", "Nice to see you.", "Schön, dich zu sehen.", "Content de te voir.")
   ],
   "Creo que sí.": [
     p("Supongo que sí.", "Ik denk van wel.", "I think so.", "Ich glaube schon.", "Je pense que oui."),
