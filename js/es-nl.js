@@ -23,6 +23,9 @@ var ES_NL = (function () {
     estudiar:  { es: ["estudio", "estudias", "estudia", "estudiamos", "estudian"], d: ["studeer", "studeert", "studeert", "studeren"], inf: "studeren" },
     comer:     { es: ["como", "comes", "come", "comemos", "comen"], d: ["eet", "eet", "eet", "eten"], inf: "eten" },
     partir:    { es: ["parto", "partes", "parte", "partimos", "parten"], d: ["vertrek", "vertrekt", "vertrekt", "vertrekken"], inf: "vertrekken" },
+    // prt: scheidbaar deel, komt achteraan de zin ("de trein komt om acht uur aan")
+    llegar:    { es: ["llego", "llegas", "llega", "llegamos", "llegan"], d: ["kom", "komt", "komt", "komen"], inf: "aankomen", prt: "aan" },
+    empezar:   { es: ["empiezo", "empiezas", "empieza", "empezamos", "empiezan"], d: ["begin", "begint", "begint", "beginnen"], inf: "beginnen" },
     beber:     { es: ["bebo", "bebes", "bebe", "bebemos", "beben"], d: ["drink", "drinkt", "drinkt", "drinken"], inf: "drinken" },
     cocinar:   { es: ["cocino", "cocinas", "cocina", "cocinamos", "cocinan"], d: ["kook", "kookt", "kookt", "koken"], inf: "koken" },
     leer:      { es: ["leo", "lees", "lee", "leemos", "leen"], d: ["lees", "leest", "leest", "lezen"], inf: "lezen" },
@@ -160,6 +163,9 @@ var ES_NL = (function () {
 
   function plural(nl) {
     if (PLURAL[nl]) return PLURAL[nl];
+    // Lange klinker in een open lettergreep: zoon -> zonen, boom -> bomen, beer -> beren
+    var lk = /^(.*[^aeiou])(aa|ee|oo|uu)([bcdfgklmnprt])$/.exec(nl);
+    if (lk) return lk[1] + lk[2].charAt(0) + lk[3] + "en";
     if (/(el|em|en|er|or)$/.test(nl)) return nl + "s";
     if (/ie$/.test(nl)) return nl + "s";          // vakantie -> vakanties (geen apostrof bij -ie)
     if (/(eau|a|o|u|i)$/.test(nl)) return nl + "'s";
@@ -230,7 +236,8 @@ var ES_NL = (function () {
     }
     var out = [];
     var isPl = nn.plural || pl || (num && num !== "veel") || false;
-    var nlN = isPl ? plural(nn.nl) : nn.nl;
+    // "hijos" is meestal "kinderen" (zonen én dochters); "hijo" alleen is "zoon"
+    var nlN = isPl ? (nn.nl === "zoon" && /^hijos$/.test(nf(nounTok)) ? "kinderen" : plural(nn.nl)) : nn.nl;
     if (det === "def") {
       var a = defArt(nn.gen, isPl);
       if (!a) return null;
@@ -533,7 +540,9 @@ var ES_NL = (function () {
     if (fv.past && !o.hasSubj && p === 2 && !o.impersonal) return null;
     var verbNL = dutchVerb(v, p, inv, fv.past, fv.perfect);
     if (fv.perfect && (spec.copula || spec.modal || spec.need || v === "ir" || v === "tener")) return null;
-    var ppTxt = fv.perfect ? PAST_D[v][2] : null;
+    // Scheidbare werkwoorden (aankomen): het deel "aan" komt achteraan; verleden tijd ("kwam ... aan") nog niet
+    if (VERBS[v] && VERBS[v].prt && (fv.past || fv.perfect)) return null;
+    var ppTxt = fv.perfect ? PAST_D[v][2] : (VERBS[v] && VERBS[v].prt ? VERBS[v].prt : null);
 
     // Ser / estar + predicaat
     if (spec.copula) {
@@ -853,10 +862,31 @@ var ES_NL = (function () {
     if (min === "menos diez") return "om tien voor " + NL_HOUR[H];
     return null;
   }
+  // Losse getallen (0-99) als woord: de vertaler kent "doce", niet "12". Tijden met een dubbele punt (12:30) blijven staan.
+  var ES_GETAL = ["cero", "uno", "dos", "tres", "cuatro", "cinco", "seis", "siete", "ocho", "nueve", "diez", "once", "doce", "trece", "catorce", "quince", "dieciséis", "diecisiete", "dieciocho", "diecinueve",
+    "veinte", "veintiuno", "veintidós", "veintitrés", "veinticuatro", "veinticinco", "veintiséis", "veintisiete", "veintiocho", "veintinueve"];
+  var ES_TIEN = ["", "", "", "treinta", "cuarenta", "cincuenta", "sesenta", "setenta", "ochenta", "noventa"];
+  function getalEs(n) {
+    if (n < 30) return ES_GETAL[n];
+    var e = n % 10, t = ES_TIEN[Math.floor(n / 10)];
+    return e ? t + " y " + ES_GETAL[e] : t;
+  }
+  function cijfersEs(text) {
+    var s = String(text).replace(/\ba las 1(?![\d:.,]\d)\b/gi, "a la una");
+    return s.replace(/(^|[^\d:.,])(\d{1,2})(?![\d:.,]\d)/g, function (m0, voor, d) { return voor + getalEs(parseInt(d, 10)); });
+  }
   function translateNL(text, rev, gen) {
+    if (typeof text === "string" && /\d/.test(text)) text = cijfersEs(text);
+    // "hasta las cinco" = tot vijf uur: vertaal als "a las cinco" (om vijf uur) en maak van "om" daarna "tot"
+    if (typeof text === "string" && /\bhasta (la|las)\b/i.test(text) && !arguments[3]) {
+      var rH = translateNL(text.replace(/\bhasta (la|las)\b/i, "a $1"), rev, gen, true);
+      return rH && /\bom\b/.test(rH) ? rH.replace(/\bom\b/, "tot") : null;
+    }
     var raw = String(text || "").trim();
     // Vervoermiddelen vertrekken: "el autobús sale" = "de bus vertrekt"
     raw = raw.replace(/^((?:el|la|los|las)\s+(?:autob[uú]s|autobuses|tren|trenes|avi[oó]n|aviones|metro|barco|tranv[ií]a)\s+)sale\b/i, "$1parte");
+    // "el autobús se va" (zo komen "le bus part" en "the bus leaves" binnen) is ook: de bus vertrekt
+    raw = raw.replace(/^((?:el|la|los|las)\s+(?:autob[uú]s|autobuses|tren|trenes|avi[oó]n|aviones|metro|barco|tranv[ií]a)\s+)se (va|van)\b/i, function (m0, s1, v) { return s1 + (v.toLowerCase() === "van" ? "parten" : "parte"); });
     var isQ = /\?/.test(raw) || /^¿/.test(raw);
     var tm = ES_TIME_END.exec(raw);
     if (tm && !isQ) {
@@ -864,6 +894,10 @@ var ES_NL = (function () {
       var head = raw.slice(0, tm.index).trim();
       var base = tt && head ? translate(head + ".", normRev(rev), gen) : null;
       if (!base) return null;
+      // Scheidbaar deel ("komt ... aan") blijft achteraan: "De trein komt om acht uur aan."
+      var prts = Object.keys(VERBS).map(function (k) { return VERBS[k].prt; }).filter(Boolean);
+      var bm = new RegExp("^(.*) (" + prts.join("|") + ")\\.$").exec(base);
+      if (prts.length && bm) return bm[1] + " " + tt + " " + bm[2] + ".";
       return base.replace(/\.$/, "") + " " + tt + ".";
     }
     if (isQ && /\s(hoy|mañana|ayer|ahora)\s*\?\s*$/i.test(raw)) return null;

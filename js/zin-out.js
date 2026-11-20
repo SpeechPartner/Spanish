@@ -134,7 +134,7 @@ var ZINO = (function () {
     var tail = [];
     var obl = enObl(c);
     if (obl === null) return null;
-    if (c.hour) tail.push(enTime(c.hour, c.min || 0));
+    if (c.hour) tail.push(c.until ? enTime(c.hour, c.min || 0).replace(/^at /, "until ") : enTime(c.hour, c.min || 0));
     if (c.day) tail.push("on " + nounEntry(c.day.key).en + (c.day.pl ? "s" : ""));
     var endAdv = [].concat(dAdv, obl, pAdv, tail, tAdv);
     if (too) endAdv.push(neg ? "either" : "too");
@@ -413,7 +413,7 @@ var ZINO = (function () {
   function deHr(n) { return deNumW(n).replace(/^ein$/, "eins"); }
   function deTime(h, m) {
     var nx = h % 12 + 1;
-    if (!m) return "um " + deHr(h) + " Uhr";
+    if (!m) return "um " + (h === 1 ? "ein" : deHr(h)) + " Uhr";   // um ein Uhr (maar: halb eins)
     if (m === 30) return "um halb " + deHr(nx);
     if (m === 15) return "um Viertel nach " + deHr(h);
     if (m === 45) return "um Viertel vor " + deHr(nx);
@@ -573,7 +573,7 @@ var ZINO = (function () {
       if (k === "también") { auch = true; return; }
       if (a.k === "t") tAdv.push(a.de); else if (a.k === "f") fAdv.push(a.de); else if (a.k === "p") pAdv.push(a.de); else dAdv.push(a.de);
     });
-    if (c.hour) tAdv.push(deTime(c.hour, c.min || 0));
+    if (c.hour) tAdv.push(c.until ? deTime(c.hour, c.min || 0).replace(/^um /, "bis ") : deTime(c.hour, c.min || 0));
     if (c.day) { var de = nounEntry(c.day.key).de; tAdv.push(c.day.pl ? low(de) + "s" : "am " + de); }
     var obl = deObl(c); if (obl === null) return null;
     var negW = never ? "nie" : (neg ? "nicht" : null);
@@ -932,7 +932,7 @@ var ZINO = (function () {
       if (a.k === "t") tAdv.push(a.fr); else if (a.k === "p") pAdv.push(a.fr); else vAdv.push(a.fr);
     });
     if (aussi) { if (neg) return null; vAdv.push("aussi"); }
-    if (c.hour) tAdv.push(frTime(c.hour, c.min || 0));
+    if (c.hour) tAdv.push(c.until ? frTime(c.hour, c.min || 0).replace(/^à /, "jusqu'à ") : frTime(c.hour, c.min || 0));
     if (c.day) { var dn = nounEntry(c.day.key).fr; tAdv.push(c.day.pl ? "le " + dn : dn); }
     var obl = frObl(c); if (obl === null) return null;
 
@@ -1233,7 +1233,7 @@ var ZINO = (function () {
     var neg = c.neg, never = c.never;
     var advEnd = [], advFront = [];
     (c.advs || []).forEach(function (k) { if (k === "siempre" || k === "a veces" || k === "también" && false) advFront.push(k); else advEnd.push(k); });
-    if (c.hour) advEnd.push(esTime(c.hour, c.min || 0));
+    if (c.hour) advEnd.push(c.until ? esTime(c.hour, c.min || 0).replace(/^a /, "hasta ") : esTime(c.hour, c.min || 0));
     if (c.day) advEnd.push(c.day.pl ? "los " + C.esPlural(c.day.key) : "el " + c.day.key);
     var obl = esObl(c); if (obl === null) return null;
     var tense = esTense(c);
@@ -1339,7 +1339,7 @@ var ZINO = (function () {
       else {
         var os = esNP(c.o); if (!os) return null;
         if (neg && c.o.det === "ind" && !c.o.pl && !(c.o.adjs || []).length) os = os.replace(/^(un|una) /, "");
-        if (personNP(c.o)) os = esContr("a", os);
+        if (personNP(c.o) && lemma !== "tener") os = esContr("a", os);   // geen persoonlijke a bij tener: "tengo tres hijos"
         if (lemma === "jugar" && c.o.k === "n" && /^(fútbol|tenis|deporte)$/.test(c.o.n)) os = "al " + c.o.n;
         objParts.push(os);
       }

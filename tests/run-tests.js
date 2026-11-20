@@ -147,5 +147,17 @@ check("zinherstel: script staat in index.html en offline-cache", read("index.htm
   const ontbreekt = talen.filter((t) => !new RegExp("\\n    " + t + ": \\{[\\s\\S]*?safari:[\\s\\S]*?chromeIOS:[\\s\\S]*?chromeAndroid:[\\s\\S]*?opnieuw:[\\s\\S]*?verwijder:").test(blok));
   check("beginscherm: melding per browser in vijf talen, ook bij een nieuwe versie", ontbreekt.length === 0 && /window\.THUIS_MELDING = function/.test(sp) && /THUIS_MELDING\(\)/.test(read("js/app.js")), ontbreekt.join(","));
 }
+check("woordherstel: de oude woordcorrectie staat uit in de Spaanse app (maakte het Spaans slechter)", /var HEARD_FIX_AAN = false;/.test(read("js/app.js")) && /if \(!HEARD_FIX_AAN\) return text;/.test(read("js/app.js")));
+// Getallen en tijden: de spraakherkenning schrijft cijfers ("om 12 uur"); "tot" is "hasta", niet "a"
+{
+  const ec = { console }; ec.window = ec; vm.createContext(ec);
+  ["dict-wiki.js","dict-extra.js","dict-pdf.js","dict-pdf-nl.js","dict-pdf-en.js","dict-pdf-de.js","dict-pdf-fr.js","grammatica.js","nl-direct-pairs.js","extra-pairs.js","dict.js","nl-es.js","es-nl.js","zin-lex.js","zin-gender.js","zin-core.js"].forEach((f) => { if (fs.existsSync(path.join(root, "js", f))) vm.runInContext(read("js/" + f), ec); });
+  const T1 = ec.NL_ES.translate("De bus vertrekt om 12 uur.", ec.DICTS.nl, "m"), T2 = ec.NL_ES.translate("Ik werk tot 5 uur.", ec.DICTS.nl, "m");
+  check("getallen: 'om 12 uur' wordt 'a las doce'", T1 === "El autobús sale a las doce.", T1);
+  check("getallen: 'tot 5 uur' wordt 'hasta las cinco'", T2 === "Trabajo hasta las cinco.", T2);
+  const T3 = ec.ES_NL.translate("Tengo tres hijos.", ec.REVS.nl, () => null), T4 = ec.ES_NL.translate("El tren llega a las ocho.", ec.REVS.nl, () => null);
+  check("hijos wordt 'kinderen'", T3 === "Ik heb drie kinderen.", T3);
+  check("aankomen: 'aan' achteraan na de tijd", T4 === "De trein komt om acht uur aan.", T4);
+}
 console.log(failures === 0 ? "\nAlles geslaagd." : `\n${failures} controle(s) mislukt.`);
 process.exit(failures === 0 ? 0 : 1);

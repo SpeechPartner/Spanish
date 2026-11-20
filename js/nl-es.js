@@ -537,7 +537,21 @@ var NL_ES = (function () {
     PHRASE_1W.forEach(function (p) { t = t.replace(p[0], p[1]); });
     return t;
   }
+  // Losse getallen (0-99) als woord: de vertaler kent "twaalf", niet "12". Tijden met een dubbele punt (12:30) blijven staan.
+  var NL_GETAL = ["nul", "een", "twee", "drie", "vier", "vijf", "zes", "zeven", "acht", "negen", "tien", "elf", "twaalf", "dertien", "veertien", "vijftien", "zestien", "zeventien", "achttien", "negentien"];
+  var NL_TIEN = ["", "", "twintig", "dertig", "veertig", "vijftig", "zestig", "zeventig", "tachtig", "negentig"];
+  function getalNl(n) {
+    if (n < 20) return NL_GETAL[n];
+    var e = n % 10, t = NL_TIEN[Math.floor(n / 10)];
+    if (!e) return t;
+    var w = NL_GETAL[e];
+    return w + (/[e]$/.test(w) ? "ën" : "en") + t;
+  }
+  function cijfersNl(text) {
+    return String(text).replace(/(^|[^\d:.,])(\d{1,2})(?![\d:.,]\d)/g, function (m0, voor, d) { return voor + getalNl(parseInt(d, 10)); });
+  }
   function translate(text, dict, gen) {
+    if (typeof text === "string" && /\d/.test(text)) text = cijfersNl(text);
     // Homoniemen met vaste zin (stem, vak): dezelfde tabel als in zin-in.js
     var hk = String(text || "").toLowerCase().replace(/[.!?]+$/, "").replace(/\s+/g, " ").trim();
     var HM = { "ik geef mijn stem": "Doy mi voto.", "zijn stem is mooi": "Su voz es bonita.", "ik hoor zijn stem": "Oigo su voz.", "ik strijk de was": "Plancho la ropa.", "de stem van de zanger is mooi": "La voz del cantante es bonita.", "het vak is vol": "El compartimento está lleno.", "ik heb wiskunde als vak": "Tengo matemáticas como asignatura.", "wiskunde is een leuk vak": "Matemáticas es una asignatura divertida." };
@@ -1013,7 +1027,7 @@ var smk = /^\s*(.+?) smaakt (?:(vandaag|elke dag|morgen|nu) )?(lekker|goed|zout|
       var infLemma = last && VERB[last] ? last : null;
       if (infOrNp.length >= 1 && FORM[infOrNp[0]] && FORM[infOrNp[0]] !== infOrNp[0] && VERB[FORM[infOrNp[0]]]) return null;
       // "ik wil ziek zijn": estar bij een plaats/toestand uit ESTAR_ADJ, anders ser; het bijvoeglijk naamwoord blijft in de mannelijke enkelvoudsvorm
-      if (infLemma === "zijn" && infOrNp.length === 2 && infOrNp[0] !== "zijn") {
+      if (infLemma === "zijn" && infOrNp.length === 2 && infOrNp[0] !== "zijn" && !/^(er|daar|hier|thuis)$/.test(infOrNp[0])) {   // "er zijn" = estar allí (verderop)
         var adjZ = infOrNp[0], adjEsZ = adjOf(adjZ, dict) || dict[adjZ];
         if (!adjEsZ) return null;
         return prefix + conj + " " + (ESTAR_ADJ[adjZ] ? "estar" : "ser") + " " + adjFor(adjEsZ, false, false) + ".";
@@ -1146,6 +1160,12 @@ var smk = /^\s*(.+?) smaakt (?:(vandaag|elke dag|morgen|nu) )?(lekker|goed|zout|
     var i = 0;
     while (i < words.length) {
       var w = words[i];
+      // "tot vijf uur" = hasta las cinco (niet "a las cinco", dat is "om vijf uur")
+      if (w === "tot") {
+        var tt = timeEs(["om"].concat(words.slice(i + 1)), 0);
+        if (tt && /^a las? /.test(tt.es)) { out.push(tt.es.replace(/^a /, "hasta ")); i += tt.n; continue; }
+        if (NUM[words[i + 1]] && words[i + 2] === "uur") { out.push((NUM[words[i + 1]] === "una" ? "hasta la " : "hasta las ") + NUM[words[i + 1]]); i += 3; continue; }
+      }
       var tm = (w === "om" || w === "half" || w === "kwart" || w === "vijf" || w === "tien") ? timeEs(words, i) : null;
       if (tm) { out.push(tm.es); i += tm.n; continue; }
       if (w === "om" && NUM[words[i + 1]] && words[i + 2] === "uur") { out.push("a las " + NUM[words[i + 1]]); i += 3; continue; }

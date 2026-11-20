@@ -437,6 +437,8 @@ var ZINI = (function () {
       var t = T[i];
       var adv = esAdvAt(T, i);
       if (adv && !((t === "mucho" || t === "poco") && T[i + 1] !== undefined && esNoun(O[i + 1])) && !(t === "manana" && /^(por)$/.test(T[i - 1] || "")) && !(t === "cerca" && T[i + 1] === "de") && !(t === "lejos" && T[i + 1] === "de")) { c.advs.push(adv.k); i = adv.end; continue; }
+      // "hasta las cinco" = tot vijf uur: dezelfde tijd als "a las cinco", met de markering "tot"
+      if (t === "hasta" && (T[i + 1] === "las" || (T[i + 1] === "la" && T[i + 2] === "una"))) { c.until = true; T[i] = "a"; t = "a"; }
       // Klokttijd met minuten: "a las once y media", "a las doce menos cuarto", "a la una y cinco"
       if (t === "a") { var ck = esClock(T, i); if (ck && ck.min) { c.hour = ck.hour; c.min = ck.min; i += ck.n; continue; } }
       if (t === "a" && T[i + 1] === "las" && (has(ESNUM, T[i + 2]) || /^\d+$/.test(T[i + 2] || ""))) { c.hour = has(ESNUM, T[i + 2]) ? ESNUM[T[i + 2]] : +T[i + 2]; i += 3; continue; }
@@ -542,6 +544,49 @@ var ZINI = (function () {
     return { hour: h, min: 0, n: j - i };
   }
   var ENNUM = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12, twenty: 20, thirty: 30, hundred: 100 };
+  // Klokttijd met minuten in het Engels, Duits en Frans (zoals esClock): geeft {hour, min, n} of null; n = aantal woorden.
+  // Het uur bij "to"/"vor"/"moins" en bij "halb" is het uur ervoor: "quarter to seven" = 6:45, "halb sieben" = 6:30.
+  function vorigUur(h) { return ((h + 10) % 12) + 1; }
+  function klokUur(tab, w) { if (has(tab, w || "") && tab[w] <= 24) return tab[w]; if (/^\d{1,2}$/.test(w || "") && +w <= 24) return +w; return null; }
+  var ENCLOCK_MIN = { five: 5, ten: 10, twenty: 20, "twenty-five": 25, quarter: 15, half: 30 };
+  function enClock(T, j) {
+    var a = T[j];
+    if (a === "a" && T[j + 1] === "quarter") { var q = enClock(T, j + 1); return q ? { hour: q.hour, min: q.min, n: q.n + 1 } : null; }
+    if (ENCLOCK_MIN[a] !== undefined && (T[j + 1] === "past" || T[j + 1] === "to") && klokUur(ENNUM, T[j + 2]) !== null) {
+      var h = klokUur(ENNUM, T[j + 2]), m = ENCLOCK_MIN[a];
+      if (T[j + 1] === "to") { if (m === 30) return null; h = vorigUur(h); m = 60 - m; }
+      return { hour: h, min: m, n: 3 };
+    }
+    var u = klokUur(ENNUM, a);
+    if (u !== null) return { hour: u, min: 0, n: T[j + 1] === "o'clock" ? 2 : 1 };
+    return null;
+  }
+  var DECLOCK_MIN = { "fünf": 5, zehn: 10, zwanzig: 20, viertel: 15 };
+  function deClock(T, j) {
+    var a = T[j], h;
+    if (a === "halb" && (h = klokUur(DENUM, T[j + 1])) !== null) return { hour: vorigUur(h), min: 30, n: 2 };
+    if (DECLOCK_MIN[a] !== undefined && (T[j + 1] === "nach" || T[j + 1] === "vor") && (h = klokUur(DENUM, T[j + 2])) !== null) {
+      var m = DECLOCK_MIN[a];
+      return T[j + 1] === "nach" ? { hour: h, min: m, n: 3 } : { hour: vorigUur(h), min: 60 - m, n: 3 };
+    }
+    if ((h = klokUur(DENUM, a)) !== null && T[j + 1] === "uhr") return { hour: h, min: 0, n: 2 };
+    return null;
+  }
+  var FRCLOCK_MIN = { cinq: 5, dix: 10, vingt: 20, "vingt-cinq": 25 };
+  function frClock(T, j) {
+    var h = null, k = j;
+    if (T[k] === "midi") { h = 12; k += 1; }
+    else if (T[k] === "minuit") { h = 12; k += 1; }
+    else if ((h = klokUur(FRNUM, T[k])) !== null && /^heures?$/.test(T[k + 1] || "")) k += 2;
+    else return null;
+    var a = T[k], b = T[k + 1];
+    if (a === "et" && (b === "demie" || b === "demi")) return { hour: h, min: 30, n: k + 2 - j };
+    if (a === "et" && b === "quart") return { hour: h, min: 15, n: k + 2 - j };
+    if (a === "moins" && b === "le" && T[k + 2] === "quart") return { hour: vorigUur(h), min: 45, n: k + 3 - j };
+    if (a === "moins" && (b === "quart" || FRCLOCK_MIN[b] !== undefined)) return { hour: vorigUur(h), min: 60 - (b === "quart" ? 15 : FRCLOCK_MIN[b]), n: k + 2 - j };
+    if (FRCLOCK_MIN[a] !== undefined) return { hour: h, min: FRCLOCK_MIN[a], n: k + 1 - j };
+    return { hour: h, min: 0, n: k - j };
+  }
   var ENWH = { what: "que", where: "donde", when: "cuando", how: "como", who: "quien", why: "porque", which: "cual" };
   var ENDAYS = { monday: "lunes", tuesday: "martes", wednesday: "miércoles", thursday: "jueves", friday: "viernes", saturday: "sábado", sunday: "domingo" };
   function enNoun(w) {
@@ -845,6 +890,7 @@ var ZINI = (function () {
       var adv = enAdvAt(T, i);
       if (adv && !(t === "a" && T[i + 1] === "lot" && T[i + 2] === "of") && !(t === "a" && T[i + 1] !== "lot" && T[i + 1] !== "bit")) { if (adv.k === "nunca") c.never = true; else c.advs.push(adv.k); i = adv.end; continue; }
       if (t === "too" || t === "either") { c.advs.push("también"); i++; continue; }
+      if (t === "at" || t === "until" || t === "till") { var ek = enClock(T, i + 1); if (ek) { c.hour = ek.hour; c.min = ek.min; if (t !== "at") c.until = true; i += 1 + ek.n; continue; } }
       if (t === "at" && (has(ENNUM, T[i + 1]) || /^\d+$/.test(T[i + 1] || ""))) { c.hour = has(ENNUM, T[i + 1]) ? ENNUM[T[i + 1]] : +T[i + 1]; i += 2; if (T[i] === "o'clock") i++; continue; }
       if (t === "on" && has(ENDAYS, (T[i + 1] || "").replace(/s$/, ""))) { c.day = { key: ENDAYS[T[i + 1].replace(/s$/, "")], pl: /s$/.test(T[i + 1]) }; i += 2; continue; }
       if (t === "home" && MOTION[c.v]) { c.obl.push({ prep: "a", np: { k: "n", n: "casa", det: "none" } }); i++; continue; }
@@ -1159,6 +1205,7 @@ var ZINI = (function () {
       if (/^(mich|dich|sich|uns|euch)$/.test(t) && VERB[c.v] && VERB[c.v].de && VERB[c.v].de.refl) { i++; continue; }
       var adv = deAdvAt(T, i);
       if (adv && !(T[i] === "viel" && T[i + 1] !== undefined && deNoun(T[i + 1]) && !DEV[T[i + 1]])) { c.advs.push(adv.k); i = adv.end; continue; }
+      if (t === "um" || t === "bis") { var dk = deClock(T, i + 1); if (dk) { c.hour = dk.hour; c.min = dk.min; if (t === "bis") c.until = true; i += 1 + dk.n; continue; } }
       if (t === "um" && (has(DENUM, T[i + 1]) || /^\d+$/.test(T[i + 1] || "")) && T[i + 2] === "uhr") { c.hour = has(DENUM, T[i + 1]) ? DENUM[T[i + 1]] : +T[i + 1]; i += 3; continue; }
       if (t === "am" && has(DEDAYS, T[i + 1] || "")) { c.day = { key: DEDAYS[T[i + 1]] }; i += 2; continue; }
       if (/^(montags|dienstags|mittwochs|donnerstags|freitags|samstags|sonntags)$/.test(t)) { c.day = { key: DEDAYS[t.slice(0, -1)], pl: true }; i++; continue; }
@@ -1301,7 +1348,7 @@ var ZINI = (function () {
   "rate rates rate ratons ratez ratent".split(" ").forEach(function (f, p) { addFV(f, "perder", p, "pres", {}); });
   (FRINF.rater = FRINF.rater || []).push({ v: "perder", refl: false });
   ["raté", "ratée", "ratés", "ratées"].forEach(function (f) { (FRPP[f] = FRPP[f] || []).push({ v: "perder", refl: false, aux: "a" }); });
-  var FR_PREF = { "être": "estar", aller: "ir", avoir: "tener", comprendre: "entender", devoir: "tener que", aimer: "gustar", adorer: "encantar", sentir: "sentirse", appeler: "llamar" };
+  var FR_PREF = { "être": "estar", aller: "ir", avoir: "tener", comprendre: "entender", devoir: "tener que", aimer: "gustar", adorer: "encantar", sentir: "sentirse", appeler: "llamar", arriver: "llegar" };   // "ça arrive" (het gebeurt) is een vaste zin
   var FRPRON = { je: [0], tu: [1], il: [2, "m"], elle: [2, "f"], on: [3], nous: [3], vous: [1, null, true], ils: [5, "m"], elles: [5, "f"] };
   var FRCLIT = { me: [0], te: [1], le: [2, "m"], la: [2, "f"], les: [5], nous: [3], vous: [4], se: ["refl"], lui: ["dat"], leur: ["dat"], y: ["y"], en: ["en"] };
   var FRNUM = { un: 1, une: 1, deux: 2, trois: 3, quatre: 4, cinq: 5, six: 6, sept: 7, huit: 8, neuf: 9, dix: 10, onze: 11, douze: 12, vingt: 20, trente: 30, cent: 100 };
@@ -1570,6 +1617,7 @@ var ZINI = (function () {
       if (t === "aussi") { c.advs.push("también"); i++; continue; }
       var adv = frAdvAt(T, i);
       if (adv && !(t === "beaucoup" && /^(de|d')$/.test(T[i + 1] || "")) && !(t === "à" && T[i + 1] !== "la")) { if (adv.k === "nunca") c.never = true; else c.advs.push(adv.k); i = adv.end; continue; }
+      if (t === "à" || t === "jusqu'à") { var fk = frClock(T, i + 1); if (fk) { c.hour = fk.hour; c.min = fk.min; if (t !== "à") c.until = true; i += 1 + fk.n; continue; } }
       if (t === "à" && (has(FRNUM, T[i + 1]) || /^\d+$/.test(T[i + 1] || "")) && /^heures?$/.test(T[i + 2] || "")) { c.hour = has(FRNUM, T[i + 1]) ? FRNUM[T[i + 1]] : +T[i + 1]; i += 3; continue; }
       if (has(FRDAYS, t)) { c.day = { key: FRDAYS[t] }; i++; continue; }
       if (t === "le" && has(FRDAYS, T[i + 1] || "")) { c.day = { key: FRDAYS[T[i + 1]], pl: true }; i += 2; continue; }

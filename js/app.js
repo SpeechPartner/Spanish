@@ -1594,7 +1594,11 @@
     }
     return HEARD_VOCAB[lang];
   }
+  // Uitgeschakeld: gemeten op echte video's en 1400 opnames maakte deze correctie het Spaans slechter
+  // (goede woorden werden vervangen; video: 13,9% -> 18,7% woordfouten). De zincorrectie (zin-herstel.js) blijft wel werken.
+  var HEARD_FIX_AAN = false;
   function heardFix(text) {
+    if (!HEARD_FIX_AAN) return text;
     var v = heardVocab(lang), out = [];
     String(text).split(/(\s+|[.,;:!?¿¡])/).forEach(function (tok) {
       var n = norm(tok).toLowerCase();
