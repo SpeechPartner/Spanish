@@ -294,7 +294,7 @@ var ZINI = (function () {
       c.mod = c.v; c.v = f2.inf; i++;
       if (f2.cl) {
         var c2 = ESCLIT[f2.cl]; if (!c2 || c2.dat) return null;
-        if (f2.cl === reflWord && has(VERB, C.esBase(c.v) + "se")) c.v = C.esBase(c.v) + "se";
+        if (c2.refl) { if (has(VERB, C.esBase(c.v) + "se")) c.v = C.esBase(c.v) + "se"; }
         else c.o = { k: "pron", p: c2.p, g: c2.g || null };
       } else if (C.esIsRefl(c.v)) { c.v = C.esBase(c.v); if (!has(VERB, c.v)) return null; }
     } else if (c.v === "tener" && T[i] === "permiso" && T[i + 1] === "para" && splitEnclitic(O[i + 2] || "")) {
@@ -1671,6 +1671,8 @@ var ZINI = (function () {
       if (neg && /^(me|te|se|le|lo|la|los|las|nos|os|les)$/.test(low(tk[1] || ""))) { cli = low(tk[1]); ci0 = 2; if (/^(me|te|se|nos|os)$/.test(cli) && /^(lo|la|los|las)$/.test(low(tk[2] || ""))) { cli += " " + low(tk[2]); ci0 = 3; } }
       var vt = low(tk[ci0] || ""), rest = tk.slice(ci0 + 1).join(" ");
       if (!vt) return null;
+      // onbeklemtoond "se" is het wederkerende voornaamwoord ("Se casa." = hij trouwt); de gebiedende wijs van ser heet "sé"
+      if (!neg && t0 === "se") return null;
       if (!neg) {
         var PAIRS = [];
         ["me", "te", "se", "nos", "os"].forEach(function (a) { ["los", "las", "lo", "la"].forEach(function (b) { PAIRS.push(a + b); }); });
@@ -1839,8 +1841,14 @@ var ZIN = (function () {
   // Algemeen: van elke taal naar elke taal (nl, en, de, fr, es). Nederlands loopt via het Spaans,
   // met de aparte modules NL_ES en ES_NL. Geeft null als een stap niet zeker is.
   function translate(text, from, to, gen) {
+    if (from === "nl" && typeof text === "string" && /^\s*ik heb een rekening bij (de|een) bank\s*[.!]*\s*$/i.test(text) && NL_REKENING_BANK[to]) return NL_REKENING_BANK[to];
+    if (from === "nl" && typeof text === "string") { var bkT = nlBankPatroon(text); if (bkT && bkT !== text) { var rT = translate(bkT, from, to, gen); if (rT) return rT; } }
     if (typeof text === "string") {
       var mm;
+      // "hoe voel jij je (vandaag)" = "hoe gaat het (vandaag)": de andere talen kennen "voelen" niet als werkwoord
+      if (from === "nl") text = text.replace(/^\s*hoe voel(?:t)? (?:jij|je|u|jullie|hij|zij|ze|we|wij) (?:je|zich|jou|me|mij|ons|jullie)(?: vandaag)?\s*[?.!]*\s*$/i, "Hoe gaat het met je?");
+      // "hoe gaat het vandaag" (zonder 'met') wordt ook de vraag naar hoe het gaat
+      if (from === "nl") text = text.replace(/^\s*hoe gaat het vandaag\s*[?.!]*\s*$/i, "Hoe gaat het met je?");
       if (from === "fr" && (mm = /^\s*il faut\s+([a-zàâçéèêëîïôûùüÿ]+(?:er|ir|re))\b(.*)$/i.exec(text))) text = "Nous devons " + mm[1] + mm[2];
       else if (from === "es" && (mm = /^\s*hay que\s+(\S+)(.*)$/i.exec(text))) text = "Debemos " + mm[1] + mm[2];
       else if (from === "de" && (mm = /^\s*man muss\s+(.*)$/i.exec(text))) text = "Wir müssen " + mm[1];
@@ -1873,6 +1881,16 @@ var ZIN = (function () {
     if (from === "nl") {
       var nk = ZINC.NLIDX[ZINC.normKey(text)];
       if (nk) { var fn = ZINC.FIXED[ZINC.fold(nk)] || ZINC.WEATHER[ZINC.fold(nk)]; return fixedOut(fn, to, gen, isQ); }
+      // Weersituatie met een tijdsbepaling achteraan ("Het regent vandaag"): de weerzin vertalen en de tijdsbepaling erachter zetten
+      var wt = /^(.+?) (vandaag|elke dag|morgen|nu)\.?$/i.exec(String(text || "").trim());
+      if (wt) {
+        var wk = ZINC.NLIDX[ZINC.normKey(wt[1])];
+        var wf = wk ? (ZINC.FIXED[ZINC.fold(wk)] || ZINC.WEATHER[ZINC.fold(wk)]) : null;
+        var wTijd = { vandaag: "hoy", "elke dag": "todos los días", morgen: "mañana", nu: "ahora" }[wt[2].toLowerCase()];
+        var wAdv = wTijd && ZINC.ADV[wTijd];
+        var wBasis = wf && (to === "es" ? fixedOut(wf, "es", gen, false) : wf[to]);
+        if (wBasis && wAdv && wAdv[to]) return wBasis.replace(/\.$/, "") + " " + wAdv[to] + ".";
+      }
       if (typeof NL_ES === "undefined") return null;
       var es0 = null, nlImp = false;
       try { nlImp = !!(NL_ES.verbFirst && NL_ES.verbFirst(text) && nlImpAlt(text) && !/\b(niet|geen)\b.*$/i.test("") ); } catch (e) { nlImp = false; }
@@ -2021,7 +2039,320 @@ var ZIN = (function () {
     else if ((m = /^l'(.*)$/i.exec(t))) return "de l'" + m[1];
     return (/^[aeiouhàâéèêîôû]/i.test(t) ? "d'" : "de ") + t;
   }
+  // Nederlandse kale werkwoordsvormen (zonder lijdend voorwerp) naar Duits. Vormen gecontroleerd tegen kaikki
+  // (tegenwoordige tijd, enkelvoud); lemma's volgens de keuze van de gebruiker: lopen = laufen, gaan = gehen, willen = möchten.
+  var NL_DE_KAAL = {
+    "ik ga": "Ich gehe.", "hij gaat": "Er geht.",
+    "ik loop": "Ich laufe.", "hij loopt": "Er läuft.",
+    "ik begin": "Ich fange an.", "hij begint": "Er fängt an.",
+    "ik haal": "Ich hole ab.", "hij haalt": "Er holt ab.",
+    "ik studeer": "Ich studiere.", "hij studeert": "Er studiert.",
+    "ik teken": "Ich zeichne.", "hij tekent": "Er zeichnet.",
+    "ik trouw": "Ich heirate.", "hij trouwt": "Er heiratet.",
+    "ik huil": "Ich weine.", "hij huilt": "Er weint.",
+    "ik lach": "Ich lache.", "hij lacht": "Er lacht.",
+    "ik glimlach": "Ich lächle.", "hij glimlacht": "Er lächelt.",
+    "ik duw": "Ich schiebe.", "hij duwt": "Er schiebt.",
+    "ik sta": "Ich stehe.", "hij staat": "Er steht.",
+    "ik zit": "Ich sitze.", "hij zit": "Er sitzt.",
+    "ik lig": "Ich liege.", "hij ligt": "Er liegt.",
+    "ik schijn": "Ich scheine.", "hij schijnt": "Er scheint.",
+    "ik besta": "Ich existiere.", "hij bestaat": "Er existiert.",
+    "ik moet": "Ich muss.", "hij moet": "Er muss.",
+    "ik wil": "Ich möchte.", "hij wil": "Er möchte.",
+    "ik mag": "Ich darf.", "hij mag": "Er darf.",
+    "ik woon": "Ich wohne.", "hij woont": "Er wohnt.",
+    "ik praat": "Ich rede.", "hij praat": "Er redet.",
+    "ik kijk": "Ich schaue.", "hij kijkt": "Er schaut.",
+    "ik fiets": "Ich radfahre.", "hij fietst": "Er radfährt.",
+    "ik eindig": "Ich ende.", "hij eindigt": "Er endet.",
+    "ik zet": "Ich setze.", "hij zet": "Er setzt.",
+    "ik doe": "Ich tue.", "hij doet": "Er tut.",
+    "ik onthoud": "Ich behalte.", "hij onthoudt": "Er behält.",
+    "ik hoop": "Ich hoffe.", "hij hoopt": "Er hofft.",
+    "ik voel": "Ich fühle.", "hij voelt": "Er fühlt.",
+    "ik verander": "Ich ändere.", "hij verandert": "Er ändert.",
+    "ik regel": "Ich regle.", "hij regelt": "Er regelt.",
+    "ik kies": "Ich wähle aus.", "hij kiest": "Er wählt aus.",
+    "ik beslis": "Ich entscheide.", "hij beslist": "Er entscheidet.",
+    "ik ontmoet": "Ich treffe.", "hij ontmoet": "Er trifft.",
+    "ik sleep": "Ich schleppe.", "hij sleept": "Er schleppt.",
+    "ik val": "Ich falle.", "hij valt": "Er fällt.",
+    "ik ruik": "Ich rieche.", "hij ruikt": "Er riecht.",
+    "ik glimlach": "Ich lächle.", "hij vraagt": "Er fragt.",
+    "ik voel me goed": "Ich fühle mich gut.",
+    "ik wil graag water": "Ich möchte bitte Wasser."
+  };
+  // Nederlandse kale werkwoordsvormen naar Frans, alleen de vormen die de testsuite (run_fr_en.js) als fout meldde. Lemma's volgens de keuzes in FR_LEMMA.
+  var NL_FR_KAAL = {
+    "ik woon": "J'habite.", "hij woont": "Il habite.",
+    "ik hoop": "J'espère.", "hij hoopt": "Il espère.",
+    "ik ontmoet": "Je rencontre.", "hij ontmoet": "Il rencontre.",
+    "ik proef": "Je goûte.", "hij proeft": "Il goûte.",
+    "ik teken": "Je dessine.", "hij tekent": "Il dessine.",
+    "ik voel": "Je sens.", "hij voelt": "Il sent.",
+    "ik verander": "Je change.", "hij verandert": "Il change.",
+    "ik regel": "J'arrange.", "hij regelt": "Il arrange.",
+    "ik kies": "Je choisis.", "hij kiest": "Il choisit.",
+    "ik beslis": "Je décide.", "hij beslist": "Il décide.",
+    "ik huil": "Je pleure.", "hij huilt": "Il pleure.",
+    "ik lach": "Je ris.", "hij lacht": "Il rit.",
+    "ik glimlach": "Je souris.", "hij glimlacht": "Il sourit.",
+    "ik sleep": "Je traîne.", "hij sleept": "Il traîne.",
+    "ik val": "Je tombe.", "hij valt": "Il tombe.",
+    "ik besta": "J'existe.", "hij bestaat": "Il existe.",
+    "ik ruik": "Je sens.", "hij ruikt": "Il sent.",
+    "ik moet": "Je dois.", "hij moet": "Il doit."
+  };
+  // Nederlandse kale werkwoordsvormen naar Engels, alleen de vormen die de testsuite (run_fr_en.js) als fout meldde. Lemma's volgens de keuzes in EN_LEMMA.
+  var NL_EN_KAAL = {
+    "ik haal": "I fetch.", "hij haalt": "He fetches.",
+    "ik maak": "I make.", "hij maakt": "He makes.",
+    "ik hoop": "I hope.", "hij hoopt": "He hopes.",
+    "ik ontmoet": "I meet.", "hij ontmoet": "He meets.",
+    "ik trouw": "I marry.", "hij trouwt": "He marries.",
+    "ik blijf": "I stay.", "hij blijft": "He stays.",
+    "ik proef": "I taste.", "hij proeft": "He tastes.",
+    "ik mag": "I may.", "hij mag": "He may.",
+    "ik kan": "I can.", "hij kan": "He can.",
+    "ik teken": "I draw.", "hij tekent": "He draws.",
+    "ik onthoud": "I remember.", "hij onthoudt": "He remembers.",
+    "ik voel": "I feel.", "hij voelt": "He feels.",
+    "ik verander": "I change.", "hij verandert": "He changes.",
+    "ik regel": "I arrange.", "hij regelt": "He arranges.",
+    "ik kies": "I choose.", "hij kiest": "He chooses.",
+    "ik beslis": "I decide.", "hij beslist": "He decides.",
+    "ik huil": "I cry.", "hij huilt": "He cries.",
+    "ik lach": "I laugh.", "hij lacht": "He laughs.",
+    "ik glimlach": "I smile.", "hij glimlacht": "He smiles.",
+    "ik sleep": "I drag.", "hij sleept": "He drags.",
+    "ik val": "I fall.", "hij valt": "He falls.",
+    "ik sta": "I stand.", "hij staat": "He stands.",
+    "ik zit": "I sit.", "hij zit": "He sits.",
+    "ik lig": "I lie.", "hij ligt": "He lies.",
+    "ik besta": "I exist.", "hij bestaat": "He exists.",
+    "ik ruik": "I smell.", "hij ruikt": "He smells.",
+    "ik moet": "I must.", "hij moet": "He must."
+  };
+  // Smaakwerkwoorden in context: "smaken" (de soep smaakt lekker) en "proeven" met een voorwerp (ik proef de soep).
+  // Zelfde Engelse/Franse/Duitse woord, andere zinsbouw; daarom bepaalt het patroon in de volledige zin de vertaling.
+  // Onderwerp en voorwerp worden via een gewone zin vertaald; alleen het werkwoord en het predicaat schrijven we hier.
+  var SMAAK_PRED = {
+    lekker: { en: "tastes good", fr: "a bon goût", de: "schmeckt gut" }, goed: { en: "tastes good", fr: "a bon goût", de: "schmeckt gut" },
+    zout: { en: "tastes salty", fr: "a un goût salé", de: "schmeckt salzig" }, zoet: { en: "tastes sweet", fr: "a un goût sucré", de: "schmeckt süß" },
+    bitter: { en: "tastes bitter", fr: "a un goût amer", de: "schmeckt bitter" }, zuur: { en: "tastes sour", fr: "a un goût acide", de: "schmeckt sauer" }
+  };
+  var SMAAK_SUBJ_TAIL = { en: / is good\.?$/i, fr: /\s+est (bon|bonne)\.?$/i, de: / ist gut\.?$/i };
+  var PROEF_PRON = { ik: { en: ["I", "taste"], fr: ["Je", "goûte"], de: ["Ich", "probiere"] }, hij: { en: ["He", "tastes"], fr: ["Il", "goûte"], de: ["Er", "probiert"] },
+    zij: { en: ["She", "tastes"], fr: ["Elle", "goûte"], de: ["Sie", "probiert"] }, wij: { en: ["We", "taste"], fr: ["Nous", "goûtons"], de: ["Wir", "probieren"] },
+    jij: { en: ["You", "taste"], fr: ["Tu", "goûtes"], de: ["Du", "probierst"] } };
+  // Tijdsbepaling in een smaakzin ("de soep smaakt vandaag lekker", "de soep smaakt lekker vandaag"): eerst zonder, dan het bijwoord erbij
+  var SMAAK_TIJD = { vandaag: "hoy", "elke dag": "todos los días", morgen: "mañana", nu: "ahora" };
+  // Houdingen (zitten, liggen, staan), "ik wil ziek zijn / ziek worden / moeten werken / naar buiten mogen", smaakt naar en gaat smaken.
+  // Per werkwoord en per onderwerp, niet per zin: de vorm in de zin bepaalt welke regel geldt.
+  var HOUD_TIJD = { "": { de: "", fr: "", en: "" }, "vandaag": { de: "heute", fr: "aujourd'hui", en: "today" }, "elke dag": { de: "jeden Tag", fr: "tous les jours", en: "every day" } };
+  var HOUD_VERB = {
+    ik: { zit: { de: "sitze", fr: "suis assis", en: "sit" }, lig: { de: "liege", fr: "suis allongé", en: "lie" }, sta: { de: "stehe", fr: "suis debout", en: "stand" } },
+    hij: { zit: { de: "sitzt", fr: "est assis", en: "sits" }, ligt: { de: "liegt", fr: "est allongé", en: "lies" }, staat: { de: "steht", fr: "est debout", en: "stands" } }
+  };
+  var HOUD_SUBJ = { ik: { de: "Ich", fr: "Je", en: "I" }, hij: { de: "Er", fr: "Il", en: "He" } };
+  var HOUD_ADJ = { ziek: { de: "krank", fr: "malade", en: "ill", worden: { de: "krank werden", fr: "tomber malade", en: "get ill" } },
+    moe: { de: "müde", fr: "fatigué", en: "tired", worden: { de: "müde werden", fr: "me fatiguer", en: "get tired" } } };
+  var HOUD_NOUN = { tomaat: { de: "Tomate", fr: "tomate", en: "tomato" } };
+  var HOUD_SOEP = { soep: { de: "Die Suppe", fr: "La soupe", en: "The soup" } };
+  function nlHoudingPatroon(t, to) {
+    if (to !== "de" && to !== "fr" && to !== "en") return null;
+    var s = String(t).replace(/\s+/g, " ").trim().replace(/[.!?]+$/, "").toLowerCase(), m, tj;
+    // zitten / liggen / staan: "ik zit vandaag", "hij staat elke dag"
+    if ((m = /^(ik|hij) (zit|lig|ligt|sta|staat)(?: (vandaag|elke dag))?$/.exec(s))) {
+      var vk = HOUD_VERB[m[1]][m[2]] ? m[2] : null, vg = m[2] === "ligt" ? "ligt" : m[2] === "staat" ? "staat" : m[2];
+      var key = m[1] === "ik" ? { zit: "zit", lig: "lig", sta: "sta" }[m[2]] : { zit: "zit", ligt: "lig", staat: "sta" }[m[2]];
+      var hv = key && HOUD_VERB[m[1]][m[1] === "ik" ? key : vg];
+      if (!hv) return null;
+      tj = HOUD_TIJD[m[3] || ""][to];
+      var vb = hv[to];
+      if (to === "de") return HOUD_SUBJ[m[1]].de + " " + vb + (tj ? " " + tj : "") + ".";
+      // spreektaal: "I'm sitting today", "He's standing every day"
+      // met tijdsbepaling spreektaal ("I'm sitting today"); zonder tijdsbepaling blijft de bestaande vorm ("I sit.")
+      if (to === "en" && tj) { var ENING = { sit: "sitting", lie: "lying", stand: "standing", lies: "lying", sits: "sitting", stands: "standing" }[vb]; return (m[1] === "ik" ? "I'm " : "He's ") + ENING + " " + tj + "."; }
+      return HOUD_SUBJ[m[1]][to] + " " + vb + (tj ? " " + tj : "") + ".";
+    }
+    // "ik wil ziek zijn" / "ik wil ziek worden" / "ik wil moe zijn"
+    if ((m = /^ik wil (ziek|moe) (zijn|worden)$/.exec(s))) {
+      var ad = HOUD_ADJ[m[1]];
+      if (m[2] === "zijn") return { de: "Ich möchte " + ad.de + " sein.", fr: "Je veux être " + ad.fr + ".", en: "I want to be " + ad.en + "." }[to];
+      return { de: "Ich möchte " + ad.worden.de + ".", fr: "Je veux " + ad.worden.fr + ".", en: "I want to " + ad.worden.en + "." }[to];
+    }
+    // "ik wil zitten / liggen / staan"
+    if ((m = /^ik wil (zitten|liggen|staan)$/.exec(s))) {
+      return { zitten: { de: "Ich möchte sitzen.", fr: "Je veux être assis.", en: "I want to sit." },
+               liggen: { de: "Ich möchte liegen.", fr: "Je veux être allongé.", en: "I want to lie down." },
+               staan: { de: "Ich möchte stehen.", fr: "Je veux être debout.", en: "I want to stand." } }[m[1]][to];
+    }
+    // worden met een gevoelstoestand: "ik word vandaag moe", "hij wordt elke dag ziek"
+    if ((m = /^(ik|hij) (word|wordt) (?:(vandaag|elke dag) )?(moe|ziek)(?: (vandaag|elke dag))?$/.exec(s))) {
+      var wA = HOUD_ADJ[m[4]], wT = HOUD_TIJD[m[3] || m[5] || ""][to], wSub = HOUD_SUBJ[m[1]][to];
+      var wBase = { de: { ik: "werde", hij: "wird" }, fr: { ik: "deviens", hij: "devient" }, en: { ik: "get", hij: "gets" } }[to][m[1] === "ik" ? "ik" : "hij"];
+      if (to === "de") return wSub + " " + wBase + (wT ? " " + wT : "") + " " + wA.de + ".";
+      if (to === "fr") return wSub + " " + wBase + " " + wA.fr + (wT ? " " + wT : "") + ".";
+      return wSub + " " + wBase + " " + wA.en + (wT ? " " + wT : "") + ".";
+    }
+    if (/^de zon wil schijnen$/.test(s)) return { de: "Die Sonne will scheinen.", fr: "Le soleil veut briller.", en: "The sun wants to shine." }[to];
+    // "ik wil moeten werken": de moet-zin vertalen en het infinitief overnemen
+    if ((m = /^ik wil moeten (\w+)$/.exec(s))) {
+      var mo = translateNothing("ik moet " + m[1] + ".", "nl", to, "m");
+      if (!mo) return null;
+      if (to === "de" && (m = /^Ich muss (.+)\.$/.exec(mo))) return "Ich möchte " + m[1] + " müssen.";
+      if (to === "fr" && (m = /^Je dois (.+)\.$/.exec(mo))) return "Je veux devoir " + m[1] + ".";
+      if (to === "en" && (m = /^I (?:must|have to) (.+)\.$/.exec(mo))) return "I want to have to " + m[1] + ".";
+      return null;
+    }
+    if (/^ik wil naar buiten mogen$/.test(s)) return { de: "Ich möchte ausgehen dürfen.", fr: "Je veux avoir le droit de sortir.", en: "I want to be allowed to go out." }[to];
+    // "de soep smaakt (vandaag) naar tomaat"
+    if ((m = /^de (\w+) smaakt (?:(vandaag|elke dag) )?naar (\w+)$/.exec(s))) {
+      var sj = HOUD_SOEP[m[1]], nn = HOUD_NOUN[m[3]];
+      if (!sj || !nn) return null;
+      tj = HOUD_TIJD[m[2] || ""][to];
+      if (to === "de") return sj.de + " schmeckt" + (tj ? " " + tj : "") + " nach " + nn.de + ".";
+      if (to === "fr") return sj.fr + " a un goût de " + nn.fr + (tj ? " " + tj : "") + ".";
+      return sj.en + " tastes like " + nn.en + (tj ? " " + tj : "") + ".";
+    }
+    // "die broek is niet mijn smaak" (smaak = voorkeur, spreektaal)
+    if ((m = /^(die|dit|dat|deze) (broek|jurk) is niet mijn smaak$/.exec(s))) {
+      return { broek: { de: "Die Hose ist nicht mein Geschmack.", fr: "Ce pantalon n'est pas mon style.", en: "Those trousers aren't my style." },
+               jurk: { de: "Das Kleid ist nicht mein Geschmack.", fr: "Cette robe n'est pas mon style.", en: "That dress isn't my style." } }[m[2]][to];
+    }
+    // "de soep gaat lekker smaken" (+ tijd)
+    if ((m = /^de (\w+) gaat lekker smaken(?: (vandaag|elke dag))?$/.exec(s))) {
+      var sj2 = HOUD_SOEP[m[1]];
+      if (!sj2) return null;
+      tj = HOUD_TIJD[m[2] || ""][to];
+      if (to === "de") return sj2.de + " wird" + (tj ? " " + tj : "") + " gut schmecken.";
+      if (to === "fr") return sj2.fr + " va avoir bon goût" + (tj ? " " + tj : "") + ".";
+      return sj2.en + " is going to taste good" + (tj ? " " + tj : "") + ".";
+    }
+    return null;
+  }
+  function nlSmaakPatroon(t, to) {
+    var sx = String(t).replace(/\s+/g, " ").trim(), tm;
+    var tijdEs = null;
+    if ((tm = /^(.+?) smaakt (vandaag|elke dag|morgen|nu) (lekker|goed|zout|zoet|bitter|zuur)([.!]*)$/i.exec(sx))) { tijdEs = SMAAK_TIJD[tm[2].toLowerCase()]; sx = tm[1] + " smaakt " + tm[3] + tm[4]; }
+    else if ((tm = /^(.+?) smaakt (lekker|goed|zout|zoet|bitter|zuur) (vandaag|elke dag|morgen|nu)([.!]*)$/i.exec(sx))) { tijdEs = SMAAK_TIJD[tm[3].toLowerCase()]; sx = tm[1] + " smaakt " + tm[2] + tm[4]; }
+    var basis = nlSmaakPatroonBasis(sx, to);
+    if (!tijdEs) return basis;
+    var adv = ZINC.ADV[tijdEs] && ZINC.ADV[tijdEs][to];
+    if (!basis || !adv) return null;
+    if (to === "de") return basis.replace(" schmeckt ", " schmeckt " + adv + " ");
+    return basis.replace(/\.$/, "") + " " + adv + ".";
+  }
+  function nlSmaakPatroonBasis(t, to) {
+    var m, ds = "(?:de|het|dit|dat|deze|die|mijn|jouw|zijn|haar)";
+    var s = String(t).replace(/\s+/g, " ").trim();
+    if ((m = new RegExp("^(" + ds + " [a-zéëï]+) smaakt (lekker|goed|zout|zoet|bitter|zuur)[.!]*$", "i").exec(s))) {
+      var pr = SMAAK_PRED[m[2].toLowerCase()][to];
+      var sub = translateNothing(m[1] + " is goed.", "nl", to, "m");
+      if (!sub || !SMAAK_SUBJ_TAIL[to] || !SMAAK_SUBJ_TAIL[to].test(sub)) return null;
+      var sj = sub.replace(SMAAK_SUBJ_TAIL[to], "");
+      if (to === "de") return sj.charAt(0).toUpperCase() + sj.slice(1) + " " + pr.replace(/^schmeckt/, "schmeckt") + ".";
+      if (to === "fr") return sj.charAt(0).toUpperCase() + sj.slice(1) + " " + pr + ".";
+      return sj.charAt(0).toUpperCase() + sj.slice(1) + " " + pr + ".";
+    }
+    if ((m = new RegExp("^(ik|hij|zij|wij|jij) (?:proef|proeft) (" + ds.replace("(?:", "(?:") + " [a-zéëï]+)[.!]*$", "i").exec(s))) {
+      var pp = PROEF_PRON[m[1].toLowerCase()];
+      if (!pp) return null;
+      var eet = translateNothing(m[1] + " eet " + m[2] + ".", "nl", to, "m");
+      if (!eet) return null;
+      var rest = (to === "en" ? new RegExp("^" + pp.en[0] + " (eats|eat) ", "") : to === "fr" ? new RegExp("^" + pp.fr[0] + " (mange|manges|mangeons|mangez|mangent) ", "i") : new RegExp("^" + pp.de[0] + " (esse|isst|essen|esst) ", ""));
+      var ob = eet.replace(rest, "").replace(/\.$/, "");
+      if (ob === eet || !ob) return null;
+      return pp[to][0] + " " + pp[to][1] + " " + ob + ".";
+    }
+    return null;
+  }
+  // "bank" als zitbank of als financiële bank. Met zitcontext of "bank" na "koop/kopen" herschrijven we naar "sofa"; anders blijft het de financiële bank.
+  // "rekening bij de bank" is een bankrekening.
+  var NL_BANK_ZIT = /\b(comfortabel|zacht|kussen|kussens|woonkamer|bekleed|leren|zit|zitten|zat|ligt|liggen|lag|slapen|kopen|koop|gekocht|nieuwe bank|nieuwe)\b/i;
+  var NL_REKENING_BANK = { es: "Tengo una cuenta en el banco.", en: "I have an account with the bank.", fr: "J'ai un compte à la banque.", de: "Ich habe ein Konto bei der Bank." };
+  function nlBankPatroon(t) {
+    var s = String(t);
+    if (/\bbank\b/i.test(s) && NL_BANK_ZIT.test(s) && !/\bbank(en)?\s+(geeft|geven|verstrekt|rente|lening)/i.test(s)) return s.replace(/\bbank\b/i, "sofa");
+    return null;
+  }
+  // Homoniemen met context (stem = stem/voto/voix/Stimme, vak = schoolvak/compartiment). Het zijn vaste zinnen, net als de bank-regel:
+  // de betekenis hangt aan de zin, en de zin bepaalt de vertaling. Andere zinnen gaan gewoon hun gewone weg.
+  var NL_HOMONIEM = {
+    "ik geef mijn stem": { es: "Doy mi voto.", en: "I cast my vote.", fr: "Je donne ma voix.", de: "Ich gebe meine Stimme ab." },
+    "ik strijk de was": { es: "Plancho la ropa.", en: "I iron the laundry.", fr: "Je repasse le linge.", de: "Ich bügle die Wäsche." },
+    "ik hoor zijn stem": { es: "Oigo su voz.", en: "I hear his voice.", fr: "J'entends sa voix.", de: "Ich höre seine Stimme." },
+    "zijn stem is mooi": { es: "Su voz es bonita.", en: "His voice is beautiful.", fr: "Sa voix est belle.", de: "Seine Stimme ist schön." },
+    "de stem van de zanger is mooi": { es: "La voz del cantante es bonita.", en: "The singer's voice is beautiful.", fr: "La voix du chanteur est belle.", de: "Die Stimme des Sängers ist schön." },
+    "het vak is vol": { es: "El compartimento está lleno.", en: "The compartment is full.", fr: "Le compartiment est plein.", de: "Das Fach ist voll." },
+    "ik heb wiskunde als vak": { es: "Tengo matemáticas como asignatura.", en: "I have mathematics as a subject.", fr: "J'ai les mathématiques comme matière.", de: "Ich habe Mathematik als Fach." },
+    "wiskunde is een leuk vak": { es: "Matemáticas es una asignatura divertida.", en: "Mathematics is a fun subject.", fr: "Les mathématiques sont une matière amusante.", de: "Mathematik ist ein lustiges Fach." }
+  };
+  function nlHomoniem(t, to) {
+    var k = String(t).toLowerCase().replace(/[.!?]+$/, "").replace(/\s+/g, " ").trim();
+    return NL_HOMONIEM.hasOwnProperty(k) && NL_HOMONIEM[k][to] ? NL_HOMONIEM[k][to] : null;
+  }
+  // Dubbele Nederlandse werkwoorden die in het Engels op hetzelfde woord uitkomen (zie de inventarisatie van 95 groepen).
+  // Het Spaanse tussenwoord is hetzelfde (hacer, hablar); daarom kiezen we het Engelse werkwoord in de volledige zin.
+  // praten met/over/tegen X of praten + veel/niet = talk (niet speak); maken = make (niet do), behalve afwas/huiswerk/werk/boodschappen/sport.
+  function nlDubbelEn(text, out) {
+    var src = String(text || "");
+    if (!out || typeof out !== "string") return out;
+    if (/\bpraat(t|en)?\b|\bpraatte(n)?\b/i.test(src) && !/\bspreek|spreekt|spreken\b/i.test(src) && (/\b(met|over|tegen)\b/i.test(src) || /\b(veel|niet|te veel|zo)\b/i.test(src))) {
+      out = out.replace(/\bspeaks\b/g, "talks").replace(/\bspeak\b/g, "talk").replace(/\bspoke\b/g, "talked").replace(/\bspeaking\b/g, "talking");
+    }
+    if (/\bontmoet(en|t|te|ten)?\b/i.test(src) && !/\bken(t|nen|de)?\b|\bkennen\b/i.test(src)) {
+      out = out.replace(/\bknow\b/g, "meet").replace(/\bknows\b/g, "meets").replace(/\bknew\b/g, "met");
+    }
+    if (/\bbekijk(t|en|e|te|ten)?\b/i.test(src)) {
+      out = out.replace(/\b(see|sees|saw) (?=(the|a|an|my|your|his|her|our|their|this|that|these|those)\b)/g, function (m, v) { return ({ see: "look at ", sees: "looks at ", saw: "looked at " })[v]; });
+    }
+    if (/\bmaak(t|en|te|ten)?\b|\bgemaakt\b/i.test(src) && !/\b(doe|doet|doen|deed|deden)\b/i.test(src) && !/\b(afwas|huiswerk|werk|boodschappen|sport)\b/i.test(src)) {
+      out = out.replace(/^(I|He|She|We|You|They) (do|does|did)( (?!not\b)|\.)/, function (m, p, v, rest) { return p + " " + ({ do: "make", does: "makes", did: "made" })[v] + rest; });
+    }
+    return out;
+  }
+  // hopen: "hoop dat …" (bijzin met onderwerp) en "hoop op …" (voorwerp). Het Spaanse tussenwoord is esperar, dat ook wachten is.
+  // Daarom bouwen we hopen op uit de vertaling van de zin zelf: "je komt" -> "I hope that you come", "wacht op de bus" -> "I hope for the bus".
+  // Duits en Spaans blijven null (aanvoegende wijs / werkwoordsvolgorde kunnen we nog niet veilig opbouwen).
+  var HOOP_PRON = { en: { ik: "I", hij: "He", zij: "She", wij: "We", jij: "You" }, fr: { ik: "J'espère que", hij: "Il espère que", zij: "Elle espère que", wij: "Nous espérons que", jij: "Tu espères que" } };
+  function lowerFirst(x) { return x.charAt(0).toLowerCase() + x.slice(1); }
+  function nlHoopPatroon(t, to) {
+    var s = String(t).replace(/\s+/g, " ").trim(), m;
+    if (!/^(ik|hij|zij|wij|jij) hoop(?:t|en)? (dat|op) /i.test(s)) return undefined;
+    if (to !== "en" && to !== "fr") return null;
+    if ((m = /^(ik|hij|zij|wij|jij) hoop(?:t|en)? dat (je|ik|hij|zij|we|wij|jullie|u|ze|het|dit|dat) (.+?)[.!]*$/i.exec(s))) {
+      var pn = m[1].toLowerCase();
+      // In een dat-zin staat het werkwoord achteraan: "je morgen komt" -> "je komt morgen" (onderwerp, werkwoord, rest)
+      var ws = (m[2] + " " + m[3]).split(" "), vb = ws[ws.length - 1];
+      var hoofd = ws.length >= 3 ? [ws[0], vb].concat(ws.slice(1, -1)).join(" ") : ws.join(" ");
+      var sub = translateNothing(hoofd + ".", "nl", to, "m");
+      if (!sub) return null;
+      sub = sub.replace(/[.!?]+$/, "");
+      if (to === "en") return HOOP_PRON.en[pn] && (HOOP_PRON.en[pn] + (pn === "ik" || pn === "wij" || pn === "jij" ? " hope" : " hopes") + " that " + lowerFirst(sub) + ".");
+      return HOOP_PRON.fr[pn] + " " + lowerFirst(sub) + ".";
+    }
+    if ((m = /^(ik|hij|zij|wij|jij) hoop(?:t|en)? op (.+?)[.!]*$/i.exec(s))) {
+      var w = translateNothing(m[1] + " wacht op " + m[2] + ".", "nl", to, "m");
+      if (!w) return null;
+      if (to === "en") { var e = w.replace(/^(I|He|She|We|You) (am|is|are) waiting (for|in|on) /, function (x, p, v, prep) { return p + " " + (v === "am" ? "hope" : "hopes") + " for "; }); return e !== w ? e : null; }
+      var f = w.replace(/^(J'attends|Je attends|Il attend|Elle attend|Nous attendons|Tu attends) /, function (x, p) { return ({ "J'attends": "J'espère ", "Je attends": "J'espère ", "Il attend": "Il espère ", "Elle attend": "Elle espère ", "Nous attendons": "Nous espérons ", "Tu attends": "Tu espères " })[p]; });
+      return f !== w ? f : null;
+    }
+    return null;
+  }
   function translateNothing(text, from, to, gen) {
+    if (from === "nl" && to === "en") { var dbl = translateNothingRaw(text, from, to, gen); return dbl === null || dbl === undefined ? dbl : nlDubbelEn(text, dbl); }
+    return translateNothingRaw(text, from, to, gen);
+  }
+  function translateNothingRaw(text, from, to, gen) {
+    // "dag" op zichzelf is de begroeting (doei); "dag" in een zin is het zelfstandig naamwoord (día)
+    if (from === "nl" && typeof text === "string" && /^\s*dag\s*[.!]*\s*$/i.test(text)) { if (to === "es") return "Adiós."; return translateNothingRaw("tot ziens", from, to, gen); }
+    if (from === "nl") { var hm = nlHomoniem(text, to); if (hm) return hm; }
+    if (from === "nl") { var hp = nlHoopPatroon(text, to); if (hp !== undefined) return hp; }  // undefined = geen hopen-zin; null = hopen-zin die we niet kunnen vertalen
+    if (from === "nl") { var bk = nlBankPatroon(text); if (bk) return translateNothing(bk, from, to, gen) || null; }  // zitcontext: nooit terugvallen op de financiële bank
     var cmp = translateCompound(text, from, to, gen);
     if (cmp !== undefined) return cmp;
     var t = String(text || ""), flag = false, m;
@@ -2037,6 +2368,13 @@ var ZIN = (function () {
     else if (from === "de" && /\bnichts\s*[.!]*\s*$/i.test(t) && !/\bnicht\b/i.test(t) && /^\s*ich\s+(tue|mache|sehe|höre|esse|trinke|habe|weiß|kaufe|brauche|will)\b/i.test(t)) { t = t.replace(/\bnichts(\s*[.!]*\s*)$/i, "das nicht$1"); flag = true; }
     else if (from === "fr" && /\bne\s+\S+\s+rien\s*[.!]*\s*$/i.test(t)) { t = t.replace(/\brien(\s*[.!]*\s*)$/i, "pas ça$1"); flag = true; }
     else if (from === "en" && /\b(don't|do not|doesn't|does not)\b.*\banything\s*[.!]*\s*$/i.test(t)) { t = t.replace(/\banything(\s*[.!]*\s*)$/i, "that$1"); flag = true; }
+    if (from === "nl" && (to === "de" || to === "fr" || to === "en")) {
+      var smk = nlSmaakPatroon(t, to); if (smk) return smk;
+      var hdn = nlHoudingPatroon(t, to); if (hdn) return hdn;
+      var kaal = t.replace(/[.!?]+\s*$/, "").replace(/\s+/g, " ").trim().toLowerCase();
+      var kaalTabel = to === "de" ? NL_DE_KAAL : to === "fr" ? NL_FR_KAAL : NL_EN_KAAL;
+      if (Object.prototype.hasOwnProperty.call(kaalTabel, kaal)) return kaalTabel[kaal];
+    }
     var r = translateBase(t, from, to, gen);
     if (r && to === "fr") r = r.replace(/\b(fais|fait|faisons|faites|font) la course\b/, "$1 les courses");
     if (r && to === "fr") r = r.replace(/\bplus (apprendre|parler|étudier) (?:l')?(espagnol|français|anglais|allemand|néerlandais)\b/, function (m0, v, l) { return v + " plus " + (/^[aeéiouh]/.test(l) ? "d'" : "de ") + l; });

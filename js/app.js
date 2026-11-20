@@ -1243,6 +1243,15 @@
     scrollGesprekEnd();
   }
 
+  // Valse vrienden: een korte, wegklikbare hint onder de vertaling, alleen als het lijkwoord in de taal van deze app zit
+  function valseHint(box, bronTekst) {
+    if (typeof valseVriendenInTekst !== "function") return;
+    var doel = typeof DOEL !== "undefined" ? DOEL : "es";
+    valseVriendenInTekst(bronTekst, lang, doel).forEach(function (v) {
+      box.appendChild(el("div", "note", T("Let op: {w} betekent {b}, niet {l} ({bl}).").replace("{w}", v.woord).replace("{b}", v.betekenis).replace("{l}", v.lijkt_op).replace("{bl}", v.betekenis_lijkt_op)));
+    });
+  }
+
   function showTranslation() {
     if (S.tab === "gesprek") { startChatFromTop(); return; }
     var box = document.getElementById("transOut");
@@ -1258,9 +1267,10 @@
       box.appendChild(el("div", "bad", T("Typ eerst iets.")));
       return;
     }
+    var invoerT = document.getElementById("vtxt").value;
     if (r.sentences) {
       r.sentences.forEach(function (x) {
-        if (x.text) { box.appendChild(el("div", "es", x.text)); return; }
+        if (x.text) { box.appendChild(el("div", "es", x.text)); valseHint(box, x.src); return; }
         box.appendChild(el("div", "nl", "“" + x.src + "”: " + T("Deze zin kan ik nog niet grammaticaal vertalen. Woord voor woord:")));
         if (x.parts.length) box.appendChild(el("div", "nl", x.parts.join(" · ")));
         if (x.missing.length) box.appendChild(el("div", "bad", T("Niet in de lijst:") + " " + x.missing.join(", ")));
@@ -1272,6 +1282,7 @@
     if (r.text) {
       box.appendChild(el("div", "es", r.text));
       if (r.whole) box.appendChild(el("div", "nl", T("Dit is een vaste zin uit de gids.")));
+      valseHint(box, invoerT);
       var row = el("div", "row");
       row.appendChild(speakBtn(r.text));
       box.appendChild(row);
@@ -1733,7 +1744,7 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "2.47";
+  var APP_VERSION = "3.0";
   // Versies waarvoor gebruikers de app opnieuw op hun beginscherm moeten zetten (oude icoon weg, nieuwe erop).
   // Bij zo'n update verschijnt eenmalig een melding met uitleg.
   var REINSTALL_VERSIONS = ["1.8"];

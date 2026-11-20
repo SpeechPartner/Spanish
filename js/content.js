@@ -707,7 +707,6 @@ var ALT_NOTE = {
 // BIJWERKEN: bij elke gebruiksaanpassing (nieuwe knop, tabblad, instelling of gedrag) deze tekst meeveranderen.
 var HELP_GUIDE = [
   { t: m("Begin hier", "Start here", "Hier anfangen", "Commencer ici"), s: [
-    m("Open de app in Safari en kies Deel, dan 'Zet op beginscherm'. Open hem daarna altijd vanaf je beginscherm.", "Open the app in Safari and choose Share, then 'Add to Home Screen'. Always open it from your home screen afterwards.", "Öffne die App in Safari, wähle Teilen und dann 'Zum Home-Bildschirm'. Öffne sie danach immer vom Home-Bildschirm.", "Ouvre l'application dans Safari, choisis Partager, puis « Sur l'écran d'accueil ». Ouvre-la ensuite toujours depuis ton écran d'accueil."),
     m("De tabbladen staan onderaan. Info open je met het ?-knopje in de banner.", "The tabs are at the bottom. Info opens with the ? button in the banner.", "Die Reiter stehen unten. Info öffnest du mit dem ?-Knopf im Banner.", "Les onglets sont en bas. Info s'ouvre avec le bouton ? dans la bannière."),
     m("Tik nogmaals op Info om terug te gaan naar de pagina waar je was.", "Tap Info again to go back to the page you were on.", "Tippe erneut auf Info, um zur vorherigen Seite zurückzukehren.", "Touche de nouveau Info pour revenir à la page précédente.") ] },
   { t: m("Wisselen en bladeren", "Switching and turning pages", "Wechseln und Blättern", "Changer et tourner les pages"), s: [

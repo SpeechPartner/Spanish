@@ -238,6 +238,11 @@ var ZINO = (function () {
     };
     // Engelse tegenwoordige tijd: bij "gaan" met een bestemming liever de duurvorm
     var prog = c.t === "prog" || (c.t === "pres" && !c.mod && (ve.prog || (lemma === "ir" && (c.obl || []).length)) && !freq.length && !c.day);
+    // Modaal werkwoord zonder infinitief ("Puedo." = "I can."): alleen het modaal werkwoord, geen lege infinitief
+    if (ve.modal && sp.p === 0 && !c.infV && !c.mod && !c.o && c.type === "stmt" && !neg && !freq.length && !(endAdv && endAdv.length)) {
+      var bmf = (c.t === "past" || c.t === "impf") ? ve.past : ve.modal;
+      if (bmf) return finish(subj + " " + bmf + ".", c);
+    }
     if (c.mod) return enModal(c, sp, subj, ve, vbody, neg, freq, endAdv);
     if (c.t === "fut") return enAux(sp, subj, enBe(sp.p, sp.s3, "pres", sp.formal) + (neg ? " not" : ""), "going to " + vbody(ve.b), c, freq, endAdv, true);
     if (prog) return enAux(sp, subj, enBe(sp.p, sp.s3, "pres", sp.formal) + (neg ? " not" : ""), vbody(C.enIng(ve)), c, freq, endAdv, true);
@@ -902,7 +907,8 @@ var ZINO = (function () {
     return out.concat(late);
   }
   function frElide(s) {
-    return s.replace(/\b(je|me|te|se|le|la|ne|de|que) (?=[aeiouyhàâéèêëîïôöùûœ])/gi, function (m, w) { return w.slice(0, -1) + "'"; })
+    // (?<![\p{L}]) i.p.v. \b: in "achète un" telt de è als niet-letter, en zou "te" anders als los woord zien
+    return s.replace(/(?<![\p{L}])(je|me|te|se|le|la|ne|de|que) (?=[aeiouyhàâéèêëîïôöùûœ])/giu, function (m, w) { return w.slice(0, -1) + "'"; })
       .replace(/' /g, "'");
   }
   function frPpAgree(pp, s) {
@@ -1077,6 +1083,9 @@ var ZINO = (function () {
       var etre = fv.aux === "e" || fv.refl;
       fin = (etre ? C.FR_ETRE : C.FR_AVOIR)[pp];
       nonfin = etre ? frPpAgree(pv, s) : pv;
+    } else if (fv.go && !refl) {
+      // "aller + infinitief" (halen = aller chercher): vervoeg "aller", zet daarna de infinitief voor het object
+      fin = C.FR_ALLER[pp]; nonfin = fv.inf;
     } else {
       fin = C.frPres(fv, pp);
     }
@@ -1113,6 +1122,12 @@ var ZINO = (function () {
       }
       if (ww === "que") return finFr(frElide("qu'est-ce que " + subj + " " + verbGroup) + (afterS ? " " + afterS : ""), c);
       return finFr(ww + " " + verbGroup + "-" + frInvPron(subj, fin) + (afterS ? " " + afterS : ""), c);
+    }
+    // Meerwoordige finiete vorm ("ai le droit de"): "pas" komt na het eerste woord -> "je n'ai pas le droit de nager"
+    var finW = fin.split(" ");
+    if (neg && mod && finW.length > 1 && !pre.length) {
+      var core2 = frElide(subj + " ne " + finW[0]) + " pas " + finW.slice(1).join(" ");
+      return finFr(core2 + (afterS ? " " + afterS : ""), c);
     }
     var core = neg ? frElide(subj + " ne " + verbGroup) + " " + pas : frElide(subj + " " + verbGroup);
     return finFr(core + (afterS ? " " + afterS : ""), c);
