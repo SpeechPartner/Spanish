@@ -128,5 +128,24 @@ check("zinherstel: een zin uit de lijst blijft zichzelf", zelfTest);
 check("zinherstel: correctie staat aan in de spraakinvoer", /var ZINHERSTEL_AAN = true/.test(read("js/app.js")) && /herstelZin\(text\)/.test(read("js/app.js")) && /herstelZin\(t\)/.test(read("js/app.js")));
 check("zinherstel: script staat in index.html en offline-cache", read("index.html").includes("js/zin-herstel.js") && read("sw.js").includes("./js/zinnen-es.js"));
 
+// 12. Melding voor het beginscherm: in elke taal de stappen voor Safari, Chrome (iPhone en Android) en andere browsers
+{
+  const sp = read("js/speels.js"), keys = ["title", "body", "safari", "chromeIOS", "chromeAndroid", "iosAnders", "androidAnders", "install", "ok"];
+  const blok = sp.slice(sp.indexOf("var HOME_TXT = {"), sp.indexOf("function browserSoort"));
+  const ht = (() => { const c = {}; vm.runInNewContext(blok.replace("var HOME_TXT", "HOME_TXT"), c); return c.HOME_TXT || {}; })();
+  const mis = ["nl", "en", "de", "fr", "es"].filter((l) => !ht[l] || keys.some((k) => !ht[l][k]));
+  check("melding beginscherm: alle talen hebben alle browserteksten", mis.length === 0, mis.join(","));
+  check("melding beginscherm: taal van de telefoon en soort browser", /function meldingTaal\(/.test(sp) && /navigator\.languages/.test(sp) && /CriOS/.test(sp) && /HOME_TXT\[meldingTaal\(\)\]/.test(sp));
+  check("app-taal: eerste keer de taal van de telefoon", /store\.get\("lang", null\) \|\| systeemTaal\(LANGS\)/.test(read("js/app.js")));
+}
+
+// Beginscherm: melding in de taal van de telefoon, met een stap per browser; ook voor de melding bij een nieuwe versie
+{
+  const sp = read("js/speels.js");
+  const talen = ["nl", "en", "de", "fr", "es"];
+  const blok = sp.slice(sp.indexOf("var HOME_TXT"), sp.indexOf("function browserSoort"));
+  const ontbreekt = talen.filter((t) => !new RegExp("\\n    " + t + ": \\{[\\s\\S]*?safari:[\\s\\S]*?chromeIOS:[\\s\\S]*?chromeAndroid:[\\s\\S]*?opnieuw:[\\s\\S]*?verwijder:").test(blok));
+  check("beginscherm: melding per browser in vijf talen, ook bij een nieuwe versie", ontbreekt.length === 0 && /window\.THUIS_MELDING = function/.test(sp) && /THUIS_MELDING\(\)/.test(read("js/app.js")), ontbreekt.join(","));
+}
 console.log(failures === 0 ? "\nAlles geslaagd." : `\n${failures} controle(s) mislukt.`);
 process.exit(failures === 0 ? 0 : 1);

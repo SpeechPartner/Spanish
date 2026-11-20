@@ -36,7 +36,14 @@
     return true;
   })();
 
-  var lang = store.get("lang", "nl");
+  // Taal van de telefoon (eerste keer openen): de eerste systeemtaal die als uitlegtaal beschikbaar is
+  function systeemTaal(lijst) {
+    var ls = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || ""];
+    for (var i = 0; i < ls.length; i++) { var c = String(ls[i] || "").slice(0, 2).toLowerCase(); if (lijst.indexOf(c) >= 0) return c; }
+    return null;
+  }
+  var lang = store.get("lang", null) || systeemTaal(LANGS) || "nl";
+  if (LANGS.indexOf(lang) < 0) lang = "nl";
   if (LANGS.indexOf(lang) < 0) lang = "nl";
   var theme = store.get("theme", "standaard");
   if (theme === "nacht") theme = "donker"; // het Nachtlampje is vervallen: opgeslagen keuzes vallen terug op de donkere modus
@@ -3195,13 +3202,21 @@
     if (!pending.length) return;
     var box = el("div", "card reinstall-note");
     box.setAttribute("role", "dialog");
-    box.appendChild(el("div", "sec-title", L(m("Nieuwe versie: zet de app opnieuw op je beginscherm", "New version: put the app on your home screen again", "Neue Version: lege die App erneut auf deinen Home-Bildschirm", "Nouvelle version : remets l'app sur ton écran d'accueil"))));
-    box.appendChild(el("div", "", L(m(
-      "Verwijder het oude icoon: houd het ingedrukt en kies 'App verwijderen'. Open daarna deze pagina in Safari, tik op Deel en kies 'Zet op beginscherm'. Zo heb je de nieuwste versie.",
-      "Remove the old icon: press and hold it and choose 'Remove App'. Then open this page in Safari, tap Share and choose 'Add to Home Screen'. That gives you the latest version.",
-      "Entferne das alte Symbol: halte es gedrückt und wähle 'App entfernen'. Öffne dann diese Seite in Safari, tippe auf Teilen und wähle 'Zum Home-Bildschirm'. So hast du die neueste Version.",
-      "Supprime l'ancienne icône : maintiens-la appuyée et choisis « Supprimer l'app ». Ouvre ensuite cette page dans Safari, touche Partager et choisis « Sur l'écran d'accueil ». Tu auras ainsi la dernière version."))));
-    var ok = el("button", "btn primary", L(m("Begrepen", "Got it", "Verstanden", "Compris")));
+    // Tekst in de taal van de telefoon, met de stap voor de browser die de gebruiker heeft (speels.js); anders de vaste tekst
+    var tm = null; try { tm = window.THUIS_MELDING ? window.THUIS_MELDING() : null; } catch (e) { tm = null; }
+    if (tm && tm.titel && tm.tekst) {
+      box.appendChild(el("div", "sec-title", tm.titel));
+      box.appendChild(el("div", "", tm.tekst));
+      var ok = el("button", "btn primary", tm.ok);
+    } else {
+      box.appendChild(el("div", "sec-title", L(m("Nieuwe versie: zet de app opnieuw op je beginscherm", "New version: put the app on your home screen again", "Neue Version: lege die App erneut auf deinen Home-Bildschirm", "Nouvelle version : remets l'app sur ton écran d'accueil"))));
+      box.appendChild(el("div", "", L(m(
+        "Verwijder het oude icoon: houd het ingedrukt en kies 'App verwijderen'. Open daarna deze pagina in Safari, tik op Deel en kies 'Zet op beginscherm'. Zo heb je de nieuwste versie.",
+        "Remove the old icon: press and hold it and choose 'Remove App'. Then open this page in Safari, tap Share and choose 'Add to Home Screen'. That gives you the latest version.",
+        "Entferne das alte Symbol: halte es gedrückt und wähle 'App entfernen'. Öffne dann diese Seite in Safari, tippe auf Teilen und wähle 'Zum Home-Bildschirm'. So hast du die neueste Version.",
+        "Supprime l'ancienne icône : maintiens-la appuyée et choisis « Supprimer l'app ». Ouvre ensuite cette page dans Safari, touche Partager et choisis « Sur l'écran d'accueil ». Tu auras ainsi la dernière version."))));
+      var ok = el("button", "btn primary", L(m("Begrepen", "Got it", "Verstanden", "Compris")));
+    }
     ok.type = "button";
     ok.onclick = function () { pending.forEach(function (v) { store.set("nieuw-" + v, true); }); box.parentNode && box.parentNode.removeChild(box); };
     box.appendChild(ok);

@@ -89,12 +89,75 @@
 
   // Eenmalige melding in de browser (Safari of Chrome): zet de app op het beginscherm.
   // Na 'Begrepen' komt de melding niet meer terug; de uitleg blijft staan op de Info-pagina.
+  // Teksten per browser: Safari (iOS 26: deelknop achter de drie puntjes), Chrome op iPhone (deelicoon in de adresbalk),
+  // Chrome op Android (drie puntjes rechtsboven) en andere browsers (daar kan het niet: open de pagina in Safari of Chrome).
   var HOME_TXT = {
-    nl: { title: "Zet de app op je beginscherm", body: "Dan opent hij als eigen app.", ios: "Tik in Safari onderin op het deelicoon en kies 'Zet op beginscherm'.", android: "Tik in Chrome rechtsboven op de drie puntjes en kies 'App installeren' of 'Toevoegen aan startscherm'.", install: "Installeer de app", ok: "Begrepen" },
-    en: { title: "Put the app on your home screen", body: "Then it opens like its own app.", ios: "In Safari, tap the share icon at the bottom and choose 'Add to Home Screen'.", android: "In Chrome, tap the three dots at the top right and choose 'Install app' or 'Add to Home screen'.", install: "Install the app", ok: "Got it" },
-    de: { title: "Leg die App auf deinen Home-Bildschirm", body: "Dann öffnet sie sich wie eine eigene App.", ios: "Tippe in Safari unten auf das Teilen-Symbol und wähle 'Zum Home-Bildschirm'.", android: "Tippe in Chrome oben rechts auf die drei Punkte und wähle 'App installieren' oder 'Zum Startbildschirm hinzufügen'.", install: "App installieren", ok: "Verstanden" },
-    fr: { title: "Mets l'app sur ton écran d'accueil", body: "Elle s'ouvrira alors comme une vraie application.", ios: "Dans Safari, touche l'icône de partage en bas et choisis « Sur l'écran d'accueil ».", android: "Dans Chrome, touche les trois points en haut à droite et choisis « Installer l'application » ou « Ajouter à l'écran d'accueil ».", install: "Installer l'application", ok: "Compris" },
-    es: { title: "Pon la app en tu pantalla de inicio", body: "Así se abrirá como una app propia.", ios: "En Safari, toca el icono de compartir, abajo, y elige «Añadir a pantalla de inicio».", android: "En Chrome, toca los tres puntos, arriba a la derecha, y elige «Instalar aplicación» o «Añadir a pantalla de inicio».", install: "Instalar la app", ok: "Entendido" }
+    nl: { title: "Zet de app op je beginscherm", body: "Dan opent hij als eigen app.",
+          safari: "Tik in Safari op de drie puntjes (•••) naast de adresbalk, kies 'Deel' en daarna 'Zet op beginscherm'. Zie je onderin al het deelicoon, tik daar dan meteen op.",
+          chromeIOS: "Tik in Chrome in de adresbalk op het deelicoon en kies 'Zet op beginscherm'.",
+          chromeAndroid: "Tik in Chrome rechtsboven op de drie puntjes en kies de optie om de app te installeren of aan je startscherm toe te voegen.",
+          iosAnders: "In deze browser kan dat niet. Open deze pagina in Safari of Chrome en zet hem daar op je beginscherm.",
+          androidAnders: "Open deze pagina in Chrome en zet hem daar op je startscherm.",
+          install: "Installeer de app", ok: "Begrepen",
+          opnieuw: "Nieuwe versie: zet de app opnieuw op je beginscherm", verwijder: "Houd het oude icoon ingedrukt en verwijder het. Daarna:" },
+    en: { title: "Put the app on your home screen", body: "Then it opens like its own app.",
+          safari: "In Safari, tap the three dots (•••) next to the address bar, choose 'Share' and then 'Add to Home Screen'. If you already see the share icon at the bottom, tap that instead.",
+          chromeIOS: "In Chrome, tap the share icon in the address bar and choose 'Add to Home Screen'.",
+          chromeAndroid: "In Chrome, tap the three dots at the top right and choose the option to install the app or add it to your home screen.",
+          iosAnders: "This browser can't do that. Open this page in Safari or Chrome and add it to your home screen there.",
+          androidAnders: "Open this page in Chrome and add it to your home screen there.",
+          install: "Install the app", ok: "Got it",
+          opnieuw: "New version: put the app on your home screen again", verwijder: "Press and hold the old icon and remove it. Then:" },
+    de: { title: "Leg die App auf deinen Home-Bildschirm", body: "Dann öffnet sie sich wie eine eigene App.",
+          safari: "Tippe in Safari auf die drei Punkte (•••) neben der Adressleiste, wähle 'Teilen' und dann 'Zum Home-Bildschirm'. Siehst du unten schon das Teilen-Symbol, tippe direkt darauf.",
+          chromeIOS: "Tippe in Chrome in der Adressleiste auf das Teilen-Symbol und wähle 'Zum Home-Bildschirm'.",
+          chromeAndroid: "Tippe in Chrome oben rechts auf die drei Punkte und wähle die Option, die App zu installieren oder zum Startbildschirm hinzuzufügen.",
+          iosAnders: "In diesem Browser geht das nicht. Öffne diese Seite in Safari oder Chrome und lege sie dort auf den Home-Bildschirm.",
+          androidAnders: "Öffne diese Seite in Chrome und lege sie dort auf den Startbildschirm.",
+          install: "App installieren", ok: "Verstanden",
+          opnieuw: "Neue Version: Lege die App erneut auf deinen Home-Bildschirm", verwijder: "Halte das alte Symbol gedrückt und entferne es. Danach:" },
+    fr: { title: "Mets l'app sur ton écran d'accueil", body: "Elle s'ouvrira alors comme une vraie application.",
+          safari: "Dans Safari, touche les trois points (•••) à côté de la barre d'adresse, choisis « Partager » puis « Sur l'écran d'accueil ». Si tu vois déjà l'icône de partage en bas, touche-la directement.",
+          chromeIOS: "Dans Chrome, touche l'icône de partage dans la barre d'adresse et choisis « Sur l'écran d'accueil ».",
+          chromeAndroid: "Dans Chrome, touche les trois points en haut à droite et choisis l'option pour installer l'application ou l'ajouter à l'écran d'accueil.",
+          iosAnders: "Ce navigateur ne le permet pas. Ouvre cette page dans Safari ou Chrome et ajoute-la là à ton écran d'accueil.",
+          androidAnders: "Ouvre cette page dans Chrome et ajoute-la là à ton écran d'accueil.",
+          install: "Installer l'application", ok: "Compris",
+          opnieuw: "Nouvelle version : remets l'app sur ton écran d'accueil", verwijder: "Maintiens l'ancienne icône appuyée et supprime-la. Ensuite :" },
+    es: { title: "Pon la app en tu pantalla de inicio", body: "Así se abrirá como una app propia.",
+          safari: "En Safari, toca los tres puntos (•••) junto a la barra de direcciones, elige «Compartir» y después «Añadir a pantalla de inicio». Si ya ves el icono de compartir abajo, tócalo directamente.",
+          chromeIOS: "En Chrome, toca el icono de compartir en la barra de direcciones y elige «Añadir a pantalla de inicio».",
+          chromeAndroid: "En Chrome, toca los tres puntos arriba a la derecha y elige la opción para instalar la app o añadirla a la pantalla de inicio.",
+          iosAnders: "Este navegador no lo permite. Abre esta página en Safari o Chrome y añádela allí a tu pantalla de inicio.",
+          androidAnders: "Abre esta página en Chrome y añádela allí a tu pantalla de inicio.",
+          install: "Instalar la app", ok: "Entendido",
+          opnieuw: "Nueva versión: vuelve a poner la app en tu pantalla de inicio", verwijder: "Mantén pulsado el icono antiguo y elimínalo. Después:" }
+  };
+  // Welke browser: alleen echte Safari en Chrome kunnen een pagina op het beginscherm zetten
+  function browserSoort() {
+    var ua = navigator.userAgent || "";
+    if (isIOSDevice()) {
+      if (/CriOS\//.test(ua)) return "chromeIOS";
+      if (/Safari\//.test(ua) && !/FxiOS|EdgiOS|OPiOS|OPT\/|YaBrowser|GSA\/|FBAN|FBAV|Instagram|Line\/|DuckDuckGo|Brave|Snapchat|WhatsApp/i.test(ua)) return "safari";
+      return "iosAnders";
+    }
+    if (/Android/i.test(ua)) {
+      if (/Chrome\/\d/.test(ua) && !/; wv\)|SamsungBrowser|EdgA|OPR\/|Firefox|YaBrowser|Brave|UCBrowser|MiuiBrowser|DuckDuckGo|Instagram|FBAN|FBAV|Version\/\d/i.test(ua)) return "chromeAndroid";
+      return "androidAnders";
+    }
+    return null;
+  }
+  // Taal van de melding: de taal van de telefoon; staat die er niet bij, dan de taal van de app
+  function meldingTaal() {
+    var ls = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || ""];
+    for (var i = 0; i < ls.length; i++) { var c = String(ls[i] || "").slice(0, 2).toLowerCase(); if (HOME_TXT[c]) return c; }
+    var d = document.body.getAttribute("data-lang");
+    return HOME_TXT[d] ? d : "nl";
+  }
+  // Voor de melding bij een nieuwe versie (app.js): zelfde taal en dezelfde stap voor deze browser als de melding hieronder
+  window.THUIS_MELDING = function () {
+    var t = HOME_TXT[meldingTaal()], soort = browserSoort();
+    return { titel: t.opnieuw, tekst: t.verwijder + " " + (t[soort] || (isIOSDevice() ? t.safari : t.chromeAndroid)), ok: t.ok };
   };
   var HOME_KEY = "thuisMeldingGezien";
   function showHomeNotice() {
@@ -103,7 +166,7 @@
     if (document.querySelector(".thuis-note")) return;
     var ios = isIOSDevice(), android = /Android/i.test(navigator.userAgent);
     if (!ios && !android && !deferredPrompt) return;   // computer: geen melding
-    var t = HOME_TXT[document.body.getAttribute("data-lang") || "nl"] || HOME_TXT.nl;
+    var t = HOME_TXT[meldingTaal()], soort = browserSoort();
     var box = document.createElement("div");
     box.className = "card reinstall-note thuis-note";
     box.setAttribute("role", "dialog");
@@ -111,7 +174,7 @@
     var p = document.createElement("div"); p.textContent = t.body; box.appendChild(p);
     if (!deferredPrompt || ios) {
       var ol = document.createElement("ol"); ol.className = "guide-list";
-      var li = document.createElement("li"); li.textContent = ios ? t.ios : t.android; ol.appendChild(li);
+      var li = document.createElement("li"); li.textContent = t[soort] || (ios ? t.safari : t.chromeAndroid); ol.appendChild(li);
       box.appendChild(ol);
     }
     function klaar() { try { localStorage.setItem(HOME_KEY, "1"); } catch (e) {} if (box.parentNode) box.parentNode.removeChild(box); }
