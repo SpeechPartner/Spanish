@@ -1152,7 +1152,24 @@
   }
 
   // ---------- Vertaalvak (bovenaan, op elke pagina) ----------
+  // Samengestelde zinnen ("ik stap uit de bus en loop naar huis", "als ik moe ben, ga ik naar bed"): ZIN.compound (zin-in.js)
+  // knipt de zin op voegwoorden en komma's, vertaalt elk deel met dezelfde vertaler als hieronder en zet de delen weer aan elkaar.
+  function ZIN_FIRST(from, to) { return typeof ZIN !== "undefined" && ZIN.compoundFirst ? ZIN.compoundFirst(from, to) : false; }
+  function viaDelen(text, from, to, base) {
+    if (typeof ZIN === "undefined" || !ZIN.compound || !ZIN.hasSplit(text, from)) return null;
+    var r = null;
+    try { r = ZIN.compound(text, from, to, function (s) { var x = base(s); return x && x.text && !x.about && !x.unsupported ? x.text : null; }); } catch (e) { r = null; }
+    return r ? { text: capSent(r), grammar: true, parts: [], missing: [], delen: true } : null;
+  }
   function translateOne(text) {
+    var r = translateOneBase(text);
+    if (r && r.whole) return r;
+    var from = lang, to = "es";
+    if (ZIN_FIRST(from, to)) { var d0 = viaDelen(text, from, to, translateOneBase); if (d0) return d0; }
+    if (r && r.text) return r;
+    return viaDelen(text, from, to, translateOneBase) || r;
+  }
+  function translateOneBase(text) {
     var t = clean(text);
     if (!t) return null;
     var hit = null;
@@ -1374,6 +1391,14 @@
     return REV_NORM[lang];
   }
   function esToLang(text) {
+    var r = esToLangBase(text);
+    if (r && r.text && (r.learned || (r.whole && !r.about))) return r;
+    var from = "es", to = lang;
+    if (ZIN_FIRST(from, to)) { var d0 = viaDelen(text, from, to, esToLangBase); if (d0) return d0; }
+    if (r && r.text && !r.about) return r;
+    return viaDelen(text, from, to, esToLangBase) || r;
+  }
+  function esToLangBase(text) {
     var t = clean(text), n = norm(text);
     var ls = learned("geleerdZin")[n];
     if (ls && ls[lang]) return { text: ls[lang], whole: true, learned: true };
@@ -1763,7 +1788,7 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "3.0";
+  var APP_VERSION = "3.1";
   // Versies waarvoor gebruikers de app opnieuw op hun beginscherm moeten zetten (oude icoon weg, nieuwe erop).
   // Bij zo'n update verschijnt eenmalig een melding met uitleg.
   var REINSTALL_VERSIONS = ["1.8"];

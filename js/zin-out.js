@@ -359,7 +359,7 @@ var ZINO = (function () {
     universidad: "at university", aeropuerto: "at the airport", fiesta: "at the party" };
   var EN_TO = { casa: "home", trabajo: "to work", escuela: "to school", colegio: "to school", universidad: "to university", cama: "to bed" };
   var EN_BY = { tren: "by train", "autobús": "by bus", coche: "by car", "avión": "by plane", bici: "by bike", bicicleta: "by bike", metro: "by underground", taxi: "by taxi", barco: "by boat" };
-  var MOTION = { ir: 1, venir: 1, volver: 1, viajar: 1, llegar: 1, salir: 1, caminar: 1, correr: 1, conducir: 1, acostarse: 1 };
+  var MOTION = { ir: 1, venir: 1, volver: 1, regresar: 1, viajar: 1, llegar: 1, salir: 1, caminar: 1, correr: 1, conducir: 1, acostarse: 1, mudarse: 1 };
   function enObl(c) {
     var out = [], late = [];
     var obl = c.obl || [];
@@ -539,12 +539,14 @@ var ZINO = (function () {
         else if (np.k === "place") r = "in " + deNP(np, "dat");
         else if (np.k === "n") r = dePP(DE_LOC[np.n] || "in", np, "dat");
       } else {
-        var map = { con: ["mit", "dat"], para: ["für", "acc"], sin: ["ohne", "acc"], de: ["aus", "dat"], sobre: ["über", "acc"], hasta: ["bis", "acc"] };
+        var map = { con: ["mit", "dat"], para: ["für", "acc"], sin: ["ohne", "acc"], de: ["aus", "dat"], sobre: ["über", "acc"], hasta: ["bis", "acc"], cerca: ["von", "dat"] };
         var m = map[pp.prep]; if (!m) return null;
         if (pp.prep === "de" && np.k === "n" && isPerson(np.n)) m = ["von", "dat"];
         // "de casa" zonder lidwoord: "aus dem Haus" (niet "aus Haus")
         if (pp.prep === "de" && np.k === "n" && np.n === "casa" && np.det === "none") r = "aus dem Haus";
         else r = dePP(m[0], np, m[1]);
+        // "cerca de la estación" = in der Nähe des Bahnhofs; spreektaal: "in der Nähe vom Bahnhof" / "von der Kirche"
+        if (r && pp.prep === "cerca") r = "in der Nähe " + r.replace(/^von dem /, "vom ");
       }
       if (!r) return null;
       out.push(r);
@@ -702,7 +704,9 @@ var ZINO = (function () {
       else if (useK || deIsIndef(c.o) || c.o.qty || c.o.num) part.indefObj = o;
       else part.defObj = o;
     }
-    if (c.io && c.io.np) { var ion = deNP(c.io.np, "dat"); if (!ion || !c.o) return null; part.ioObj = ion; } else if (c.io) { var iop = dePron(c.io, "dat"); if (!iop || (!c.o && c.v !== "decir")) return null; part.pron = part.pron ? part.pron + " " + iop : iop; }
+    // fragen: de persoon in de vierde naamval ("er fragt mich etwas")
+    var ioNv = c.v === "preguntar" ? "acc" : "dat";
+    if (c.io && c.io.np) { var ion = deNP(c.io.np, ioNv); if (!ion || !c.o) return null; part.ioObj = ion; } else if (c.io) { var iop = dePron(c.io, ioNv); if (!iop || (!c.o && c.v !== "decir")) return null; part.pron = part.pron ? part.pron + " " + iop : iop; }
     if (c.lng) part.indefObj = C.LANG[c.lng][1];
     if (gern) part.gern = gern;
     if (dv.tail) part.tail = dv.tail;
@@ -899,6 +903,7 @@ var ZINO = (function () {
       } else {
         var map = { con: "avec", para: "pour", sin: "sans", sobre: "sur", desde: "depuis", hasta: "jusqu'à" };
         if (pp.prep === "de") { if (np.k === "place") { r = frPlaceDe(np.key); } else { var wd = frNP(np); r = wd ? frDe(wd) : null; } }
+        else if (pp.prep === "cerca") { var wc = frNP(np); r = wc ? "près " + frDe(wc) : null; }
         else { var m = map[pp.prep]; if (!m) return null; var w2 = frNP(np); r = w2 ? m + " " + w2 : null; }
       }
       if (!r) return null;

@@ -390,7 +390,7 @@ var ZINC = (function () {
     sorprenderse: { es: "de", en: "at", de: ["über", "acc"], fr: "de" },
     informarse: { es: "sobre", en: "about", de: ["über", "acc"], fr: "sur" },
     ocuparse: { es: "de", en: "of", de: ["um", "acc"], fr: "de" },
-    preocuparse: { es: "por", en: "about", de: ["um", "acc"], fr: "de" },
+    preocuparse: { es: "por", en: "about", de: ["um", "acc"], fr: "pour" },
     quedar: { es: "con", en: "", de: ["mit", "dat"], fr: "" },
     unir: { es: "con", en: "with", de: ["mit", "dat"], fr: "à" },
     recuperarse: { es: "de", en: "from", de: ["von", "dat"], fr: "de" },

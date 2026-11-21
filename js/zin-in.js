@@ -6,7 +6,7 @@ var ZINI = (function () {
   var REV = function (lang) { return (typeof REVS !== "undefined" && REVS[lang]) || {}; };
 
   // ---------------- gedeelde hulpfuncties ----------------
-  var DITRANS = { dar: 1, mostrar: 1, traer: 1, enviar: 1, decir: 1 };
+  var DITRANS = { dar: 1, mostrar: 1, traer: 1, enviar: 1, decir: 1, preguntar: 1, contar: 1 };
   function subjOf(p, g, formal, pron) { return { p: p, g: g || null, formal: !!formal, pron: !!pron, np: null }; }
   function npHead(np) { return np; }
   var INTJ = { si: { en: "Yes", de: "Ja", fr: "Oui", es: "Sí" }, no: { en: "No", de: "Nein", fr: "Non", es: "No" } };
@@ -55,8 +55,8 @@ var ZINI = (function () {
   var ESCLIT = { me: { p: 0 }, te: { p: 1 }, lo: { p: 2, g: "m" }, la: { p: 2, g: "f" }, nos: { p: 3 }, os: { p: 4 }, los: { p: 5, g: "m" }, las: { p: 5, g: "f" }, le: { p: 2, dat: true }, les: { p: 5, dat: true }, se: { p: 2, refl: true } };
   var ESNUM = { un: 1, uno: 1, una: 1, dos: 2, tres: 3, cuatro: 4, cinco: 5, seis: 6, siete: 7, ocho: 8, nueve: 9, diez: 10, once: 11, doce: 12, veinte: 20, treinta: 30, cien: 100 };
   var ESPREP = { en: "en", a: "a", con: "con", de: "de", para: "para", sin: "sin", desde: "desde", hasta: "hasta", sobre: "sobre" };
-  var POSTSUBJ = { costar: 1, llegar: 1, venir: 1, salir: 1, empezar: 1, terminar: 1, abrir: 1, cerrar: 1, vivir: 1, trabajar: 1, ir: 1, volver: 1 };
-  var MOTION = { ir: 1, venir: 1, volver: 1, viajar: 1, llegar: 1, salir: 1, caminar: 1, correr: 1, conducir: 1 };
+  var POSTSUBJ = { costar: 1, llegar: 1, venir: 1, salir: 1, empezar: 1, terminar: 1, abrir: 1, cerrar: 1, vivir: 1, trabajar: 1, ir: 1, volver: 1, regresar: 1 };
+  var MOTION = { ir: 1, venir: 1, volver: 1, regresar: 1, viajar: 1, llegar: 1, salir: 1, caminar: 1, correr: 1, conducir: 1, mudarse: 1 };
 
   function esTokens(text) {
     var raw = String(text || "").trim();
@@ -270,13 +270,17 @@ var ZINI = (function () {
     if (clits.length > 1) return null;
     if (clits.length === 1) {
       var cc = ESCLIT[clits[0]];
-      if (cc && !cc.refl && DITRANS[c.v] && /^(me|te|nos|os|le|les)$/.test(clits[0])) { c.io = { p: cc.dat ? (clits[0] === "les" ? 5 : 2) : cc.p, g: cc.g || null }; clits = []; cc = null; }
+      // "le pregunto a mi madre": de persoon staat er met "a" bij; dan is het voornaamwoord geen apart meewerkend voorwerp
+      var aPersoon = c.v === "preguntar" && T.slice(i).indexOf("a") >= 0;
+      // preguntar/contar: alleen meewerkend voorwerp als er ook iets gevraagd/verteld wordt ("me pregunta algo"); "te pregunto" blijft gewoon
+      if ((c.v === "preguntar" || c.v === "contar") && i >= T.length) aPersoon = true;
+      if (cc && !cc.refl && DITRANS[c.v] && !aPersoon && /^(me|te|nos|os|le|les)$/.test(clits[0])) { c.io = { p: cc.dat ? (clits[0] === "les" ? 5 : 2) : cc.p, g: cc.g || null }; clits = []; cc = null; }
       else if (!cc || cc.dat || cc.refl) return null;
       if (cc && cc.p === p && p !== 2 && p !== 5) {
         if (has(VERB, C.esBase(c.v) + "se")) { c.v = C.esBase(c.v) + "se"; clits = []; }
         else if (c.v === "ir") { c.v = "irse"; clits = []; }
         else return null;
-      } else if (!cc) { /* meewerkend voorwerp al verwerkt */ } else if (/^(saber|creer|entender|comprender|hacer|decir|pensar|olvidar|comprar|encontrar|intentar|probar|ganar|perder|recoger|buscar|usar|pedir|leer|escribir|comer|beber|tener|preparar|abrir|cerrar|pagar|traer|llevar|enviar|mandar|necesitar|cambiar|terminar|empezar|conseguir|reservar|cocinar|tomar)$/.test(c.v) && clits[0] === "lo") c.o = { k: "pron", p: 2, g: "n" };
+      } else if (!cc) { /* meewerkend voorwerp al verwerkt */ } else if (/^(saber|creer|entender|comprender|hacer|decir|pensar|olvidar|comprar|encontrar|intentar|probar|ganar|perder|recoger|buscar|usar|pedir|leer|escribir|comer|beber|tener|preparar|abrir|cerrar|pagar|traer|llevar|enviar|mandar|necesitar|cambiar|terminar|empezar|conseguir|reservar|cocinar|tomar|repetir|explicar|aprender|estudiar|practicar|limpiar|lavar|guardar|vender|romper|arreglar|recordar|traducir|imprimir|apagar|encender)$/.test(c.v) && clits[0] === "lo") c.o = { k: "pron", p: 2, g: "n" };
       else if (clits[0] === "lo" || clits[0] === "la") c.o = { k: "pron", p: 2, g: clits[0] === "la" ? "f" : "m", amb: true };
       else if (cc) c.o = { k: "pron", p: cc.p, g: cc.g || null };
     }
@@ -1221,6 +1225,8 @@ var ZINI = (function () {
       if (pr === false) return null;
       if (pr) { i = pr.end; continue; }
       if (has(DEOBJ, t) && DEOBJ[t][2] === "d" && DITRANS[c.v] && !c.io && !opts.hay) { var pi = DEOBJ[t]; c.io = { p: pi[0], g: pi[1] || null }; i++; continue; }
+      // fragen: de persoon in de vierde naamval is het meewerkend voorwerp als er nog iets volgt ("er fragt mich etwas")
+      if (has(DEOBJ, t) && c.v === "preguntar" && DEOBJ[t][2] !== "d" && !c.io && i + 1 < T.length && !opts.hay) { var pq = DEOBJ[t]; c.io = { p: pq[0], g: pq[1] || null }; i++; continue; }
       if (has(DEOBJ, t) && !c.o && !opts.hay) { var po = DEOBJ[t]; c.o = { k: "pron", p: po[0], g: po[1] || null }; if (po[2] === "d" && !(VERB[c.v] && VERB[c.v].de && VERB[c.v].de.obj === "d")) return null; i++; continue; }
       if (has(C.LANGIDX.de, t) && !c.o && !c.lng && /^(hablar|aprender|estudiar|entender)$/.test(c.v)) { c.lng = C.LANGIDX.de[t]; i++; continue; }
       if (C.PV[c.v] && C.PV[c.v].de && C.PV[c.v].de[0] === "" && C.PV[c.v].de[1] === "gen" && !opts.hay) {
@@ -1822,7 +1828,40 @@ var ZINI = (function () {
     }
     return null;
   }
-  return { es: parseEs, en: parseEn, de: parseDe, fr: parseFr, enImp: parseEnImp, impIn: impIn };
+  // "je vais/rentre à la maison": bij een werkwoord van beweging is "à la maison" een richting (a casa), geen plaats (en casa)
+  function parseFrRichting(t) {
+    var c = parseFr(t);
+    if (c && MOTION[c.v] && c.advs && c.advs.indexOf("en casa") >= 0) {
+      c.advs.splice(c.advs.indexOf("en casa"), 1);
+      (c.obl = c.obl || []).push({ prep: "a", np: { k: "n", n: "casa", det: "none" } });
+    }
+    return c;
+  }
+  // "lo" na een infinitief of gebiedende wijs ("¿Puedes repetirlo?", "Quiero comprarlo"): bij werkwoorden die een ding als
+  // voorwerp hebben is "lo" = het (it/es/le), niet hem. Dezelfde lijst als bij "lo" voor het werkwoord.
+  var LO_DING = /^(saber|creer|entender|comprender|hacer|decir|pensar|olvidar|comprar|encontrar|intentar|probar|ganar|perder|recoger|buscar|usar|pedir|leer|escribir|comer|beber|tener|preparar|abrir|cerrar|pagar|traer|llevar|enviar|mandar|necesitar|cambiar|terminar|empezar|conseguir|reservar|cocinar|tomar|repetir|explicar|aprender|estudiar|practicar|limpiar|lavar|guardar|vender|romper|arreglar|recordar|traducir|imprimir|apagar|encender)$/;
+  var DAGEN_ES = "lunes|martes|miércoles|jueves|viernes|sábados|domingos";
+  function parseEsLo(t) {
+    var t0 = String(t || "");
+    // "los domingos" vooraan mag ook: "Los domingos como en casa" = "Como en casa los domingos"
+    var md = new RegExp("^\\s*(los (?:" + DAGEN_ES + "))\\s*,?\\s+([^¿?]+?)(\\s*[.!]?)\\s*$", "i").exec(t0);
+    if (md) t0 = md[2].charAt(0).toUpperCase() + md[2].slice(1) + " " + md[1].toLowerCase() + (md[3] || ".");
+    // "cada día" = todos los días
+    t0 = t0.replace(/\bcada día\b/gi, "todos los días");
+    // wandelen "por el parque": door/in het park
+    t0 = t0.replace(/\b(paseo|paseas|pasea|paseamos|pasean|camino|caminas|camina|caminamos|caminan|corro|corres|corre|corremos|corren) por (el|la|los|las)\b/gi, "$1 en $2");
+    // eerst de zin zoals hij is (vaste zinnen, gewone ontleding); de herschreven vorm alleen als dat niets geeft
+    var c = parseEs(t);
+    if (!c && t0 !== String(t || "")) c = parseEs(t0);
+    // "su" met een uitgesproken onderwerp (él/ella/ellos/ellas): het bezit hoort bij het onderwerp
+    if (c && c.s && c.s.pron && c.s.g && (c.s.p === 2 || c.s.p === 5) && /^\s*[¿¡]?\s*(él|ella|ellos|ellas)\b/i.test(t0)) {
+      var zet = function (np) { if (np && np.det === "poss" && np.own === 2 && !np.ownG && !np.ownFormal) { np.own = c.s.p; np.ownG = c.s.g; } };
+      zet(c.o); zet(c.io); (c.obl || []).forEach(function (pp) { zet(pp && pp.np); });
+    }
+    if (c && c.o && c.o.k === "pron" && c.o.p === 2 && c.o.g === "m" && !c.o.amb && LO_DING.test(c.v || "") && /[a-záéíóú]lo\s*[.!?]*\s*$|[a-záéíóú]lo[\s,]/i.test(String(t || ""))) c.o.g = "n";
+    return c;
+  }
+  return { es: parseEsLo, en: parseEn, de: parseDe, fr: parseFrRichting, enImp: parseEnImp, impIn: impIn };
 })();
 
 // Publieke ingang voor de app
@@ -2395,7 +2434,175 @@ var ZIN = (function () {
     if (from === "nl" && to === "en") { var dbl = translateNothingRaw(text, from, to, gen); return dbl === null || dbl === undefined ? dbl : nlDubbelEn(text, dbl); }
     return translateNothingRaw(text, from, to, gen);
   }
+  // In- en uitstappen met een voertuig en de trap op/af, vanuit een Spaanse zin ("subo al autobús", "no bajo del tren a las ocho",
+  // "subo las escaleras"). De algemene ontleding leest "subir a" als richting; dit patroon geeft per taal de gewone uitdrukking.
+  var VOERTUIG = {
+    "autobús": { en: ["bus", "on"], de: ["Bus", "m"], fr: ["bus", "m"], nl: ["bus", "de"] }, tren: { en: ["train", "on"], de: ["Zug", "m"], fr: ["train", "m"], nl: ["trein", "de"] },
+    "tranvía": { en: ["tram", "on"], de: ["Straßenbahn", "f"], fr: ["tram", "m"], nl: ["tram", "de"] }, metro: { en: ["metro", "on"], de: ["U-Bahn", "f"], fr: ["métro", "m"], nl: ["metro", "de"] },
+    coche: { en: ["car", "in"], de: ["Auto", "n"], fr: ["voiture", "f"], nl: ["auto", "de"] }, barco: { en: ["boat", "on"], de: ["Boot", "n"], fr: ["bateau", "m"], nl: ["boot", "de"] },
+    "avión": { en: ["plane", "on"], de: ["Flugzeug", "n"], fr: ["avion", "m"], nl: ["vliegtuig", "het"] }, taxi: { en: ["taxi", "in"], de: ["Taxi", "n"], fr: ["taxi", "m"], nl: ["taxi", "de"] }
+  };
+  var VT_VORM = { bajo: ["b", 0], bajas: ["b", 1], baja: ["b", 2], bajamos: ["b", 3], bajan: ["b", 5], subo: ["s", 0], subes: ["s", 1], sube: ["s", 2], subimos: ["s", 3], suben: ["s", 5] };
+  var VT_HULP = { en: "I work ", de: "Ich arbeite ", fr: "Je travaille ", nl: "Ik werk " };
+  // Een Spaanse tijdsbepaling ("a las ocho", "mañana") naar de doeltaal, via een hulpzin. null als dat niet lukt.
+  function vtTijd(tijd, to, gen) {
+    if (!tijd) return "";
+    var hulp = VT_HULP[to], tr = hulp && translateNothing("Trabajo " + tijd + ".", "es", to, gen);
+    if (!tr) return null;
+    if (tr.indexOf(hulp) === 0) return tr.slice(hulp.length).replace(/[.!?]+$/, "");
+    // tijd vooraan met inversie: "Morgen werk ik." / "Morgen arbeite ich."
+    var inv = { nl: " werk ik", de: " arbeite ich" }[to], mi = inv && new RegExp("^(.+?)" + inv + "[.!?]*$").exec(tr);
+    if (mi) return mi[1].charAt(0).toLowerCase() + mi[1].slice(1);
+    return null;
+  }
+  // Spaanse zin ontleden: {p, uit, trap, v, een, neg, tijd, q}, false = subir/bajar met een ander voorwerp (niet vertalen), null = geen stapzin.
+  function vtLees(es) {
+    var q = /^\s*¿/.test(es || "") || /\?\s*$/.test(es || "");
+    var t = (es || "").replace(/[¿?¡!.]/g, " ").replace(/\s+/g, " ").trim(), tl = t.toLowerCase();
+    var m = /^(.*?)\b(bajo|bajas|baja|bajamos|bajan|subo|subes|sube|subimos|suben)\b\s*(.*)$/.exec(tl);
+    if (!m) return null;
+    var voor = m[1].trim(), na = m[3], neg = null, fem = false;
+    if (/(^|\s)no$/.test(voor)) { neg = "no"; voor = voor.replace(/(^|\s)no$/, "").trim(); }
+    else if (/(^|\s)nunca$/.test(voor)) { neg = "nunca"; voor = voor.replace(/(^|\s)nunca$/, "").trim(); }
+    var pm = /(^|\s)(yo|tú|él|ella|nosotros|nosotras|ellos|ellas|usted|ustedes)$/.exec(voor);
+    if (pm) { fem = /^ella/.test(pm[2]); voor = voor.slice(0, voor.length - pm[0].length).trim(); }
+    var vf = VT_VORM[m[2]], uit = vf[0] === "b", r, v = null, een = false, trap = false;
+    if ((r = /^(del|de la|de un|de una|al|a la|a un|a una)\s+(autobús|tren|tranvía|metro|coche|barco|avión|taxi)\b\s*(.*)$/.exec(na))) {
+      if ((uit && /^a/.test(r[1])) || (!uit && /^de/.test(r[1]))) return null;
+      v = VOERTUIG[r[2]]; een = /un/.test(r[1]); na = r[3];
+    } else if ((r = /^(la escalera|las escaleras)\b\s*(.*)$/.exec(na))) { trap = true; na = r[2]; }
+    else if (/^(el|la|los|las|un|una|unos|unas|mi|mis|tu|tus|su|sus|este|esta|estos|estas|ese|esa|nuestro|nuestra)\s/.test(na)) return false;
+    else return null;
+    var tijd = [voor, na.trim()].filter(Boolean).join(" ");
+    return { p: vf[1], uit: uit, trap: trap, v: v, een: een, neg: neg, tijd: tijd, q: q, fem: fem };
+  }
+  function cap(x) { return x.charAt(0).toUpperCase() + x.slice(1); }
+  function voertuigZin(es, to, gen) {
+    var o = vtLees(es);
+    if (o === false) return false;
+    if (!o) return null;
+    var tijd = vtTijd(o.tijd, to, gen);
+    if (tijd === null) return false;
+    var p = o.p, uit = o.uit, v = o.v, q = o.q, neg = o.neg, nooit = neg === "nunca", T = tijd ? " " + tijd : "";
+    if (to === "en") {
+      var sEn = ["I", "you", o.fem ? "she" : "he", "we", "", "they"][p], s3 = p === 2;
+      var kern = o.trap ? "go " + (uit ? "down" : "up") + " the stairs"
+        : "get " + (v.en[1] === "in" ? (uit ? "out of" : "into") : (uit ? "off" : "on")) + " " + (o.een ? "a " : "the ") + v.en[0];
+      if (q) return (neg === "no" ? (s3 ? "Doesn't " : "Don't ") : (s3 ? "Does " : "Do ")) + sEn + (nooit ? " never " : " ") + kern + T + "?";
+      if (neg === "no") return cap(sEn) + (s3 ? " doesn't " : " don't ") + kern + T + ".";
+      var vEn = kern.replace(/^(get|go)/, function (x) { return s3 ? (x === "go" ? "goes" : "gets") : x; });
+      return cap(sEn) + (nooit ? " never " : " ") + vEn + T + ".";
+    }
+    if (to === "de") {
+      var sDe = ["ich", "du", o.fem ? "sie" : "er", "wir", "", "sie"][p], ngDe = neg === "no" ? " nicht" : nooit ? " nie" : "", kernD, vDe;
+      if (o.trap) {
+        vDe = ["gehe", "gehst", "geht", "gehen", "", "gehen"][p];
+        kernD = T + " die Treppe" + ngDe + " " + (uit ? "hinunter" : "hinauf");
+      } else {
+        vDe = ["steige", "steigst", "steigt", "steigen", "", "steigen"][p];
+        var g = v.de[1];
+        var npD = uit ? (o.een ? (g === "f" ? "einer " : "einem ") : (g === "f" ? "der " : "dem ")) : (o.een ? (g === "f" ? "eine " : g === "n" ? "ein " : "einen ") : (g === "f" ? "die " : g === "n" ? "das " : "den "));
+        kernD = T + ngDe + " " + (uit ? "aus " : "in ") + npD + v.de[0] + " " + (uit ? "aus" : "ein");
+      }
+      return q ? cap(vDe) + " " + sDe + kernD + "?" : cap(sDe) + " " + vDe + kernD + ".";
+    }
+    if (to === "fr") {
+      var sFr = ["je", "tu", o.fem ? "elle" : "il", "nous", "", o.fem ? "elles" : "ils"][p];
+      var vFr = uit ? ["descends", "descends", "descend", "descendons", "", "descendent"][p] : ["monte", "montes", "monte", "montons", "", "montent"][p];
+      var npF;
+      if (o.trap) npF = "l'escalier";
+      else {
+        var gF = v.fr[1], artF = o.een ? (gF === "f" ? "une " : "un ") : (uit ? (gF === "f" ? "de la " : "du ") : (gF === "f" ? "la " : "le "));
+        npF = (uit ? (o.een ? "d'" + artF : artF) : "dans " + artF) + v.fr[0];
+      }
+      var vz = neg ? (/^[aeiouéh]/.test(vFr) ? "n'" : "ne ") + vFr + (nooit ? " jamais" : " pas") : vFr;
+      var subj = sFr === "je" && neg ? "je" : sFr;
+      return cap(subj) + " " + vz + " " + npF + T + (q ? " ?" : ".");
+    }
+    if (to === "nl") {
+      var sNl = ["ik", "je", o.fem ? "zij" : "hij", "we", "", "ze"][p], kernN, vNl, ngNl = neg === "no" ? " niet" : nooit ? " nooit" : "";
+      if (o.trap) {
+        vNl = ["ga", "gaat", "gaat", "gaan", "", "gaan"][p];
+        kernN = T + " de trap" + ngNl + " " + (uit ? "af" : "op");
+      } else {
+        vNl = ["stap", "stapt", "stapt", "stappen", "", "stappen"][p];
+        kernN = T + ngNl + " " + (uit ? "uit " : "in ") + (o.een ? "een " : v.nl[1] + " ") + v.nl[0];
+      }
+      if (q) return (p === 1 ? (o.trap ? "Ga" : "Stap") : cap(vNl)) + " " + sNl + kernN + "?";
+      return cap(sNl) + " " + vNl + kernN + ".";
+    }
+    return null;
+  }
+  // Omgekeerd: een Engelse, Duitse of Franse in-/uitstapzin (of de trap op/af) naar de Spaanse vorm.
+  // undefined = geen stapzin, null = herkend maar niet te vertalen.
+  function vtTijdNaarEs(tail, from, gen) {
+    tail = (tail || "").trim();
+    if (!tail) return "";
+    var hulp = VT_HULP[from], tr = translateNothing(hulp + tail + ".", from, "es", gen);
+    if (!tr || !/^Trabajo /.test(tr)) return null;
+    return tr.replace(/^Trabajo /, "").replace(/[.!?]+$/, "");
+  }
+  function voertuigNaarEs(text, from, gen) {
+    var q = /\?\s*$/.test(text || "");
+    var t = (text || "").replace(/[?!.]/g, " ").replace(/\s+/g, " ").trim(), tl = t.toLowerCase(), m, p, uit, een = false, nm = null, trap = false, neg = null, tijd = [], fem = false;
+    var NEN = { bus: "autobús", train: "tren", tram: "tranvía", metro: "metro", subway: "metro", car: "coche", boat: "barco", plane: "avión", taxi: "taxi" };
+    var NDE = { bus: "autobús", zug: "tren", "straßenbahn": "tranvía", "u-bahn": "metro", auto: "coche", boot: "barco", flugzeug: "avión", taxi: "taxi" };
+    var NFR = { bus: "autobús", train: "tren", tram: "tranvía", "métro": "metro", voiture: "coche", bateau: "barco", avion: "avión", taxi: "taxi" };
+    if (from === "en") {
+      var PEN = { i: 0, you: 1, he: 2, she: 2, we: 3, they: 5 };
+      m = /^(?:(.+?) )??(?:(do|does|don't|doesn't) )?(i|you|he|she|we|they) (?:(do not|don't|does not|doesn't|never) )?(get|gets|go|goes) (off|on|onto|in|into|out of|up|down) (the|a) (\S+)(?: (.+))?$/.exec(tl);
+      if (!m) return undefined;
+      p = PEN[m[3]]; fem = m[3] === "she";
+      if (m[2]) { if (!q || m[1]) return undefined; if (/n't$/.test(m[2])) neg = "no"; }
+      if (m[4]) neg = m[4] === "never" ? "nunca" : "no";
+      var go = /^go/.test(m[5]);
+      if (go) { if (!/^stairs?$/.test(m[8]) || !/^(up|down)$/.test(m[6])) return undefined; trap = true; uit = m[6] === "down"; }
+      else { nm = NEN[m[8]]; if (!nm || /^(up|down)$/.test(m[6])) return undefined; uit = /^(off|out of)$/.test(m[6]); een = m[7] === "a"; }
+      if (m[1]) tijd.push(m[1]); if (m[9]) tijd.push(m[9]);
+    } else if (from === "de") {
+      var PDE = { ich: 0, du: 1, er: 2, sie: 2, wir: 3, ihr: 4 };
+      var VDE = "steige|steigst|steigt|steigen|gehe|gehst|geht|gehen";
+      m = new RegExp("^(?:(.+?) )??(?:(ich|du|er|sie|wir) (" + VDE + ")|(" + VDE + ") (ich|du|er|sie|wir))(?: (.+?))??(?: (nicht|nie))? (?:(aus|in) (dem|der|den|die|das|einem|einer|einen|eine|ein) (\\S+) (aus|ein)|die treppe(?: (nicht|nie))? (hinauf|hinunter|hoch|runter|rauf|nach oben|nach unten))$").exec(tl);
+      if (!m) return undefined;
+      var subjD = m[2] || m[5], verbD = m[3] || m[4];
+      if (m[4] && !m[1] && !q) return undefined;
+      p = PDE[subjD]; if (subjD === "sie" && /en$/.test(verbD)) p = 5; else if (subjD === "sie") fem = true;
+      var ng = m[7] || m[12];
+      if (ng) neg = ng === "nie" ? "nunca" : "no";
+      if (m[13]) { if (!/^geh/.test(verbD)) return undefined; trap = true; uit = /^(hinunter|runter|nach unten)$/.test(m[13]); }
+      else { if (!/^steig/.test(verbD)) return undefined; uit = m[11] === "aus"; if ((m[8] === "aus") !== uit) return undefined; een = /^ein/.test(m[9]); nm = NDE[m[10]]; }
+      if (m[1]) tijd.push(m[1]); if (m[6]) tijd.push(m[6]);
+    } else if (from === "fr") {
+      var PFR = { je: 0, tu: 1, il: 2, elle: 2, nous: 3, ils: 5, elles: 5 };
+      m = /^(?:(.+?) )??(je|tu|il|elle|nous|ils|elles) (?:(ne|n') ?)?(descends|descend|descendons|descendent|monte|montes|montons|montent)(?: (pas|jamais))? (du|de la|d'un|d'une|dans le|dans la|dans un|dans une|l'escalier|les escaliers) ?(\S+)?(?: (.+))?$/.exec(tl.replace(/n'(?=\S)/, "n' "));
+      if (!m) return undefined;
+      p = PFR[m[2]]; fem = /^elle/.test(m[2]); uit = /^desc/.test(m[4]);
+      if (m[3]) { if (!m[5]) return undefined; neg = m[5] === "jamais" ? "nunca" : "no"; }
+      if (/escalier/.test(m[6])) { trap = true; if (m[7]) tijd.push(m[7] + (m[8] ? " " + m[8] : "")); }
+      else { if (uit !== /^d(u|e|')/.test(m[6])) return undefined; een = /un/.test(m[6]); nm = NFR[m[7]]; if (m[8]) tijd.push(m[8]); }
+      if (m[1]) tijd.unshift(m[1]);
+    } else return undefined;
+    if ((!nm && !trap) || p === undefined) return undefined;
+    var tEs = [];
+    for (var ti = 0; ti < tijd.length; ti++) { var te = vtTijdNaarEs(tijd[ti], from, gen); if (te === null) return null; if (te) tEs.push(te); }
+    var vorm = (uit ? ["bajo", "bajas", "baja", "bajamos", "bajáis", "bajan"] : ["subo", "subes", "sube", "subimos", "subís", "suben"])[p];
+    var np = trap ? "las escaleras" : ((uit ? "de " : "a ") + (een ? "un " : "el ") + nm).replace(/^de el /, "del ").replace(/^a el /, "al ");
+    var pron = p === 2 ? (fem ? "ella " : "él ") : p === 5 ? (fem ? "ellas " : "ellos ") : "";
+    var zin = cap(pron + (neg ? neg + " " : "") + vorm + " " + np + (tEs.length ? " " + tEs.join(" ") : ""));
+    return q ? "¿" + zin + "?" : zin + ".";
+  }
   function translateNothingRaw(text, from, to, gen) {
+    if (from === "en" || from === "de" || from === "fr") {
+      var vEs = voertuigNaarEs(text, from, gen);
+      if (vEs === null) return null;
+      if (vEs) { if (to === "es") return vEs; var vOut = voertuigZin(vEs, to, gen); if (vOut) return vOut; if (vOut === false) return null; }
+    }
+    if (to !== "es") {
+      var esVt = from === "es" ? text : (from === "nl" && typeof NL_ES !== "undefined" && typeof DICTS !== "undefined" ? NL_ES.translate(text, DICTS.nl, "m") : null);
+      var vtz = esVt && voertuigZin(esVt, to, gen);
+      if (vtz) return vtz;
+      if (vtz === false) return null;
+    }
     // "dag" op zichzelf is de begroeting (doei); "dag" in een zin is het zelfstandig naamwoord (día)
     if (from === "nl" && typeof text === "string" && /^\s*dag\s*[.!]*\s*$/i.test(text)) { if (to === "es") return "Adiós."; return translateNothingRaw("tot ziens", from, to, gen); }
     if (from === "nl") { var hm = nlHomoniem(text, to); if (hm) return hm; }
@@ -2416,6 +2623,22 @@ var ZIN = (function () {
     else if (from === "de" && /\bnichts\s*[.!]*\s*$/i.test(t) && !/\bnicht\b/i.test(t) && /^\s*ich\s+(tue|mache|sehe|höre|esse|trinke|habe|weiß|kaufe|brauche|will)\b/i.test(t)) { t = t.replace(/\bnichts(\s*[.!]*\s*)$/i, "das nicht$1"); flag = true; }
     else if (from === "fr" && /\bne\s+\S+\s+rien\s*[.!]*\s*$/i.test(t)) { t = t.replace(/\brien(\s*[.!]*\s*)$/i, "pas ça$1"); flag = true; }
     else if (from === "en" && /\b(don't|do not|doesn't|does not)\b.*\banything\s*[.!]*\s*$/i.test(t)) { t = t.replace(/\banything(\s*[.!]*\s*)$/i, "that$1"); flag = true; }
+    // "iets / algo / something / etwas / quelque chose" aan het eind (zonder ontkenning): zelfde aanpak als bij "niets"
+    var iets = false;
+    if (!flag) {
+      var IETS = { es: /\balgo(\s*[.!?]*\s*)$/i, nl: /\biets(\s*[.!?]*\s*)$/i, en: /\bsomething(\s*[.!?]*\s*)$/i, de: /\betwas(\s*[.!?]*\s*)$/i, fr: /\bquelque chose(\s*[.!?]*\s*)$/i };
+      var NEG = { es: /^\s*no\b/i, nl: /\b(niet|geen)\b/i, en: /\b(not|n't|never)\b/i, de: /\b(nicht|kein\w*)\b/i, fr: /\b(ne|n')\b/i };
+      var DAT = { es: "eso", nl: "dat", en: "that", de: "das", fr: "ça" };
+      if (IETS[from] && IETS[from].test(t) && !NEG[from].test(t) && !/\?\s*$/.test(t)) {
+        // Naar het Nederlands: eerst naar het Spaans ("... algo"), dan rechtstreeks met de Spaans-Nederlandse vertaler, die "algo" kent
+        if (to === "nl" && typeof ES_NL !== "undefined" && typeof REVS !== "undefined") {
+          var esZin = from === "es" ? t : translateNothingRaw(t, from, "es", gen);
+          var nlZin = esZin ? ES_NL.translate(esZin, REVS.nl, function (w) { return (typeof GRAM !== "undefined") ? GRAM.gen(w, "nl") : null; }) : null;
+          if (nlZin) return nlZin;
+        }
+        t = t.replace(IETS[from], DAT[from] + "$1"); iets = true;
+      }
+    }
     if (from === "nl" && (to === "de" || to === "fr" || to === "en")) {
       var smk = nlSmaakPatroon(t, to); if (smk) return smk;
       var hdn = nlHoudingPatroon(t, to); if (hdn) return hdn;
@@ -2429,6 +2652,12 @@ var ZIN = (function () {
     if (r && to === "en") r = r.replace(/\b(learn|speak|study) (Spanish|French|English|German|Dutch) more\b/, "$1 more $2");
     if (r && to === "en") r = r.replace(/\bI be\b/g, "I am").replace(/\b(You|you|We|we|They|they) be\b/g, "$1 are");
     if (r && to === "en") r = r.replace(/\b(Let|let) (that|this|it)(?=[!.]|$)/, function (m0, l, w) { return (l === "Let" ? "Leave " : "leave ") + w; }).replace(/\bbeautiful (man|boy|guy|actor|father|brother|husband|son)\b/g, "handsome $1").replace(/^(He is|He's|He was) beautiful\b/, "$1 handsome");
+    if (iets) {
+      if (!r) return null;
+      var TERUG = { es: [/\beso\b/, "algo"], nl: [/\bdat\b/, "iets"], en: [/\bthat\b/, "something"], de: [/\bdas\b/, "etwas"], fr: [/(^|\s)ça\b/, "$1quelque chose"] }[to];   // \b werkt niet voor ç
+      var o2 = TERUG ? r.replace(TERUG[0], TERUG[1]) : r;
+      return o2 === r ? null : o2;
+    }
     if (!flag || !r) return flag ? null : r;
     var o = r;
     if (to === "es") o = r.replace(/\beso\b/, "nada");
@@ -2437,5 +2666,507 @@ var ZIN = (function () {
     else if (to === "fr") o = r.replace(/ pas ça\b/, " rien").replace(/ pas\b/, " rien").replace(/ ça\b/, "");
     return o === r ? null : o;
   }
-  return { fromEs: fromEs, toEs: toEs, translate: translateNothing };
+  // Het Spaans heeft één woord voor zonen en kinderen ("hijos"). Zei de bron "sons", "Söhne" of "fils", dan zijn het zonen.
+  // Vaste woordgroepen per doeltaal (zelfde regels als bij Zin bouwen in app.js), nu voor alle vertalingen
+  function nazorg(r, to) {
+    if (typeof r !== "string") return r;
+    if (to === "en") r = r.replace(/\b(have|has) work a lot\b/g, "$1 a lot of work").replace(/\b(do|does) the dinner\b/g, function (m0, v) { return (v === "does" ? "makes" : "make") + " dinner"; })
+      .replace(/\b(don't|doesn't) do the dinner\b/g, "$1 make dinner").replace(/\b(do|does) a break\b/g, function (m0, v) { return (v === "does" ? "takes" : "take") + " a break"; })
+      .replace(/\b(don't|doesn't) do a break\b/g, "$1 take a break").replace(/\b(do|does|don't|doesn't) sport\b/g, "$1 sports");
+    if (to === "fr") r = r.replace(/\bbeaucoup du\b/g, "beaucoup de").replace(/\bpas la course\b/g, "pas les courses").replace(/(^|\s)à la ville\b/g, "$1en ville")
+      .replace(/\bque (elle|il|ils|elles|on)\b/g, "qu'$1");
+    if (to === "nl" && typeof ES_NL !== "undefined" && ES_NL.nazorg) r = ES_NL.nazorg(r);
+    return r;
+  }
+  function translateZonen(text, from, to, gen) { return nazorg(translateZonenBasis(text, from, to, gen), to); }
+  function translateZonenBasis(text, from, to, gen) {
+    var r = translateNothing(text, from, to, gen);
+    if (r && to === "nl" && (from === "en" || from === "de" || from === "fr") && /\b(sons|söhne|fils)\b/i.test(String(text || "")))
+      r = r.replace(/\bkinderen\b/g, "zonen").replace(/\bKinderen\b/g, "Zonen");
+    // "caminar a casa": te voet naar huis, niet "nach Hause spazieren" / "marcher à la maison"
+    if (r && to === "de") r = r.replace(/\b(gehe|gehst|geht|gehen)( nicht)? nach Hause spazieren\b/g, "$1$2 zu Fuß nach Hause");
+    if (r && to === "fr") r = r.replace(/\b(ne )?(marche|marches|marchons|marchez|marchent)( pas)? à la maison\b/g, function (m0, ne, v, pas) {
+      return (ne ? "ne " : "") + { marche: "rentre", marches: "rentres", marchons: "rentrons", marchez: "rentrez", marchent: "rentrent" }[v] + (pas || "") + " à pied";
+    });
+    return r;
+  }
+  // De Spaanse app vraagt fromEs/toEs aan. Die gaan via dezelfde volledige vertaler als de andere apps (met de extra lagen
+  // voor iets/niets, in- en uitstappen, enzovoort). Gemeten over 1760 zinnen: nooit een andere of slechtere uitkomst.
+  // Bij twijfel geeft de Spaanse app bewust niets ("Lo veo": hem of het?). Daarom blijft de eigen ontleding de basis; alleen
+  // de lagen die aantoonbaar goed gaan komen erbij: in- en uitstappen en de trap, en zinnen die op iets/niets eindigen.
+  var IETS_EIND = { es: /\b(algo|nada)\s*[.!?]*\s*$/i, en: /\b(something|nothing|anything)\s*[.!?]*\s*$/i, de: /\b(etwas|nichts)\s*[.!?]*\s*$/i, fr: /\b(quelque chose|rien)\s*[.!?]*\s*$/i };
+  function fromEsVol(text, lang) {
+    if (lang !== "en" && lang !== "de" && lang !== "fr") return null;
+    try {
+      var vz = voertuigZin(text, lang, "m");
+      if (vz) return vz;
+      if (vz === false) return null;
+      var b = fromEs(text, lang);
+      if (b) return nazorg(b, lang);
+      if (IETS_EIND.es.test(String(text || ""))) return translateZonen(text, "es", lang, "m") || null;
+    } catch (e) { return null; }
+    return null;
+  }
+  function toEsVol(text, lang, gen) {
+    if (lang !== "en" && lang !== "de" && lang !== "fr") return null;
+    try {
+      var ve = voertuigNaarEs(text, lang, gen);
+      if (ve !== undefined) return ve;
+      var b = toEs(text, lang, gen);
+      if (b) return b;
+      if (IETS_EIND[lang].test(String(text || ""))) return translateZonen(text, lang, "es", gen) || null;
+    } catch (e) { return null; }
+    return null;
+  }
+  return { fromEs: fromEsVol, toEs: toEsVol, translate: translateZonen };
 })();
+
+// ---------- Samengestelde zinnen ----------
+// Een zin met twee of meer delen ("ik stap uit de bus en loop naar huis", "als ik moe ben, ga ik naar bed",
+// "ik eet brood en kaas") wordt op de voegwoorden en komma's in delen geknipt. Elk deel gaat apart door de
+// gewone vertaler (one), met de juiste rol: weggelaten onderwerp aanvullen, omgekeerde volgorde of bijzin
+// (werkwoord achteraan, Nederlands en Duits) terugzetten, en bij "brood en kaas" het eerste deel aanvullen.
+// Daarna worden de vertaalde delen met het voegwoord van de doeltaal aan elkaar gezet. Lukt één deel niet,
+// dan probeert het systeem minder knippunten; lukt niets, dan geeft het null (geen halve vertaling).
+var ZINDELEN = (function () {
+  // [woorden, sleutel, soort]: co = gewone volgorde, inv = werkwoord vooraan (nl/de), sub = bijzin (werkwoord achteraan, nl/de)
+  var CONJ = {
+    nl: [["en dan", "then", "inv"], ["en daarna", "then", "inv"], ["en toen", "then", "inv"], ["daarna", "then", "inv"], ["dan", "then", "inv"],
+         ["want", "because", "co"], ["omdat", "because", "sub"], ["maar", "but", "co"], ["dus", "so", "inv"], ["of", "or", "co"], ["en", "and", "co"],
+         ["als", "when", "sub"], ["wanneer", "when", "sub"], ["terwijl", "while", "sub"], ["toen", "when", "sub"], ["hoewel", "although", "sub"], ["dat", "that", "sub"]],
+    es: [["y luego", "then", "co"], ["y después", "then", "co"], ["y entonces", "then", "co"], ["luego", "then", "co"], ["después", "then", "co"],
+         ["porque", "because", "co"], ["pero", "but", "co"], ["así que", "so", "co"], ["y", "and", "co"], ["e", "and", "co"], ["o", "or", "co"], ["u", "or", "co"],
+         ["cuando", "when", "co"], ["mientras", "while", "co"], ["si", "if", "co"], ["aunque", "although", "co"], ["que", "that", "co"]],
+    en: [["and then", "then", "co"], ["then", "then", "co"], ["because", "because", "co"], ["but", "but", "co"], ["so", "so", "co"], ["and", "and", "co"], ["or", "or", "co"],
+         ["when", "when", "co"], ["while", "while", "co"], ["if", "if", "co"], ["although", "although", "co"], ["even though", "although", "co"], ["that", "that", "co"]],
+    de: [["und dann", "then", "inv"], ["und danach", "then", "inv"], ["dann", "then", "inv"], ["danach", "then", "inv"], ["denn", "because", "co"], ["weil", "because", "sub"],
+         ["aber", "but", "co"], ["also", "so", "inv"], ["deshalb", "so", "inv"], ["und", "and", "co"], ["oder", "or", "co"],
+         ["wenn", "when", "sub"], ["als", "when", "sub"], ["während", "while", "sub"], ["falls", "if", "sub"], ["obwohl", "although", "sub"], ["dass", "that", "sub"]],
+    fr: [["et puis", "then", "co"], ["et ensuite", "then", "co"], ["et après", "then", "co"], ["puis", "then", "co"], ["ensuite", "then", "co"],
+         ["parce que", "because", "co"], ["parce qu'", "because", "co"], ["car", "because", "co"], ["mais", "but", "co"], ["donc", "so", "co"], ["alors", "so", "co"],
+         ["et", "and", "co"], ["ou", "or", "co"], ["quand", "when", "co"], ["lorsque", "when", "co"], ["pendant que", "while", "co"], ["si", "if", "co"], ["s'", "if", "co"], ["même si", "although", "co"], ["bien que", "although", "co"], ["que", "that", "co"], ["qu'", "that", "co"]]
+  };
+  var OUT = {
+    and: { nl: "en", es: "y", en: "and", de: "und", fr: "et" }, but: { nl: "maar", es: "pero", en: "but", de: "aber", fr: "mais" },
+    or: { nl: "of", es: "o", en: "or", de: "oder", fr: "ou" }, because: { nl: "want", es: "porque", en: "because", de: "denn", fr: "parce que" },
+    so: { nl: "dus", es: "así que", en: "so", de: "also", fr: "donc" }, then: { nl: "en dan", es: "y luego", en: "and then", de: "und dann", fr: "et puis" },
+    when: { nl: "als", es: "cuando", en: "when", de: "wenn", fr: "quand" }, "while": { nl: "terwijl", es: "mientras", en: "while", de: "während", fr: "pendant que" },
+    "if": { nl: "als", es: "si", en: "if", de: "wenn", fr: "si" },
+    although: { nl: "hoewel", es: "aunque", en: "although", de: "obwohl", fr: "même si" },
+    that: { nl: "dat", es: "que", en: "", de: "dass", fr: "que" }
+  };
+  // "Ik denk / zeg / weet dat ...": de hoofdzin is alleen het werkwoord; vaste vormen per taal (ik, jij, hij, wij, zij mv)
+  var DENK = {
+    denken: { nl: ["denk", "denkt", "denkt", "denken", "denken"], es: ["creo", "crees", "cree", "creemos", "creen"], en: ["think", "think", "thinks", "think", "think"], de: ["glaube", "glaubst", "glaubt", "glauben", "glauben"], fr: ["crois", "crois", "croit", "croyons", "croient"] },
+    pensar: { nl: ["denk", "denkt", "denkt", "denken", "denken"], es: ["pienso", "piensas", "piensa", "pensamos", "piensan"], en: ["think", "think", "thinks", "think", "think"], de: ["denke", "denkst", "denkt", "denken", "denken"], fr: ["pense", "penses", "pense", "pensons", "pensent"] },
+    zeggen: { nl: ["zeg", "zegt", "zegt", "zeggen", "zeggen"], es: ["digo", "dices", "dice", "decimos", "dicen"], en: ["say", "say", "says", "say", "say"], de: ["sage", "sagst", "sagt", "sagen", "sagen"], fr: ["dis", "dis", "dit", "disons", "disent"] },
+    weten: { nl: ["weet", "weet", "weet", "weten", "weten"], es: ["sé", "sabes", "sabe", "sabemos", "saben"], en: ["know", "know", "knows", "know", "know"], de: ["weiß", "weißt", "weiß", "wissen", "wissen"], fr: ["sais", "sais", "sait", "savons", "savent"] },
+    geloven: { nl: ["geloof", "gelooft", "gelooft", "geloven", "geloven"], es: ["creo", "crees", "cree", "creemos", "creen"], en: ["believe", "believe", "believes", "believe", "believe"], de: ["glaube", "glaubst", "glaubt", "glauben", "glauben"], fr: ["crois", "crois", "croit", "croyons", "croient"] }
+  };
+  var DENK_SUBJ = { nl: [["ik"], ["je", "jij"], ["hij", "zij", "ze"], ["we", "wij"], ["ze", "zij"]], en: [["i"], ["you"], ["he", "she"], ["we"], ["they"]], de: [["ich"], ["du"], ["er", "sie"], ["wir"], ["sie"]],
+    fr: [["je"], ["tu"], ["il", "elle"], ["nous"], ["ils", "elles"]], es: [["yo"], ["tú"], ["él", "ella"], ["nosotros", "nosotras"], ["ellos", "ellas"]] };
+  var DENK_OUT = { nl: ["ik", "je", "hij", "we", "ze"], en: ["I", "you", "he", "we", "they"], de: ["ich", "du", "er", "wir", "sie"], fr: ["je", "tu", "il", "nous", "ils"], es: ["", "", "", "", ""] };
+  var DENK_OUT_F = { nl: "zij", en: "she", de: "sie", fr: "elle", es: "ella" };
+  // geeft {p, f, verb} of null
+  function denkLees(tk, from) {
+    var w = tk.map(lc), subj = null, vi = 0, fem = false;
+    var S = DENK_SUBJ[from];
+    if (w.length === 2) { subj = w[0]; vi = 1; } else if (w.length === 1 && from === "es") vi = 0; else return null;
+    for (var vb in DENK) {
+      var f = DENK[vb][from];
+      for (var p = 0; p < 5; p++) {
+        if (f[p] !== w[vi]) continue;
+        if (subj !== null && S[p].indexOf(subj) < 0) continue;
+        if (subj !== null && (p === 2 || p === 4) && /^(zij|ze|she|sie|elle|elles|ella|ellas)$/.test(subj) && !(from === "nl" && p === 4)) fem = p === 2;
+        return { p: p, f: fem, verb: vb, subj: subj };
+      }
+    }
+    return null;
+  }
+  function denkUit(d, to) {
+    var v = DENK[d.verb][to][d.p], s = d.f ? DENK_OUT_F[to] : DENK_OUT[to][d.p];
+    if (to === "es") return cap((d.f ? "ella " : (d.subj && d.p === 2 ? "él " : "")) + v);
+    if (to === "nl" && d.p === 2 && !d.f && !d.subj) s = "hij/zij";
+    return cap(s + " " + v);
+  }
+  var INV_OUT = { then: 1, so: 1 }, SUB_OUT = { when: 1, "while": 1, "if": 1, although: 1, that: 1 };
+  var INTERJ = {};
+  [["ja", "sí", "yes", "ja", "oui"], ["nee", "no", "no", "nein", "non"], ["oké", "vale", "okay", "okay", "d'accord"], ["natuurlijk", "claro", "of course", "natürlich", "bien sûr"]].forEach(function (r) {
+    var o = { nl: r[0], es: r[1], en: r[2], de: r[3], fr: r[4] };
+    r.forEach(function (w) { if (!INTERJ[w]) INTERJ[w] = o; });
+  });
+  INTERJ.ok = INTERJ["oké"]; INTERJ.yes = INTERJ.ja; INTERJ.no = INTERJ.nee; INTERJ.nein = INTERJ.nee; INTERJ.si = INTERJ.ja;
+  var NUMW = /^(uno|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|once|doce|veinte|treinta|cuarenta|cincuenta|sesenta|setenta|ochenta|noventa|heures?|uur|uhr|o'clock|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|un|deux|trois|quatre|cinq|sept|huit|neuf|dix|onze|douze|vingt|trente|eins|zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn|elf|zwölf|een|twee|vijf|zes|zeven|negen|tien|twaalf)$/;
+  var TIJDW = /^(media|cuarto|quart|demie|demi|half|halb|viertel|kwart|minutos|minutes|minuten)$/;
+  var BELEEFD = { es: /,?\s*por favor$/i, en: /,?\s*please$/i, de: /,?\s*bitte$/i, fr: /,?\s*s'il (te|vous) pla[iî]t$/i, nl: /,?\s*(alsjeblieft|alstublieft)$/i };
+  var BELEEFD_OUT = { es: "por favor", en: "please", de: "bitte", fr: "s'il te plaît", nl: "alsjeblieft" };
+  var GAP_KEEP = { fr: /^(du|de|des|d'|la|le|les|l'|un|une|à|au|aux)$/, en: /^(the|a|an|some|any|to)$/, es: /^(el|la|los|las|un|una|unos|unas|del|al|a|de)$/,
+    de: /^(der|die|das|den|dem|des|ein|eine|einen|einem|einer)$/, nl: /^(de|het|een|naar)$/ };
+  var PRON = {
+    nl: ["ik", "jij", "je", "u", "hij", "zij", "ze", "we", "wij", "jullie", "het", "men", "hij/zij"], de: ["ich", "du", "er", "sie", "es", "wir", "ihr", "man"],
+    en: ["i", "you", "he", "she", "it", "we", "they"], fr: ["je", "j'", "tu", "il", "elle", "on", "nous", "vous", "ils", "elles", "c'", "ce"],
+    es: ["yo", "tú", "él", "ella", "nosotros", "nosotras", "vosotros", "ellos", "ellas", "usted", "ustedes"]
+  };
+  var DET = {
+    nl: ["de", "het", "een", "mijn", "jouw", "zijn", "haar", "ons", "onze", "hun", "deze", "die", "dit", "dat"],
+    de: ["der", "die", "das", "ein", "eine", "einen", "mein", "meine", "dein", "deine", "sein", "seine", "ihre", "unser", "unsere", "dieser", "diese", "dieses"],
+    en: ["the", "a", "an", "my", "your", "his", "her", "our", "their", "this", "that", "these", "those"],
+    fr: ["le", "la", "les", "l'", "un", "une", "des", "mon", "ma", "mes", "ton", "ta", "tes", "son", "sa", "ses", "notre", "nos", "leur", "leurs", "cette", "ces"],
+    es: ["el", "la", "los", "las", "un", "una", "mi", "mis", "tu", "tus", "su", "sus", "este", "esta", "ese", "esa"]
+  };
+  var PART = { nl: ["op", "uit", "in", "af", "aan", "mee", "terug", "weg", "binnen", "buiten", "toe", "langs", "thuis"], de: ["auf", "aus", "ein", "an", "ab", "mit", "zurück", "weg", "los", "vor", "zu", "fern", "her", "hin", "hinauf", "hinunter"] };
+  // "Ik weet niet of hij komt": "of" = whether, niet knippen
+  var OF_NA = /^(weet|weten|vraag|vraagt|vragen|vroeg|vroegen|snap|begrijp|zie|kijk|twijfel|benieuwd|niet)$/;
+
+  function lc(w) { return String(w || "").toLowerCase(); }
+  function isIn(list, w) { w = lc(w); for (var i = 0; i < list.length; i++) if (list[i] === w || (/'$/.test(list[i]) && w.indexOf(list[i]) === 0 && w.length > list[i].length)) return true; return false; }
+  function cap(s) { return String(s).replace(/^([¿¡]?)(\S)/, function (m, q, c) { return q + c.toUpperCase(); }); }
+
+  function tokens(text) {
+    return String(text).replace(/,/g, " , ").replace(/\s+/g, " ").trim().split(" ").filter(Boolean);
+  }
+  // Knippunten: {i: index van het eerste woord van het voegwoord, n: aantal woorden, key, kind, comma}
+  function splitPoints(tk, from) {
+    var list = CONJ[from], pts = [];
+    for (var i = 1; i < tk.length; i++) {
+      if (tk[i] === ",") {
+        // komma direct voor een voegwoord hoort bij dat voegwoord
+        var nx = matchConj(tk, i + 1, list);
+        if (nx) { var p = conjPoint(tk, i + 1, nx, from); if (p) { p.comma = true; p.i0 = i; pts.push(p); i = i + nx[0].split(" ").length; continue; } }
+        pts.push({ i0: i, i: i, n: 1, key: "comma", kind: "co", comma: true }); continue;
+      }
+      var m = matchConj(tk, i, list);
+      if (m) { var cp = conjPoint(tk, i, m, from); if (cp) { cp.i0 = i; pts.push(cp); i += m[0].split(" ").length - 1; } }
+    }
+    return pts;
+  }
+  function matchConj(tk, i, list) {
+    for (var k = 0; k < list.length; k++) {
+      var ws = list[k][0].split(" "), ok = true;
+      for (var j = 0; j < ws.length; j++) {
+        var w = lc(tk[i + j]);
+        if (/'$/.test(ws[j]) ? w.indexOf(ws[j]) !== 0 : w !== ws[j]) { ok = false; break; }
+      }
+      if (ok) return list[k];
+    }
+    return null;
+  }
+  function conjPoint(tk, i, m, from) {
+    var n = m[0].split(" ").length, key = m[1], kind = m[2] || "co";
+    if (/'$/.test(m[0].split(" ").pop())) {   // "parce qu'il", "s'il": het woord na de apostrof hoort bij het volgende deel
+      return { i: i, n: n, key: key, kind: kind, glued: m[0].split(" ").pop() };
+    }
+    if (from === "nl" && m[0] === "of" && OF_NA.test(lc(tk[i - 1]))) return null;
+    if (key === "that") {
+      var voor = [], k0 = i - 1;
+      while (k0 >= 0 && tk[k0] !== ",") { voor.unshift(tk[k0]); k0--; }
+      if (from === "de" && tk[i - 1] === ",") { voor = []; k0 = i - 2; while (k0 >= 0 && tk[k0] !== ",") { voor.unshift(tk[k0]); k0--; } }
+      if (!denkLees(voor, from)) return null;
+      if (/^(sí|si|no|oui|non)$/.test(lc(tk[i + n]))) return null;
+    }
+    // tijden en getallen niet knippen: "ocho y cuarto", "six heures et demie", "treinta y dos", "half acht en"
+    if (key === "and" && (NUMW.test(lc(tk[i - 1])) || /^\d/.test(tk[i - 1] || "")) && (TIJDW.test(lc(tk[i + 1])) || NUMW.test(lc(tk[i + 1])) || /^\d/.test(tk[i + 1] || ""))) return null;
+    if (key === "and" && TIJDW.test(lc(tk[i + 1])) && (i + 2 >= tk.length || tk[i + 2] === ",")) return null;
+    if (from === "nl" && m[0] === "toen") { if (isIn(PRON.nl, tk[i + 1])) { key = "when"; kind = "sub"; } else { key = "then"; kind = "inv"; } }
+    if (from === "nl" && m[0] === "dan" && i > 0 && /^(groter|kleiner|beter|meer|minder|liever|eerder|later|ouder|jonger)$/.test(lc(tk[i - 1]))) return null;
+    return { i: i, n: n, key: key, kind: kind };
+  }
+  function leadConj(tk, from) {
+    var m = matchConj(tk, 0, CONJ[from]);
+    if (!m || !/^(when|while|if|because)$/.test(m[1])) return null;
+    var c = tk.indexOf(",");
+    if (c < 2) return null;
+    var n = m[0].split(" ").length;
+    return { n: n, key: m[1], kind: m[2] || "co", comma: c, glued: /'$/.test(m[0]) ? m[0].split(" ").pop() : null };
+  }
+  // Nederlands en Duits: tweede persoon bij inversie ("ga je" <-> "je gaat")
+  function nlAddT(v) { v = lc(v); if (/t$/.test(v)) return v; if (/[^aeiou]a$/.test(v) || v === "ga" || v === "sta" || v === "sla") return v + "at"; return v + "t"; }
+  function nlDropT(v) {
+    var lv = lc(v);
+    if (!/t$/.test(lv) || lv.length <= 3) return v;
+    var r = lv.slice(0, -1);
+    if (/aa$/.test(r)) return r.slice(0, -1);
+    if (/(oe|ie)$/.test(r) || /[^aeiou]$/.test(r)) return r;
+    return v;
+  }
+  function subjLen(tk, lang) {
+    if (isIn(PRON[lang] || [], tk[0])) return 1;
+    if (isIn(DET[lang] || [], tk[0]) && tk.length > 2) return 2;
+    return 0;
+  }
+  // Bron: "ga ik naar bed" -> "ik ga naar bed"
+  function deInvert(tk, lang) {
+    if (tk.length > 1 && isIn(PRON[lang] || [], tk[1]) && !isIn(PRON[lang] || [], tk[0])) {
+      var v = tk[0], s = tk[1];
+      if (lang === "nl" && /^(je|jij)$/.test(lc(s))) v = nlAddT(v);
+      return [lc(s), lc(v)].concat(tk.slice(2));
+    }
+    return null;
+  }
+  // Bron: bijzin met het werkwoord achteraan -> gewone volgorde. Geeft een lijst kandidaten.
+  function subToMain(tk, lang) {
+    var out = [], s = subjLen(tk, lang);
+    if (!s || tk.length < s + 1) return out;
+    var subj = tk.slice(0, s), mid = tk.slice(s), last = mid[mid.length - 1];
+    var parts = PART[lang] || [];
+    // werkwoord met vast deel: "uitstap" -> "stap ... uit", "aussteige" -> "steige ... aus"
+    for (var p = 0; p < parts.length; p++) {
+      if (lc(last).indexOf(parts[p]) === 0 && lc(last).length > parts[p].length + 2) {
+        out.push(subj.concat([last.slice(parts[p].length)], mid.slice(0, -1), [parts[p]]));
+      }
+    }
+    out.push(subj.concat([last], mid.slice(0, -1)));
+    if (mid.length >= 2) out.push(subj.concat([mid[mid.length - 2]], mid.slice(0, -2), [last]));
+    out.push(tk.slice());
+    return out;
+  }
+  // Doel: gewone zin -> werkwoord vooraan ("ik ga naar bed" -> "ga ik naar bed")
+  function invertOut(o, lang) {
+    var tk = o.split(" ");
+    if (isIn(PRON[lang], tk[0]) && tk.length > 1) {
+      var v = tk[1];
+      if (lang === "nl" && /^(je|jij)$/.test(lc(tk[0]))) v = nlDropT(v);
+      return [v, lowSubj(tk[0], lang)].concat(tk.slice(2)).join(" ");
+    }
+    if (isIn(DET[lang], tk[0]) && tk.length > 2) return [tk[2], lc(tk[0]), tk[1]].concat(tk.slice(3)).join(" ");
+    return null;
+  }
+  function lowSubj(w, lang) { return lang === "en" && /^I('|$)/.test(w) ? w : lc(w); }
+  // Doel: gewone zin -> bijzin ("ik ben moe" -> "ik moe ben", "ich steige aus dem Bus aus" -> "ich aus dem Bus aussteige")
+  function subOut(o, lang) {
+    var tk = o.split(" "), s = 0, v, subj, rest;
+    if (isIn(PRON[lang], tk[0])) s = 1; else if (isIn(DET[lang], tk[0]) && tk.length > 2) s = 2;
+    if (s && tk.length > s) { subj = tk.slice(0, s); v = tk[s]; rest = tk.slice(s + 1); }
+    else if (tk.length > 2 && isIn(PRON[lang], tk[2])) { subj = [tk[2]]; v = tk[1]; rest = [tk[0]].concat(tk.slice(3)); }   // "Morgen ga ik ..." -> "ik morgen ... ga"
+    else return null;
+    subj = subj.map(function (w, i) { return i === 0 ? (lang === "de" && !isIn(PRON.de, w) && !isIn(DET.de, w) ? w : lc(w)) : w; });
+    rest = rest.map(function (w, i) { return i === 0 && s === 0 ? lc(w) : w; });
+    var parts = PART[lang] || [], lastW = rest[rest.length - 1];
+    if (rest.length && parts.indexOf(lc(lastW)) >= 0) return subj.concat(rest.slice(0, -1), [lc(lastW) + v]).join(" ");
+    // Nederlands: hulpwerkwoord vóór de infinitief ("dat je meer Spaans wilt leren", "als ik kan komen")
+    if (lang === "nl" && rest.length >= 1 && /^(wil|wilt|willen|kan|kun|kunt|kunnen|moet|moeten|mag|mogen|ga|gaat|gaan|zal|zult|zullen)$/.test(lc(v)) && /[a-z]en$/.test(lc(lastW))) return subj.concat(rest.slice(0, -1), [v, lastW]).join(" ");
+    return subj.concat(rest, [v]).join(" ");
+  }
+  function stripPunct(o) { return String(o).replace(/\s*[.!?]+\s*$/, "").replace(/^[¿¡]/, "").trim(); }
+  function words(o) { return o.split(" "); }
+
+  // Een vaste zin (zin-lex.js) wordt nooit geknipt: die heeft een eigen, goedgekeurde vertaling
+  function isVast(text, from) {
+    if (typeof ZINC === "undefined") return false;
+    var k = ZINC.normKey(text);
+    if (from === "nl") return !!(ZINC.NLIDX && ZINC.NLIDX[k]);
+    if (from === "es") return !!(ZINC.FIXED[ZINC.fold(k)] || ZINC.FIXED[k]);
+    var fi = ZINC.FIDX && ZINC.FIDX[from];
+    return !!(fi && (fi[k] || (ZINC.enKey && from === "en" && fi[ZINC.enKey(text)])));
+  }
+  function compound(text, from, to, one) {
+    if (!CONJ[from] || !OUT.and[to] || typeof one !== "function") return null;
+    var src = String(text || "").trim(), q = /\?\s*$/.test(src);
+    if (isVast(src, from)) return null;
+    // meer zinnen in één keer ("¿Puedes cerrar la ventana? Hace frío."): elke zin apart
+    var zinnen = src.replace(/([.!?…]+)\s+(?=[¿¡]?[A-ZÁÉÍÓÚÑÄÖÜÀÂÇÈÊÎÔÛ])/g, "$1\u0001").split("\u0001").map(function (x) { return x.trim(); }).filter(Boolean);
+    if (zinnen.length > 1) {
+      var uitz = [];
+      for (var zi = 0; zi < zinnen.length; zi++) {
+        var zr = (hasSplit(zinnen[zi], from) ? compound(zinnen[zi], from, to, one) : null) || one(zinnen[zi]);
+        if (!zr) return null;
+        uitz.push(String(zr));
+      }
+      return uitz.join(" ");
+    }
+    var body = src.replace(/^[¿¡]/, "").replace(/\s*[.!?…]+\s*$/, "");
+    // beleefdheid aan het eind (", por favor") los houden: de rest vertalen en het woord van de doeltaal erachter zetten
+    if (BELEEFD[from] && BELEEFD[from].test(body) && BELEEFD_OUT[to]) {
+      var kern = body.replace(BELEEFD[from], "").trim();
+      if (kern && kern !== body) {
+        // zonder ander knippunt: liever de hele zin als de gewone vertaler die kent ("Kannst du das bitte wiederholen?")
+        if (!splitPoints(tokens(kern), from).length && !leadConj(tokens(kern), from)) { var heel = one(src); if (heel) return String(heel); }
+        // eerst: het beleefdheidswoord bij het laatste deel houden ("pero habla despacio, por favor" = een verzoek)
+        var mPol = BELEEFD[from].exec(body), polSrc = mPol[0].replace(/^,?\s*/, "");
+        var vk = kern + "";
+        var kt = tokens(vk);
+        if (splitPoints(kt, from).length || leadConj(kt, from)) {
+          var rp = coreCompound(kt, from, to, q, one, polSrc);
+          if (rp) return rp;
+        }
+        var kz = (src.charAt(0) === "¿" ? "¿" : "") + kern + (q ? "?" : ".");
+        var kr = (hasSplit(kz, from) ? compound(kz, from, to, one) : null) || one(kz);
+        if (!kr) return null;
+        var kq = /\?\s*$/.test(kr);
+        return String(kr).replace(/\s*[.!?]+\s*$/, "") + ", " + BELEEFD_OUT[to] + (q || kq ? (to === "fr" ? " ?" : "?") : ".");
+      }
+    }
+    var tk = tokens(body);
+    if (tk.length < 3) return null;
+    return coreCompound(tk, from, to, q, one, null);
+  }
+  function coreCompound(tk, from, to, q, one, polSrc) {
+    var lead = leadConj(tk, from);
+    var pts = splitPoints(tk, from).filter(function (p) { return !lead || p.i0 !== lead.comma; });
+    if (lead) {
+      // het eerste deel loopt tot de komma; knippunten daarbinnen vervallen
+      pts = pts.filter(function (p) { return p.i0 > lead.comma; });
+    }
+    if (!pts.length && !lead) return null;
+    if (pts.length > 6) pts = pts.slice(0, 6);
+    var combos = [];
+    for (var mask = (1 << pts.length) - 1; mask >= 0; mask--) {
+      var sel = pts.filter(function (p, k) { return mask & (1 << k); });
+      if (sel.length || lead) combos.push(sel);
+    }
+    combos.sort(function (a, b) { return b.length - a.length; });
+    for (var ci = 0; ci < combos.length; ci++) {
+      var r = tryCombo(tk, combos[ci], lead, from, to, q, one, polSrc);
+      if (r) return r;
+    }
+    return null;
+  }
+
+  function tryCombo(tk, sel, lead, from, to, q, one, polSrc) {
+    // segmenten bouwen
+    var segs = [], start = 0, first = { role: "main", key: null, kind: "co" };
+    if (lead) {
+      var t0 = tk.slice(lead.n, lead.comma);
+      if (lead.glued) t0[0] = t0[0].slice(lead.glued.length) || t0[0];
+      segs.push({ tk: t0, role: "sub", key: lead.key, kind: lead.kind, leadSub: true });
+      start = lead.comma + 1;
+      first = { role: "afterSub", key: "comma", kind: "co" };
+    }
+    var cur = first;
+    for (var s = 0; s <= sel.length; s++) {
+      var end = s < sel.length ? sel[s].i0 : tk.length;
+      var part = tk.slice(start, end);
+      if (cur.glued && part.length) { var g = part[0].slice(cur.glued.length); part[0] = g; }
+      if (!part.length || part[0] === "") return null;
+      segs.push({ tk: part, role: cur.role, key: cur.key, kind: cur.kind, comma: cur.comma, at: start });
+      if (s < sel.length) {
+        var p = sel[s];
+        start = p.i + p.n;
+        if (p.key === "comma") start = p.i + 1;
+        var role = p.key === "comma" ? "main" : (p.kind === "sub" && (from === "nl" || from === "de")) ? "sub" : (p.kind === "inv" && (from === "nl" || from === "de")) ? "inv" : "main";
+        cur = { role: role, key: p.key, kind: p.kind, comma: p.comma, glued: p.glued };
+        if (p.glued) start = p.i + p.n - 1;
+      }
+    }
+    var punct = q ? "?" : ".";
+    function mk(arr, last) { return cap(arr.join(" ")) + (q ? "?" : "."); }
+    function tryT(arr, last) {
+      // losse tussenwerpsels ("ja", "nee", "oké") hebben een vaste vertaling
+      if (arr.length === 1 && INTERJ[lc(arr[0])] && INTERJ[lc(arr[0])][to]) return cap(INTERJ[lc(arr[0])][to]) + ".";
+      var r = one(mk(arr, last)); return r ? String(r) : null;
+    }
+    var outs = [], lastClause = null, lastOutRaw = null;
+    for (var i = 0; i < segs.length; i++) {
+      var sg = segs[i], isLast = i === segs.length - 1, res = null, used = null, how = "full";
+      var cands = [];
+      var src = sg.tk.map(function (w, k) { return k === 0 && !/^[A-ZÄÖÜ]/.test(w) ? w : w; });
+      var hasSubj = (PRON[from] && (isIn(PRON[from], src[0]) || isIn(DET[from], src[0]) || /^[A-ZÄÖÜÉ]/.test(src[0]) || (src.length > 2 && (isIn(PRON[from], src[1]) || isIn(PRON[from], src[2])))));
+      if (sg.role === "sub" && (from === "nl" || from === "de")) subToMain(src, from).forEach(function (c) { cands.push({ tk: c, how: "full" }); });
+      else if (sg.role === "inv" || (sg.role === "afterSub" && (from === "nl" || from === "de"))) {
+        var di = deInvert(src, from);
+        if (di) cands.push({ tk: di, how: "full" });
+        cands.push({ tk: src, how: "full" });
+      } else if (from === "es" || hasSubj || !lastClause || sg.role === "sub") cands.push({ tk: src, how: "full" });
+      if (lastClause && !(sg.role === "sub" && (from === "nl" || from === "de")) && sg.role !== "afterSub" && /^(and|or|but|then|comma)$/.test(sg.key)) {
+        var sl = subjLen(lastClause, from);
+        if (from !== "es" && !hasSubj && sl) cands.push({ tk: lastClause.slice(0, sl).concat(src.map(function (w, k) { return k === 0 ? lc(w) : w; })), how: "elided", n: sl });
+        var lijst = sg.key !== "comma" || sel.some(function (pp) { return pp.i0 > sg.at && /^(and|or)$/.test(pp.key); });
+        if (/^(and|or|but|comma)$/.test(sg.key) && lijst) {
+          for (var L = lastClause.length - 1; L >= 1; L--) cands.push({ tk: lastClause.slice(0, L).concat(src), how: "gap" });
+        }
+        if (from !== "es" && !hasSubj && !sl) cands.push({ tk: src, how: "full" });
+      }
+      var polDone = false;
+      if (isLast && polSrc) {
+        for (var cp = 0; cp < cands.length && !res; cp++) {
+          if (cands[cp].how !== "full") continue;
+          var trp = one(cap(cands[cp].tk.join(" ")) + ", " + polSrc + (q ? "?" : "."));
+          if (trp && BELEEFD[to] && BELEEFD[to].test(stripPunct(trp))) { res = String(trp); used = cands[cp]; polDone = true; }
+        }
+      }
+      var nextKey = i + 1 < segs.length ? segs[i + 1].key : null;
+      if (nextKey === "that") { var dl = denkLees(src, from); if (dl) { res = denkUit(dl, to) + "."; used = { tk: src, how: "denk" }; } }
+      for (var c = 0; c < cands.length && !res; c++) {
+        var tr = tryT(cands[c].tk, isLast);
+        if (tr) { res = tr; used = cands[c]; }
+      }
+      if (!res) return null;
+      var raw = res, o = stripPunct(res);
+      if (used.how === "full" || used.how === "denk") { lastClause = used.tk; lastOutRaw = o; }
+      if (used.how === "elided" && i > 0) {
+        var ow = words(o), pw = words(lastOutRaw || "");
+        if (ow.length > 1 && pw.length && lc(ow[0]) === lc(pw[0]) && (isIn(PRON[to] || [], ow[0]) || /^(él|ella)$/i.test(ow[0]))) o = ow.slice(1).join(" ");
+        o = lowFirst(o, to);
+      }
+      // Spaanse bron laat het onderwerp weg; in de doeltaal dubbel onderwerp weghalen bij "en"/"of": "I get off the bus and walk home"
+      if (used.how === "full" && i > 0 && from === "es" && /^(and|or|then)$/.test(sg.key) && outs.length && outs[outs.length - 1].how !== "gap") {
+        var pw2 = words(outs[outs.length - 1].firstRaw || ""), ow2 = words(o);
+        if (to !== "es" && ow2.length > 1 && pw2.length && lc(ow2[0]) === lc(pw2[0]) && isIn(PRON[to] || [], ow2[0]) && !((to === "nl" || to === "de") && sg.key === "then")
+            && !(to === "fr" && (sg.key === "then" || /^(me|m'|te|t'|se|s'|nous|vous|le|la|les|l'|lui|leur|y|en|ne|n')/.test(lc(ow2[1]))))) { o = ow2.slice(1).join(" "); used = { how: "elided", tk: used.tk }; }
+      }
+      if (used.how === "gap") {
+        var aw = words(stripPunct(lastOutRaw || "")), bw = words(o), k2 = 0;
+        while (k2 < aw.length && k2 < bw.length - 1 && aw[k2] === bw[k2]) k2++;
+        // lidwoorden en voorzetsels horen bij het nieuwe deel: "du pain et du fromage", "naar Madrid en naar Barcelona" niet, wel "et du fromage"
+        while (k2 > 0 && GAP_KEEP[to] && GAP_KEEP[to].test(lc(aw[k2 - 1]))) k2--;
+        if (!k2) return null;
+        o = bw.slice(k2).join(" ");
+      }
+      outs.push({ o: o, sg: sg, how: used.how, src: sg.tk, firstRaw: stripPunct(raw), polDone: polDone });
+    }
+    // aan elkaar zetten
+    var res2 = "";
+    for (var j = 0; j < outs.length; j++) {
+      var it = outs[j], o2 = it.o, key = it.sg.key;
+      if (j > 0 && it.how === "full") {
+        var srcLow = !/^[A-ZÄÖÜÉ]/.test(it.src[0]) || (from === "en" && it.src[0] === "I");
+        if (srcLow && !(to === "en" && /^I\b/.test(o2))) o2 = o2.charAt(0).toLowerCase() + o2.slice(1);
+      }
+      if ((to === "nl" || to === "de") && it.how === "full") {
+        if (it.sg.leadSub || (key && SUB_OUT[key] && it.sg.role !== "afterSub")) { o2 = subOut(o2, to); if (!o2) return null; }
+        else if (it.sg.role === "afterSub" || INV_OUT[key]) { o2 = invertOut(o2, to); if (!o2) return null; }
+      }
+      if (j === 0) {
+        if (it.sg.leadSub) { res2 = conjWord(it.sg.key, to, o2) + " " + (o2.charAt(0).toLowerCase() === o2.charAt(0) || to === "de" ? o2 : lowFirst(o2, to)); }
+        else res2 = o2;
+        continue;
+      }
+      if (key === "comma") { res2 += ", " + o2; continue; }
+      var cw = conjWord(key, to, o2);
+      if (cw === "") { res2 += (to === "de" ? ", " : " ") + o2; continue; }
+      var comma = (it.sg.comma && /^(but|so|comma)$/.test(key)) || (it.sg.comma && to === from) || (to === "de" && !/^(and|or|then)$/.test(key) && it.how === "full");
+      res2 += (comma ? ", " : " ") + cw + (/'$/.test(cw) ? "" : " ") + o2;
+    }
+    if (to === "fr") res2 = res2.replace(/\bparce que (?=[aeiouéh])/gi, "parce qu'").replace(/\bsi il(s?)\b/g, "s'il$1").replace(/ de le /g, " du ");
+    if (to === "es") res2 = res2.replace(/\by (?=h?i[^aeou])/gi, "e ").replace(/\bo (?=h?o)/gi, "u ");
+    if (polSrc && !(outs.length && outs[outs.length - 1].polDone)) res2 += ", " + BELEEFD_OUT[to];
+    if (to === "nl" && typeof ES_NL !== "undefined" && ES_NL.nazorg) res2 = ES_NL.nazorg(res2);
+    res2 = cap(res2);
+    if (q) { res2 = to === "fr" ? res2 + " ?" : res2 + "?"; if (to === "es" && res2.charAt(0) !== "¿") res2 = "¿" + res2; }
+    else res2 += ".";
+    return res2;
+  }
+  function lowFirst(o, lang) {
+    var w = o.split(" ")[0];
+    if (lang === "en" && /^I('|$)/.test(w)) return o;
+    return o.charAt(0).toLowerCase() + o.slice(1);
+  }
+  function conjWord(key, to, next) {
+    var w = OUT[key][to];
+    if (to === "fr" && w === "parce que" && /^[aeiouéh]/i.test(next)) return "parce qu'";
+    if (to === "fr" && w === "que" && /^[aeiouéh]/i.test(next)) return "qu'";
+    return w;
+  }
+  function hasSplit(text, from) {
+    if (!CONJ[from]) return false;
+    if (/[.!?…]\s+[¿¡]?[A-ZÁÉÍÓÚÑÄÖÜ]/.test(String(text || "").trim())) return true;
+    var tk = tokens(String(text || "").replace(/[.!?…]+\s*$/, "").replace(/^[¿¡]/, ""));
+    return splitPoints(tk, from).length > 0 || !!leadConj(tk, from) || !!(BELEEFD[from] && BELEEFD[from].test(tk.join(" ").replace(/ ,/g, ",")));
+  }
+  // Waar de gewone vertaler een samengestelde zin zelf niet goed doet (Nederlands <-> Spaans), gaat dit systeem voor.
+  function first(from, to) { return from === "nl" || (from === "es" && to === "nl"); }
+  return { compound: compound, hasSplit: hasSplit, first: first };
+})();
+ZIN.compound = ZINDELEN.compound;
+ZIN.hasSplit = ZINDELEN.hasSplit;
+ZIN.compoundFirst = ZINDELEN.first;
