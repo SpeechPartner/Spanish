@@ -1161,13 +1161,22 @@
     try { r = ZIN.compound(text, from, to, function (s) { var x = base(s); return x && x.text && !x.about && !x.unsupported ? x.text : null; }); } catch (e) { r = null; }
     return r ? { text: capSent(r), grammar: true, parts: [], missing: [], delen: true } : null;
   }
+  // Situatieboek (js/sit.js): een zin die precies in het boek staat, krijgt de vertaling uit het boek
+  function sitDoel() { return (typeof IS_ES !== "undefined" && IS_ES) || typeof DOELC === "undefined" ? "es" : DOELC; }
+  function sitVertaal(text, from, to) {
+    if (typeof SIT === "undefined") return null;
+    var v = SIT.vertaal(text, from, to);
+    return v ? { text: v, grammar: true, parts: [], missing: [], whole: true, sit: true } : null;
+  }
+  function translateOneSit(text) { return sitVertaal(text, lang, sitDoel()) || translateOneBase(text); }
+  function esToLangSit(text) { return sitVertaal(text, sitDoel(), lang) || esToLangBase(text); }
   function translateOne(text) {
-    var r = translateOneBase(text);
+    var r = translateOneSit(text);
     if (r && r.whole) return r;
     var from = lang, to = "es";
-    if (ZIN_FIRST(from, to)) { var d0 = viaDelen(text, from, to, translateOneBase); if (d0) return d0; }
+    if (ZIN_FIRST(from, to)) { var d0 = viaDelen(text, from, to, translateOneSit); if (d0) return d0; }
     if (r && r.text) return r;
-    return viaDelen(text, from, to, translateOneBase) || r;
+    return viaDelen(text, from, to, translateOneSit) || r;
   }
   function translateOneBase(text) {
     var t = clean(text);
@@ -1196,6 +1205,8 @@
   // Meerdere zinnen in één vak: elke zin apart vertalen en de uitkomst op volgorde samenvoegen.
   function translateText(text) {
     var raw = String(text || "").trim();
+    var sv = sitVertaal(raw, lang, sitDoel());
+    if (sv) return sv;
     var parts = raw.replace(/([.!?…]+)\s+/g, "$1\u0001").split("\u0001").map(function (x) { return x.trim(); }).filter(function (x) { return clean(x); });
     if (parts.length < 2) return translateOne(text);
     var res = parts.map(function (p) { var r = translateOne(p); return r ? { src: p, text: r.text || null, parts: r.parts || [], missing: r.missing || [] } : { src: p, text: null, parts: [], missing: [] }; });
@@ -1391,12 +1402,12 @@
     return REV_NORM[lang];
   }
   function esToLang(text) {
-    var r = esToLangBase(text);
+    var r = esToLangSit(text);
     if (r && r.text && (r.learned || (r.whole && !r.about))) return r;
     var from = "es", to = lang;
-    if (ZIN_FIRST(from, to)) { var d0 = viaDelen(text, from, to, esToLangBase); if (d0) return d0; }
+    if (ZIN_FIRST(from, to)) { var d0 = viaDelen(text, from, to, esToLangSit); if (d0) return d0; }
     if (r && r.text && !r.about) return r;
-    return viaDelen(text, from, to, esToLangBase) || r;
+    return viaDelen(text, from, to, esToLangSit) || r;
   }
   function esToLangBase(text) {
     var t = clean(text), n = norm(text);
@@ -1666,8 +1677,29 @@
     });
     return out.join("");
   }
+  // Keuzevraag ("¿Efectivo o tarjeta?", "Bar oder mit Karte?"): beide keuzes als antwoord
+  var KEUZE = { es: [/^(.+?)\s+(?:o|u)\s+(.+)$/i, "por favor"], de: [/^(.+?)\s+oder\s+(.+)$/i, "bitte"], fr: [/^(.+?)\s+ou\s+(.+)$/i, "s'il vous plaît"],
+    en: [/^(.+?)\s+or\s+(.+)$/i, "please"], nl: [/^(.+?)\s+of\s+(.+)$/i, "graag"] };
+  function keuzeAntwoorden(text) {
+    var t = String(text || "").trim();
+    if (!/\?\s*$/.test(t)) return [];
+    var k = KEUZE[sitDoel()];
+    if (!k) return [];
+    var m = k[0].exec(t.replace(/^[¿¡]\s*/, "").replace(/\s*\?\s*$/, ""));
+    if (!m) return [];
+    var a = m[1].trim(), b = m[2].trim();
+    // Alleen korte keuzes (geen hele zinnen) en geen vraagwoord ervoor
+    if (a.split(/\s+/).length > 4 || b.split(/\s+/).length > 4) return [];
+    if (/^(wo|was|wie|wann|welche|where|what|how|which|when|où|que|quel|quelle|comment|quand|dónde|qué|cómo|cuál|cuándo|waar|wat|hoe|welke|wanneer)\b/i.test(a)) return [];
+    function cap(x) { return x.charAt(0).toUpperCase() + x.slice(1); }
+    return [cap(a) + ", " + k[1] + ".", cap(b) + ", " + k[1] + "."];
+  }
   function makeTurn(text) {
+    var text0 = text;
     text = heardFix(text);
+    // Een zin die precies zo in het situatieboek staat, niet 'verbeteren' als herkenningsfout ("klantnummer")
+    if (typeof SIT !== "undefined" && text !== text0 && SIT.vertaal(text0, sitDoel(), sitDoel() === "nl" ? "en" : "nl") && !SIT.vertaal(text, sitDoel(), sitDoel() === "nl" ? "en" : "nl")) text = String(text0).trim();
+    if (typeof SIT !== "undefined") SIT.zet(text, sitDoel());
     var n = norm(text);
     var genDetected = detectPartnerGender(text);
     if (genDetected) store.set("partnerGenderAuto", genDetected);
@@ -1687,7 +1719,8 @@
         fu = qr.questions.map(function (x) { return { label: UI["Vraag door"], es: x.es, m: x.m }; });
       } else {
         var sr = stateReplies(text);
-        var tr = sr || (tp ? topicReplies(tp, false) : null);
+        // Een onderwerp-reactie ("¡Qué bien! Me gusta …") alleen als de ander zegt wat hij leuk vindt
+        var tr = sr || (tp && /\b(me gusta|me gustan|me encanta|me encantan|me interesa|prefiero|soy fan)\b/i.test(text) ? topicReplies(tp, false) : null);
         if (tr) {
           replies.push({ label: ANS, es: tr.answer.es, m: tr.answer.m });
           fu = tr.questions.map(function (x) { return { label: UI["Vraag door"], es: x.es, m: x.m }; });
@@ -1700,9 +1733,20 @@
         }
       }
     }
+    // Situatieboek: wat in het gesprek volgt op deze zin gaat voor; de algemene antwoorden vervallen dan
+    var sitA = (typeof SIT !== "undefined") ? SIT.antwoorden(text, sitDoel()) : [];
+    var sitOpts = sitA.map(function (a) { return { label: ANS, es: a.doel, m: a.m, sit: true }; });
+    if (sitOpts.length) {
+      var eigen = replies.filter(function (o) { return o.label === UI["Mijn antwoord"]; });
+      replies = eigen.concat(sitOpts, (react || tk) ? replies.filter(function (o) { return o.label !== UI["Mijn antwoord"]; }) : []);
+      fu = [];
+    } else if (!react && !tk) {
+      var kz = keuzeAntwoorden(text);
+      if (kz.length) { replies = replies.filter(function (o) { return o.label === UI["Mijn antwoord"]; }).concat(kz.map(function (x) { return { label: ANS, es: x, m: null }; })); fu = []; }
+    }
     var opts = replies.concat(fu).map(function (o) {
       // Eigen opgeslagen antwoorden blijven precies zoals de gebruiker ze schreef
-      return o.label === UI["Mijn antwoord"] ? o : { label: o.label, es: genderEs(o.es), m: o.m };
+      return (o.label === UI["Mijn antwoord"] || o.sit) ? o : { label: o.label, es: genderEs(o.es), m: o.m };
     });
     return { es: text.trim(), tr: esToLang(text), options: opts, gen: genDetected };
   }
@@ -1814,7 +1858,7 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "3.2";
+  var APP_VERSION = "3.3";
   // Versies waarvoor gebruikers de app opnieuw op hun beginscherm moeten zetten (oude icoon weg, nieuwe erop).
   // Bij zo'n update verschijnt eenmalig een melding met uitleg.
   var REINSTALL_VERSIONS = ["1.8"];
@@ -2506,12 +2550,22 @@
     // Komt de getypte zin overeen met een snel antwoord bij de laatste beurt? Dan dat antwoord ("Heel goed, en met jou?" = "Muy bien, ¿y tú?")
     var lastP = null;
     for (var li = S.convo.length - 1; li >= 0; li--) { if (!S.convo[li].me) { lastP = S.convo[li]; break; } }
-    if (lastP && lastP.options) {
+    // Eerst de voorstellen uit het situatieboek, dan het boek zelf, dan de overige voorstellen
+    var bijOptie = function (alleenBoek) {
+      if (!lastP || !lastP.options) return false;
       for (var oi = 0; oi < lastP.options.length; oi++) {
         var o = lastP.options[oi];
-        if (o.m && clean(L(o.m)) === clean(raw)) { S.convo.push({ me: true, es: o.es, src: raw }); S.note = ""; speak(o.es); return true; }
+        if (alleenBoek && !o.sit) continue;
+        if (o.m && clean(L(o.m)) === clean(raw)) { if (typeof SIT !== "undefined") SIT.zet(o.es, sitDoel()); S.convo.push({ me: true, es: o.es, src: raw }); S.note = ""; speak(o.es); return true; }
       }
+      return false;
+    };
+    if (bijOptie(true)) return true;
+    if (typeof SIT !== "undefined" && SIT.zet(raw, lang)) {
+      var sv = sitVertaal(raw, lang, sitDoel());
+      if (sv) { S.convo.push({ me: true, es: sv.text, src: raw, missing: [] }); S.note = ""; speak(sv.text); return true; }
     }
+    if (bijOptie(false)) return true;
     var r = translateText(raw);
     if (!r || !r.text) {
       S.note = (r && r.missing && r.missing.length)
@@ -2527,6 +2581,7 @@
   // Een snel antwoord kiezen: het wordt jouw beurt en wordt uitgesproken
   function gZeg(t, o) {
     if (t && t.help) { pickHelp(t, o); return; }
+    if (typeof SIT !== "undefined") SIT.zet(o.es, sitDoel());
     S.convo.push({ me: true, es: o.es, m: o.m });
     S.note = "";
     speak(o.es);
@@ -2541,7 +2596,7 @@
       var rm = esToLang(t.es);
       return rm && rm.text ? rm.text : "";
     }
-    var trr = t.fixedM ? { text: L(t.fixedM) } : (esToLang(t.es) || t.tr || {});
+    var trr = t.fixedM ? { text: L(t.fixedM) } : ((t.tr && t.tr.sit) ? t.tr : (esToLang(t.es) || t.tr || {}));
     return trr.text || "";
   }
 
@@ -2571,7 +2626,7 @@
   function viewChat() {
     var w = el("div", "chat");
     var top = el("div", "chips chat-top");
-    if (S.convo.length) top.appendChild(btn(T("Wis gesprek"), "small", function () { S.convo = []; S.chatStartTurn = null; S.note = ""; S.gDetail = null; render(); }));
+    if (S.convo.length) top.appendChild(btn(T("Wis gesprek"), "small", function () { S.convo = []; if (typeof SIT !== "undefined") SIT.wis(); S.chatStartTurn = null; S.note = ""; S.gDetail = null; render(); }));
     if (top.childNodes.length) w.appendChild(top);
 
     var list = el("div", "chat-list");
@@ -2607,7 +2662,8 @@
         var c = el("button", "snel");
         c.type = "button";
         c.appendChild(el("span", "snel-es", o.es));
-        if (o.m) c.appendChild(el("span", "snel-tr", L(o.m)));
+        var otr = o.m ? L(o.m) : ((esToLang(o.es) || {}).text || "");
+        if (otr) c.appendChild(el("span", "snel-tr", otr));
         c.onclick = function () { gZeg(last, o); };
         rij.appendChild(c);
       });
@@ -2708,7 +2764,7 @@
     line.appendChild(speakBtn(t.es));
     sh.appendChild(line);
     sh.appendChild(el("div", "nl", T("Vertaling")));
-    var trr = t.me ? { text: gVertaling(t) } : (t.fixedM ? { text: L(t.fixedM) } : (esToLang(t.es) || t.tr || {}));
+    var trr = t.me ? { text: gVertaling(t) } : (t.fixedM ? { text: L(t.fixedM) } : ((t.tr && t.tr.sit) ? t.tr : (esToLang(t.es) || t.tr || {})));
     if (trr.text) sh.appendChild(el("div", "sentence-tr", trr.text));
     else sh.appendChild(el("div", "note", T("Nog geen volledige zinsvertaling. Tik op Verbeter vertaling om er een toe te voegen.")));
     var pgl = glossBlock(t.es); if (pgl) sh.appendChild(pgl);
