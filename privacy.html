@@ -6,84 +6,157 @@
 <title>Privacy · SpeechPartner.Spanish</title>
 <style>
   body { font-family: system-ui, -apple-system, Segoe UI, sans-serif; max-width: 680px; margin: 0 auto; padding: 24px 18px 48px; line-height: 1.55; color: #161616; background: #fff; }
-  h1 { font-size: 1.5rem; margin-bottom: .2rem; }
+  h1 { font-size: 1.5rem; margin: 0 56px .2rem 0; }
   h2 { font-size: 1.1rem; margin-top: 1.6rem; }
   .small { color: #555; font-size: .9rem; }
-  .en { border-top: 1px solid #ddd; margin-top: 2.5rem; padding-top: 1rem; }
+  .talen { font-size: .95rem; margin: 0 56px 1.2rem 0; }
+  .talen a.nu { font-weight: 700; color: #161616; text-decoration: none; }
+  .taal + .taal { border-top: 1px solid #ddd; margin-top: 2.5rem; padding-top: 1rem; }
+  .verberg { display: none; }
   a { color: #1a4fa0; }
 </style>
 </head>
 <body>
 <button id="closeBtn" type="button" aria-label="Sluiten" style="position:fixed;top:12px;right:12px;width:44px;height:44px;border-radius:12px;border:3px solid #161616;background:#AE1C28;color:#fff;font-size:24px;font-weight:900;box-shadow:3px 3px 0 #161616;cursor:pointer;z-index:10">&times;</button>
 <script>document.getElementById("closeBtn").onclick=function(){if(history.length>1){history.back();}else{location.href="./";}};</script>
-
+<nav class="talen"><a href="#nl" data-l="nl">Nederlands</a> · <a href="#en" data-l="en">English</a> · <a href="#de" data-l="de">Deutsch</a> · <a href="#fr" data-l="fr">Français</a></nav>
+<section class="taal" id="nl" lang="nl">
 <h1>Privacyverklaring</h1>
-<p class="small">SpeechPartner.Spanish · versie 3.1 · laatst bijgewerkt november 2026</p>
-
+<p class="small">SpeechPartner.Spanish · versie 3.2 · laatst bijgewerkt november 2026</p>
 <h2>Kort samengevat</h2>
-<p>De app heeft geen account, geen advertenties en geen analytics. We ontvangen niets van jou. Je voortgang en instellingen blijven op je eigen toestel.</p>
-
+<p>De app heeft geen account, geen advertenties en geen analytics. Wij ontvangen niets van jou. Je voortgang en instellingen blijven op je eigen toestel.</p>
 <h2>Wat er op je toestel wordt opgeslagen</h2>
-<p>De app bewaart in de opslag van je browser (localStorage): je gekozen taal en thema, je voortgang, de zinnen die je als begrepen hebt aangemerkt en eventuele instellingen zoals de stem en de snelheid van voorlezen. Deze gegevens verlaten je toestel niet.</p>
-<p>Je wist ze zelf via Instellingen met "Voortgang resetten" of "Begrepen items resetten", of door de websitegegevens van de app in Safari te verwijderen.</p>
-
-<h2>Spraak</h2>
-<p><strong>Spraakherkenning op de iPhone.</strong> De app gebruikt het Whisper-model van OpenAI. Dit model draait in je browser. Je opname wordt op je toestel omgezet in tekst en wordt niet naar een server van ons gestuurd.</p>
-<p>Het model en de bijbehorende software worden één keer gedownload. Daarbij ontvangen de servers van Hugging Face en jsDelivr je IP-adres, zoals bij elk bestand dat van internet wordt gehaald.</p>
-<p>De natuurlijke stem (Piper) wordt ook één keer gedownload, van Hugging Face. Daarna spreekt de app op je toestel, zonder internet.</p>
-<p>Een vrijwillige donatie in de webshop loopt via PayPal, een externe betaaldienst. PayPal verwerkt de betaalgegevens; de app ontvangt daar niets van.</p>
-<p><strong>Spraakherkenning in andere browsers.</strong> Waar de browser zelf spraakherkenning aanbiedt, kan die opname volgens het beleid van de browser- of systeemaanbieder (zoals Google of Apple) worden verwerkt. Dat is niet in onze hand.</p>
-
+<p>De app bewaart in de opslag van je browser (localStorage):</p>
+<ul><li>je gekozen taal en thema, en je instellingen zoals de stem, de voorleessnelheid, je eigen geslacht en dat van je gesprekspartner;</li><li>je voortgang en de zinnen die je als begrepen of gekend hebt aangemerkt;</li><li>de woorden, zinnen en antwoorden die je de app zelf aanleert;</li><li>het logboek van de uitspraaktrainer: alleen de oefening, het aantal sterren en het tijdstip, geen geluid.</li></ul>
+<p>Daarnaast bewaart de browser de bestanden van de app, en als je die downloadt het spraakmodel en de natuurlijke stem, zodat de app ook zonder internet werkt.</p>
+<p>Deze gegevens verlaten je toestel niet. Je wist ze via Instellingen (Voortgang resetten, Begrepen items resetten, Wis voortgang uitspraak) of door de websitegegevens van de app in je browser te verwijderen.</p>
+<h2>Gesprek en tolkmodus</h2>
+<p>Wat er in Gesprek en in de tolkmodus gezegd of getypt wordt, staat alleen in het geheugen van de geopende pagina. Het wordt niet opgeslagen en verdwijnt met Wis gesprek of als je de app sluit.</p>
+<p>De vertalingen maakt de app zelf, op je toestel. Er gaat geen tekst naar een vertaaldienst.</p>
+<h2>Microfoon en spraakherkenning</h2>
+<p>De microfoon staat alleen aan nadat je op een opneemknop tikt, en gaat uit als je op Stop tikt. In de tolkmodus en bij Ik zeg wordt ook jouw eigen taal herkend, op dezelfde manier als de taal van je gesprekspartner.</p>
+<p>Op de iPhone gebruikt de app het Whisper-model van OpenAI. Dit model draait in je browser: je opname wordt op je toestel omgezet in tekst en wordt niet naar een server gestuurd. Het model en de bijbehorende software worden één keer gedownload, alleen met jouw toestemming. Daarbij ontvangen de servers van Hugging Face en jsDelivr je IP-adres, zoals bij elk bestand dat van internet wordt gehaald.</p>
+<p>In andere browsers gebruikt de app de spraakherkenning van de browser zelf. Die opname kan volgens het beleid van de browser- of systeemaanbieder (zoals Google of Apple) worden verwerkt. Dat is niet in onze hand.</p>
+<h2>Voorlezen</h2>
+<p>De natuurlijke stem (Piper) wordt één keer gedownload van Hugging Face. Daarna spreekt de app op je toestel, zonder internet. Anders, en in de tolkmodus voor jouw eigen taal, gebruikt de app de ingebouwde stem van je toestel.</p>
+<h2>Vrijwillige donatie</h2>
+<p>Een vrijwillige donatie in de webshop loopt via PayPal, een externe betaaldienst. PayPal verwerkt de betaalgegevens volgens het eigen privacybeleid; de app ontvangt daar niets van.</p>
 <h2>Externe links</h2>
-<p>De knop om een zin te laten vertalen opent Google Translate in een nieuw tabblad, met de tekst die je wilt vertalen. Dan gelden de voorwaarden en het privacybeleid van Google.</p>
-
+<p>De knoppen om een zin online te laten vertalen of te controleren openen Google Translate in een nieuw tabblad, met de tekst die je wilt vertalen. Dan gelden de voorwaarden en het privacybeleid van Google.</p>
 <h2>Hosting</h2>
 <p>De app wordt gehost op GitHub Pages. GitHub kan technische gegevens zoals IP-adressen in logboeken bewaren volgens het eigen privacybeleid van GitHub.</p>
-
 <h2>Wat we niet doen</h2>
-<ul>
-  <li>We verzamelen geen persoonsgegevens.</li>
-  <li>We gebruiken geen cookies voor volgen of advertenties.</li>
-  <li>We delen niets met derden.</li>
-</ul>
-
+<ul><li>We verzamelen geen persoonsgegevens.</li><li>We gebruiken geen cookies voor volgen of advertenties.</li><li>De app stuurt zelf niets naar derden. Alleen bij de downloads, links en de donatie hierboven heb je rechtstreeks contact met die partijen.</li></ul>
 <h2>Vragen</h2>
 <p>Heb je een vraag over deze verklaring? Neem contact op via de GitHub-repository van de app.</p>
+</section>
 
-<div class="en">
+<section class="taal" id="en" lang="en">
 <h1>Privacy statement</h1>
-<p class="small">SpeechPartner.Spanish · version 2.37 · last updated November 2026</p>
-
+<p class="small">SpeechPartner.Spanish · version 3.2 · last updated November 2026</p>
 <h2>In short</h2>
 <p>The app has no account, no ads and no analytics. We receive nothing from you. Your progress and settings stay on your own device.</p>
-
 <h2>What is stored on your device</h2>
-<p>The app stores in your browser storage (localStorage): your chosen language and theme, your progress, the sentences you have marked as understood, and settings such as the voice and the reading speed. This data does not leave your device.</p>
-<p>You can delete it yourself in Settings with "Reset progress" or "Reset understood items", or by clearing the website data for the app in Safari.</p>
-
-<h2>Speech</h2>
-<p><strong>Speech recognition on iPhone.</strong> The app uses OpenAI's Whisper model, which runs in your browser. Your recording is turned into text on your device and is not sent to a server of ours.</p>
-<p>The model and its software are downloaded once. During that download, the servers of Hugging Face and jsDelivr receive your IP address, as with any file fetched from the internet.</p>
-<p>The natural voice (Piper) is also downloaded once, from Hugging Face. After that the app speaks on your device, without internet.</p>
-<p>An optional donation in the webshop goes through PayPal, an external payment provider. PayPal processes the payment details; the app receives nothing from it.</p>
-<p><strong>Speech recognition in other browsers.</strong> Where the browser offers its own speech recognition, the recording may be processed under the policy of the browser or system provider (such as Google or Apple). We cannot control that.</p>
-
+<p>The app stores in your browser storage (localStorage):</p>
+<ul><li>your chosen language and theme, and settings such as the voice, the reading speed, your own gender and your partner's;</li><li>your progress and the sentences you have marked as understood or known;</li><li>the words, sentences and answers you teach the app yourself;</li><li>the pronunciation trainer's log: only the exercise, the number of stars and the time, no audio.</li></ul>
+<p>The browser also keeps the app's files and, if you download them, the speech model and the natural voice, so the app also works without internet.</p>
+<p>This data does not leave your device. You can delete it in Settings (Reset progress, Reset understood items, Clear pronunciation progress) or by clearing the app's website data in your browser.</p>
+<h2>Conversation and interpreter mode</h2>
+<p>What is said or typed in Conversation and in interpreter mode is only kept in the memory of the open page. It is not stored and disappears with Clear conversation or when you close the app.</p>
+<p>The app makes the translations itself, on your device. No text is sent to a translation service.</p>
+<h2>Microphone and speech recognition</h2>
+<p>The microphone is only on after you tap a record button, and goes off when you tap Stop. In interpreter mode and with I say, your own language is also recognised, in the same way as your partner's language.</p>
+<p>On iPhone the app uses OpenAI's Whisper model, which runs in your browser: your recording is turned into text on your device and is not sent to a server. The model and its software are downloaded once, only with your permission. During that download, the servers of Hugging Face and jsDelivr receive your IP address, as with any file fetched from the internet.</p>
+<p>In other browsers the app uses the browser's own speech recognition. That recording may be processed under the policy of the browser or system provider (such as Google or Apple). We cannot control that.</p>
+<h2>Reading aloud</h2>
+<p>The natural voice (Piper) is downloaded once from Hugging Face. After that the app speaks on your device, without internet. Otherwise, and in interpreter mode for your own language, the app uses your device's built-in voice.</p>
+<h2>Optional donation</h2>
+<p>An optional donation in the webshop goes through PayPal, an external payment provider. PayPal processes the payment details under its own privacy policy; the app receives nothing from it.</p>
 <h2>External links</h2>
-<p>The button to translate a sentence opens Google Translate in a new tab, with the text you want translated. Google's terms and privacy policy then apply.</p>
-
+<p>The buttons to translate or check a sentence online open Google Translate in a new tab, with the text you want translated. Google's terms and privacy policy then apply.</p>
 <h2>Hosting</h2>
 <p>The app is hosted on GitHub Pages. GitHub may keep technical data such as IP addresses in logs, under its own privacy policy.</p>
-
 <h2>What we do not do</h2>
-<ul>
-  <li>We do not collect personal data.</li>
-  <li>We do not use cookies for tracking or advertising.</li>
-  <li>We do not share anything with third parties.</li>
-</ul>
-
+<ul><li>We do not collect personal data.</li><li>We do not use cookies for tracking or advertising.</li><li>The app itself sends nothing to third parties. Only with the downloads, links and the donation above are you in direct contact with those parties.</li></ul>
 <h2>Questions</h2>
 <p>Do you have a question about this statement? Contact us through the app's GitHub repository.</p>
-</div>
+</section>
 
+<section class="taal" id="de" lang="de">
+<h1>Datenschutzerklärung</h1>
+<p class="small">SpeechPartner.Spanish · Version 3.2 · zuletzt aktualisiert im November 2026</p>
+<h2>Kurz gesagt</h2>
+<p>Die App hat kein Konto, keine Werbung und keine Analyse. Wir erhalten nichts von dir. Dein Fortschritt und deine Einstellungen bleiben auf deinem eigenen Gerät.</p>
+<h2>Was auf deinem Gerät gespeichert wird</h2>
+<p>Die App speichert im Speicher deines Browsers (localStorage):</p>
+<ul><li>deine gewählte Sprache und dein Design sowie Einstellungen wie die Stimme, die Vorlesegeschwindigkeit, dein eigenes Geschlecht und das deines Gesprächspartners;</li><li>deinen Fortschritt und die Sätze, die du als verstanden oder gekonnt markiert hast;</li><li>die Wörter, Sätze und Antworten, die du der App selbst beibringst;</li><li>das Protokoll des Aussprachetrainers: nur die Übung, die Anzahl der Sterne und die Uhrzeit, kein Ton.</li></ul>
+<p>Außerdem speichert der Browser die Dateien der App und, wenn du sie herunterlädst, das Sprachmodell und die natürliche Stimme, damit die App auch ohne Internet funktioniert.</p>
+<p>Diese Daten verlassen dein Gerät nicht. Du löschst sie in den Einstellungen (Fortschritt zurücksetzen, Verstandene zurücksetzen, Aussprache-Fortschritt löschen) oder indem du die Websitedaten der App in deinem Browser löschst.</p>
+<h2>Gespräch und Dolmetschmodus</h2>
+<p>Was im Gespräch und im Dolmetschmodus gesagt oder getippt wird, steht nur im Speicher der geöffneten Seite. Es wird nicht gespeichert und verschwindet mit Gespräch leeren oder wenn du die App schließt.</p>
+<p>Die Übersetzungen macht die App selbst, auf deinem Gerät. Es wird kein Text an einen Übersetzungsdienst gesendet.</p>
+<h2>Mikrofon und Spracherkennung</h2>
+<p>Das Mikrofon ist nur an, nachdem du auf einen Aufnahmeknopf tippst, und geht aus, wenn du auf Stopp tippst. Im Dolmetschmodus und bei Ich sage wird auch deine eigene Sprache erkannt, genauso wie die Sprache deines Gesprächspartners.</p>
+<p>Auf dem iPhone nutzt die App das Whisper-Modell von OpenAI. Dieses Modell läuft in deinem Browser: Deine Aufnahme wird auf deinem Gerät in Text umgewandelt und nicht an einen Server gesendet. Das Modell und die zugehörige Software werden einmal heruntergeladen, nur mit deiner Zustimmung. Dabei erhalten die Server von Hugging Face und jsDelivr deine IP-Adresse, wie bei jeder Datei aus dem Internet.</p>
+<p>In anderen Browsern nutzt die App die Spracherkennung des Browsers selbst. Diese Aufnahme kann nach den Richtlinien des Browser- oder Systemanbieters (zum Beispiel Google oder Apple) verarbeitet werden. Darauf haben wir keinen Einfluss.</p>
+<h2>Vorlesen</h2>
+<p>Die natürliche Stimme (Piper) wird einmal von Hugging Face heruntergeladen. Danach spricht die App auf deinem Gerät, ohne Internet. Sonst, und im Dolmetschmodus für deine eigene Sprache, nutzt die App die eingebaute Stimme deines Geräts.</p>
+<h2>Freiwillige Spende</h2>
+<p>Eine freiwillige Spende im Webshop läuft über PayPal, einen externen Zahlungsdienst. PayPal verarbeitet die Zahlungsdaten nach eigenen Datenschutzrichtlinien; die App erhält davon nichts.</p>
+<h2>Externe Links</h2>
+<p>Die Knöpfe, um einen Satz online übersetzen oder prüfen zu lassen, öffnen Google Übersetzer in einem neuen Tab, mit dem Text, den du übersetzen willst. Dann gelten die Bedingungen und die Datenschutzerklärung von Google.</p>
+<h2>Hosting</h2>
+<p>Die App wird auf GitHub Pages gehostet. GitHub kann technische Daten wie IP-Adressen nach eigenen Datenschutzrichtlinien in Protokollen speichern.</p>
+<h2>Was wir nicht tun</h2>
+<ul><li>Wir sammeln keine personenbezogenen Daten.</li><li>Wir verwenden keine Cookies für Tracking oder Werbung.</li><li>Die App selbst sendet nichts an Dritte. Nur bei den oben genannten Downloads, Links und der Spende hast du direkten Kontakt mit diesen Anbietern.</li></ul>
+<h2>Fragen</h2>
+<p>Hast du eine Frage zu dieser Erklärung? Melde dich über das GitHub-Repository der App.</p>
+</section>
+
+<section class="taal" id="fr" lang="fr">
+<h1>Déclaration de confidentialité</h1>
+<p class="small">SpeechPartner.Spanish · version 3.2 · mise à jour en novembre 2026</p>
+<h2>En bref</h2>
+<p>L'application n'a pas de compte, pas de publicité et pas d'analyse. Nous ne recevons rien de toi. Ta progression et tes réglages restent sur ton propre appareil.</p>
+<h2>Ce qui est enregistré sur ton appareil</h2>
+<p>L'application enregistre dans le stockage de ton navigateur (localStorage) :</p>
+<ul><li>la langue et le thème choisis, et des réglages comme la voix, la vitesse de lecture, ton genre et celui de ton interlocuteur ;</li><li>ta progression et les phrases que tu as marquées comme comprises ou connues ;</li><li>les mots, phrases et réponses que tu apprends toi-même à l'application ;</li><li>le journal de l'entraîneur de prononciation : seulement l'exercice, le nombre d'étoiles et l'heure, aucun son.</li></ul>
+<p>Le navigateur conserve aussi les fichiers de l'application et, si tu les télécharges, le modèle vocal et la voix naturelle, pour que l'application fonctionne aussi sans internet.</p>
+<p>Ces données ne quittent pas ton appareil. Tu les effaces dans les Réglages (Réinitialiser la progression, Réinitialiser les éléments compris, Effacer la progression de prononciation) ou en supprimant les données du site de l'application dans ton navigateur.</p>
+<h2>Conversation et mode interprète</h2>
+<p>Ce qui est dit ou écrit dans Conversation et dans le mode interprète reste uniquement dans la mémoire de la page ouverte. Ce n'est pas enregistré et cela disparaît avec Effacer la conversation ou quand tu fermes l'application.</p>
+<p>L'application fait les traductions elle-même, sur ton appareil. Aucun texte n'est envoyé à un service de traduction.</p>
+<h2>Micro et reconnaissance vocale</h2>
+<p>Le micro n'est allumé qu'après avoir touché un bouton d'enregistrement, et s'éteint quand tu touches Arrêter. Dans le mode interprète et avec Je dis, ta propre langue est aussi reconnue, de la même façon que la langue de ton interlocuteur.</p>
+<p>Sur iPhone, l'application utilise le modèle Whisper d'OpenAI. Ce modèle fonctionne dans ton navigateur : ton enregistrement est transformé en texte sur ton appareil et n'est envoyé à aucun serveur. Le modèle et son logiciel sont téléchargés une seule fois, uniquement avec ton accord. Lors de ce téléchargement, les serveurs de Hugging Face et de jsDelivr reçoivent ton adresse IP, comme pour tout fichier venant d'internet.</p>
+<p>Dans les autres navigateurs, l'application utilise la reconnaissance vocale du navigateur lui-même. Cet enregistrement peut être traité selon la politique du fournisseur du navigateur ou du système (comme Google ou Apple). Nous n'avons pas de contrôle là-dessus.</p>
+<h2>Lecture à voix haute</h2>
+<p>La voix naturelle (Piper) est téléchargée une seule fois depuis Hugging Face. Ensuite, l'application parle sur ton appareil, sans internet. Sinon, et dans le mode interprète pour ta propre langue, l'application utilise la voix intégrée de ton appareil.</p>
+<h2>Don volontaire</h2>
+<p>Un don volontaire dans la boutique passe par PayPal, un service de paiement externe. PayPal traite les données de paiement selon sa propre politique de confidentialité ; l'application n'en reçoit rien.</p>
+<h2>Liens externes</h2>
+<p>Les boutons pour traduire ou vérifier une phrase en ligne ouvrent Google Traduction dans un nouvel onglet, avec le texte à traduire. Les conditions et la politique de confidentialité de Google s'appliquent alors.</p>
+<h2>Hébergement</h2>
+<p>L'application est hébergée sur GitHub Pages. GitHub peut conserver des données techniques comme les adresses IP dans des journaux, selon sa propre politique de confidentialité.</p>
+<h2>Ce que nous ne faisons pas</h2>
+<ul><li>Nous ne collectons pas de données personnelles.</li><li>Nous n'utilisons pas de cookies de suivi ou de publicité.</li><li>L'application elle-même n'envoie rien à des tiers. Ce n'est qu'avec les téléchargements, les liens et le don ci-dessus que tu es en contact direct avec ces parties.</li></ul>
+<h2>Questions</h2>
+<p>Tu as une question sur cette déclaration ? Contacte-nous via le dépôt GitHub de l'application.</p>
+</section>
+<script>
+// Toon de taal van de app (privacy.html#en) of van de browser; zonder script zijn alle talen zichtbaar.
+(function () {
+  var talen = ["nl","en","de","fr"], l = (location.hash || "").slice(1);
+  if (talen.indexOf(l) < 0) { var b = (navigator.language || "nl").slice(0, 2).toLowerCase(); l = talen.indexOf(b) >= 0 ? b : talen[0]; }
+  function toon(t) {
+    talen.forEach(function (x) { var s = document.getElementById(x); if (s) s.classList.toggle("verberg", x !== t); });
+    [].forEach.call(document.querySelectorAll(".talen a"), function (a) { a.classList.toggle("nu", a.getAttribute("data-l") === t); });
+    document.documentElement.lang = t;
+    var c = document.getElementById("closeBtn"); if (c) c.setAttribute("aria-label", { nl: "Sluiten", en: "Close", de: "Schließen", fr: "Fermer", es: "Cerrar" }[t] || "Sluiten");
+  }
+  [].forEach.call(document.querySelectorAll(".talen a"), function (a) { a.onclick = function (e) { e.preventDefault(); toon(a.getAttribute("data-l")); history.replaceState(null, "", "#" + a.getAttribute("data-l")); }; });
+  toon(l);
+})();
+</script>
 </body>
 </html>

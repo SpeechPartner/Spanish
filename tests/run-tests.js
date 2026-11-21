@@ -125,7 +125,7 @@ const zinLijst = (() => { const c = {}; vm.runInNewContext(read("js/zinnen-es.js
 check("zinherstel: zinnenlijst heeft ruim 1500 zinnen, allemaal tekst", zinLijst.length > 1500 && zinLijst.every((z) => typeof z === "string" && z.trim().length > 0), "aantal: " + zinLijst.length);
 const zelfTest = zinLijst.filter((z, i) => i % 97 === 0).every((z) => ZH.corrigeer(z, zinLijst).tekst === z);
 check("zinherstel: een zin uit de lijst blijft zichzelf", zelfTest);
-check("zinherstel: correctie staat aan in de spraakinvoer", /var ZINHERSTEL_AAN = true/.test(read("js/app.js")) && /herstelZin\(text\)/.test(read("js/app.js")) && /herstelZin\(t\)/.test(read("js/app.js")));
+check("zinherstel: correctie staat aan in de spraakinvoer", /var ZINHERSTEL_AAN = true/.test(read("js/app.js")) && /function micResult\(t\) \{[\s\S]{0,160}makeTurn\(herstelZin\(t\)\)/.test(read("js/app.js")) && /micResult\(text\)/.test(read("js/app.js")) && /micResult\(t\)/.test(read("js/app.js")));
 check("zinherstel: script staat in index.html en offline-cache", read("index.html").includes("js/zin-herstel.js") && read("sw.js").includes("./js/zinnen-es.js"));
 
 // 12. Melding voor het beginscherm: in elke taal de stappen voor Safari, Chrome (iPhone en Android) en andere browsers

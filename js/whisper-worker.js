@@ -20,7 +20,7 @@ self.onmessage = async (ev) => {
       });
       self.postMessage({ type: "ready" });
     } else if (d.type === "run") {
-      const opts = { language: "spanish", task: "transcribe" };
+      const opts = { language: d.language || "spanish", task: "transcribe" };
       if (d.audio.length > 30 * 16000) opts.chunk_length_s = 30;
       const out = await pipe(d.audio, opts);
       self.postMessage({ type: "result", id: d.id, text: out && out.text ? String(out.text) : "" });

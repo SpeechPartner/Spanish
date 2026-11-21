@@ -1095,10 +1095,19 @@ var ES_NL = (function () {
     return r;
   }
   // Vaste zinnen uit de zinsmodule (zin-lex.js) gaan voor de woord-voor-woord-vertaling
+  var vastNlIdx = null;
   function vastEs(text) {
     if (typeof ZINC === "undefined" || !ZINC.FIXED || typeof text !== "string") return null;
-    var f = ZINC.FIXED[ZINC.fold(ZINC.normKey(text))] || ZINC.FIXED[ZINC.normKey(text)];
-    return f && f.nl ? f.nl : null;
+    var k = ZINC.normKey(text);
+    var f = ZINC.FIXED[ZINC.fold(k)] || ZINC.FIXED[k];
+    if (f && f.nl) return f.nl;
+    // Vaste Nederlandse zinnen zonder Engels/Duits/Frans (zoals "hacía frío" = "Het was koud.")
+    if (typeof ZIN_LEX !== "undefined" && ZIN_LEX.FIXED_NL) {
+      if (!vastNlIdx) { vastNlIdx = {}; for (var fk in ZIN_LEX.FIXED_NL) vastNlIdx[ZINC.fold(ZINC.normKey(fk))] = ZIN_LEX.FIXED_NL[fk]; }
+      var nl = vastNlIdx[ZINC.fold(k)];
+      if (nl) return nl;
+    }
+    return null;
   }
   function translateNLTerug(text, rev, gen, diepte) { var v = vastEs(text); if (v) return v; return nlNazorg(translateNLTerugBasis(text, rev, gen, diepte)); }
   return { translate: translateNLTerug, nazorg: nlNazorg };

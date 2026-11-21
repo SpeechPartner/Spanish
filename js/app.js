@@ -1553,13 +1553,39 @@
     gr.appendChild(gw);
     return gr;
   }
+  // Werkwoorden in de zin (per zinsdeel ontleed): "bajo" en "camino" zijn dan "ik stap uit" en "lopen", niet "laag" en "weg"
+  var GLOSS_UIT = { nl: "uitstappen", en: "get off", de: "aussteigen", fr: "descendre", es: "bajar" };
+  var GLOSS_IN = { nl: "instappen", en: "get on", de: "einsteigen", fr: "monter", es: "subir" };
+  function glossLemmas(es) {
+    var out = [];
+    if (typeof ZINI === "undefined" || !ZINI.es) return out;
+    String(es).replace(/[¿¡]/g, "").split(/\s*(?:[,;]|\by\b|\be\b|\bpero\b|\bporque\b|\bque\b|\bo\b|\bcuando\b|\baunque\b|\bsi\b)\s*/i).forEach(function (part) {
+      part = part.replace(/[.?!…]+\s*$/, "").trim();
+      if (!part) return;
+      try { var pz = ZINI.es(part.charAt(0).toUpperCase() + part.slice(1) + "."); if (pz && pz.v) out.push(pz.v); } catch (e) {}
+    });
+    return out;
+  }
   function wordGloss(es) {
     var rev = REVS[lang] || {}, out = [];
-    String(es).split(/\s+/).forEach(function (raw) {
+    var lemmas = glossLemmas(es);
+    var woorden = String(es).split(/\s+/);
+    woorden.forEach(function (raw, wi) {
       var c = clean(raw).trim();
       if (!c) return;
       var g = rev[c];
       if (g === undefined) g = revNorm(rev)[norm(c)];
+      if (typeof ZINC !== "undefined" && ZINC.ESF) {
+        var alle = ZINC.ESF[c] || ZINC.ESFF[ZINC.fold(c)] || [];
+        var hits = alle.filter(function (h) { return lemmas.indexOf(h.v) >= 0 || h.v === "bajar" || h.v === "subir"; });
+        if (hits.length) {
+          var v = hits[0].v, verder = woorden.slice(wi + 1, wi + 4).join(" ").toLowerCase();
+          var voertuig = /(autobús|tren|coche|taxi|metro|tranvía|avión|barco)/.test(verder);
+          if (v === "bajar" && /^(del|de la|de un)\b/.test(verder) && voertuig) g = GLOSS_UIT[lang] || g;
+          else if (v === "subir" && /^(al|a la|a un)\b/.test(verder) && voertuig) g = GLOSS_IN[lang] || g;
+          else if (lemmas.indexOf(v) >= 0 && (g === undefined || (hits[0].tense === "pres" && hits[0].p === 0) || c === "como")) g = rev[v] !== undefined ? rev[v] : g;
+        }
+      }
       out.push({ es: raw.replace(/[¿?¡!.,;:…"“”()]+/g, ""), m: g === undefined ? "?" : g });
     });
     return out;
@@ -1788,7 +1814,7 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "3.1";
+  var APP_VERSION = "3.2";
   // Versies waarvoor gebruikers de app opnieuw op hun beginscherm moeten zetten (oude icoon weg, nieuwe erop).
   // Bij zo'n update verschijnt eenmalig een melding met uitleg.
   var REINSTALL_VERSIONS = ["1.8"];
@@ -1858,7 +1884,7 @@
     return new Promise(function (resolve, reject) {
       var id = ++WH.jobId;
       WH.jobs[id] = [resolve, reject];
-      WH.worker.postMessage({ type: "run", id: id, audio: audio }, [audio.buffer]);
+      WH.worker.postMessage({ type: "run", id: id, audio: audio, language: micDoel && micDoel.wh ? micDoel.wh : "spanish" }, [audio.buffer]);
     });
   }
   function whLoadWithNote() {
@@ -2066,7 +2092,7 @@
         S.note = "";
         // Whisper zet stilte of ruis soms om in (música) of [Music]: dat telt niet als zin.
         var junk = /^[\(\[\{].*[\)\]\}]$/.test(text) || /^[\W_]+$/.test(text);
-        if (text.length >= 2 && !junk) S.convo.push(makeTurn(herstelZin(text)));
+        if (text.length >= 2 && !junk) micResult(text);
         else S.note = T("Geen spraak gehoord. Probeer het opnieuw.") + info + (text ? ", " + T("gehoord") + ": " + text.slice(0, 40) : "") + ")";
         go("gesprek"); scrollGesprekEnd();
       });
@@ -2091,8 +2117,16 @@
     return t;
   }
 
-  function startMic() {
+  // Bestemming van de huidige opname: standaard een beurt van de gesprekspartner (doeltaal); de chat (Ik zeg)
+  // en de tolkmodus geven een andere taal en een eigen verwerking mee.
+  var micDoel = null;
+  function micResult(t) {
+    if (micDoel && micDoel.onText) micDoel.onText(t);
+    else S.convo.push(makeTurn(herstelZin(t)));
+  }
+  function startMic(opts) {
     if (S.listening) return;
+    micDoel = opts && opts.onText ? opts : null;
     if (typeof prRelease === "function") prRelease();
     if (isIOS() && (window.AudioContext || window.webkitAudioContext) && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) { whStart(); return; }
     var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -2106,7 +2140,7 @@
       if (ended) return; ended = true;
       S.listening = false; S.rec = null; micStop = null;
       if (heard.length) {
-        heard.forEach(function (t) { S.convo.push(makeTurn(herstelZin(t))); });
+        heard.forEach(function (t) { micResult(t); });
         S.note = "";
       } else if (!errored) {
         S.note = T("Geen spraak gehoord. Probeer het opnieuw.");
@@ -2117,7 +2151,7 @@
       var rec = null;
       try { rec = new SR(); } catch (e) { rec = null; }
       if (!rec) { errored = true; S.note = T("Spraakherkenning werkt niet in deze browser. Gebruik Chrome of Edge, of typ hieronder."); finish(); return; }
-      rec.lang = "es-ES";
+      rec.lang = micDoel && micDoel.bcp ? micDoel.bcp : "es-ES";
       rec.continuous = true;
       rec.interimResults = false;
       rec.maxAlternatives = 1;
@@ -2169,15 +2203,15 @@
            "Ein kostenloses Hilfsmittel, um Spanisch zu sprechen, auch wenn du die Sprache noch nicht gut kennst. Es gibt fertige Sätze, Grammatikerklärungen und einen Gesprächstrainer. Die App läuft auf deinem Telefon, ohne Konto und ohne Server.",
            "Un outil gratuit pour parler espagnol, même si tu ne le maîtrises pas encore. Il contient des phrases toutes prêtes, des explications de grammaire et un entraîneur de conversation. L'application fonctionne sur ton téléphone, sans compte et sans serveur.") },
     { t: m("Zo gebruik je de tabbladen", "How to use the tabs", "So benutzt du die Reiter", "Comment utiliser les onglets"),
-      b: m("Zinnen: kant-en-klare zinnen per situatie, met de vertaling en een uitleg. Onderwerpen: zinnen per onderwerp. Vastlopen: wat je zegt als je even niets weet. Zin bouwen: maak zelf zinnen met een patroon. Reageren: antwoorden op wat je gesprekspartner zegt. Leren: korte lessen en oefeningen. Regels: grammatica in het kort, met een test. Gesprek: je gesprekspartner spreekt in, de app vertaalt en geeft antwoorden. Uitspraak: oefen je uitspraak met opnemen. Info: deze pagina.",
-           "Sentences: ready-made sentences per situation, with translation and explanation. Topics: sentences per topic. Stuck: what to say when you don't know what to say. Build a sentence: make your own sentences with a pattern. React: answers to what your conversation partner says. Learn: short lessons and exercises. Rules: grammar in brief, with a test. Conversation: your partner speaks, the app translates and suggests answers. Pronunciation: practise your pronunciation by recording. Info: this page.",
-           "Sätze: fertige Sätze pro Situation, mit Übersetzung und Erklärung. Themen: Sätze pro Thema. Hänger: was du sagst, wenn dir nichts einfällt. Satz bauen: eigene Sätze mit einem Muster. Reagieren: Antworten auf das, was dein Gesprächspartner sagt. Lernen: kurze Lektionen und Übungen. Regeln: Grammatik kurz gefasst, mit einem Test. Gespräch: dein Gesprächspartner spricht, die App übersetzt und schlägt Antworten vor. Aussprache: übe deine Aussprache mit Aufnehmen. Info: diese Seite.",
-           "Phrases : phrases toutes prêtes par situation, avec traduction et explication. Sujets : phrases par sujet. Bloqué : que dire quand tu ne sais plus quoi dire. Construire une phrase : tes propres phrases avec un modèle. Réagir : réponses à ce que dit ton interlocuteur. Apprendre : courtes leçons et exercices. Règles : grammaire en bref, avec un test. Conversation : ton interlocuteur parle, l'application traduit et propose des réponses. Prononciation : entraîne ta prononciation en enregistrant. Info : cette page.") },
+      b: m("Zinnen: kant-en-klare zinnen per situatie, met de vertaling en een uitleg. Onderwerpen: zinnen per onderwerp. Vastlopen: wat je zegt als je even niets weet. Zin bouwen: maak zelf zinnen met een patroon. Reageren: antwoorden op wat je gesprekspartner zegt. Leren: korte lessen en oefeningen. Regels: grammatica in het kort, met een test. Gesprek: chat met je gesprekspartner, met snelle antwoorden, en een tolkmodus waarin jullie om de beurt in je eigen taal spreken. Uitspraak: oefen je uitspraak met opnemen. Info: deze pagina.",
+           "Sentences: ready-made sentences per situation, with translation and explanation. Topics: sentences per topic. Stuck: what to say when you don't know what to say. Build a sentence: make your own sentences with a pattern. React: answers to what your conversation partner says. Learn: short lessons and exercises. Rules: grammar in brief, with a test. Conversation: chat with your partner, with quick answers, and an interpreter mode where you take turns speaking in your own language. Pronunciation: practise your pronunciation by recording. Info: this page.",
+           "Sätze: fertige Sätze pro Situation, mit Übersetzung und Erklärung. Themen: Sätze pro Thema. Hänger: was du sagst, wenn dir nichts einfällt. Satz bauen: eigene Sätze mit einem Muster. Reagieren: Antworten auf das, was dein Gesprächspartner sagt. Lernen: kurze Lektionen und Übungen. Regeln: Grammatik kurz gefasst, mit einem Test. Gespräch: Chat mit deinem Gesprächspartner, mit schnellen Antworten, und ein Dolmetschmodus, in dem ihr abwechselnd in eurer eigenen Sprache sprecht. Aussprache: übe deine Aussprache mit Aufnehmen. Info: diese Seite.",
+           "Phrases : phrases toutes prêtes par situation, avec traduction et explication. Sujets : phrases par sujet. Bloqué : que dire quand tu ne sais plus quoi dire. Construire une phrase : tes propres phrases avec un modèle. Réagir : réponses à ce que dit ton interlocuteur. Apprendre : courtes leçons et exercices. Règles : grammaire en bref, avec un test. Conversation : chat avec ton interlocuteur, avec des réponses rapides, et un mode interprète où vous parlez chacun à votre tour dans votre langue. Prononciation : entraîne ta prononciation en enregistrant. Info : cette page.") },
     { t: m("Spreken op de iPhone", "Speaking on iPhone", "Sprechen auf dem iPhone", "Parler sur iPhone"),
-      b: m("Op de iPhone herkent de app spraak met een spraakmodel dat op je telefoon draait. Het model wordt één keer gedownload (ongeveer 40 of 80 MB; bij voorkeur via wifi). Daarna werkt het ook zonder internet. Tik op de microfoon, spreek de Spaanse zin en tik op Stop. Werkt de spraakherkenning niet goed, typ de zin dan in het typvak.",
-           "On iPhone the app recognises speech with a speech model that runs on your phone. The model is downloaded once (about 40 or 80 MB; preferably over Wi-Fi). After that it also works without internet. Tap the microphone, say the Spanish sentence and tap Stop. If speech recognition doesn't work well, type the sentence in the text box.",
-           "Auf dem iPhone erkennt die App Sprache mit einem Sprachmodell, das auf deinem Telefon läuft. Das Modell wird einmal heruntergeladen (etwa 40 oder 80 MB; am besten über WLAN). Danach funktioniert es auch ohne Internet. Tippe auf das Mikrofon, sprich den spanischen Satz und tippe auf Stopp. Funktioniert die Spracherkennung nicht gut, tippe den Satz in das Eingabefeld.",
-           "Sur iPhone, l'application reconnaît la voix grâce à un modèle vocal qui tourne sur ton téléphone. Le modèle se télécharge une fois (environ 40 ou 80 Mo ; de préférence en Wi-Fi). Ensuite il fonctionne aussi hors ligne. Appuie sur le micro, dis la phrase espagnole puis appuie sur « Arrêter ». Si la reconnaissance vocale ne marche pas bien, tape la phrase dans la zone de saisie.") },
+      b: m("Op de iPhone herkent de app spraak met een spraakmodel dat op je telefoon draait. Het model wordt één keer gedownload (ongeveer 40 of 80 MB; bij voorkeur via wifi). Daarna werkt het ook zonder internet. Tik op de microfoon, spreek de Spaanse zin en tik op Stop. Werkt de spraakherkenning niet goed, typ de zin dan in het typvak. In de tolkmodus en bij Ik zeg herkent hetzelfde model ook je eigen taal.",
+           "On iPhone the app recognises speech with a speech model that runs on your phone. The model is downloaded once (about 40 or 80 MB; preferably over Wi-Fi). After that it also works without internet. Tap the microphone, say the Spanish sentence and tap Stop. If speech recognition doesn't work well, type the sentence in the text box. In interpreter mode and with I say, the same model also recognises your own language.",
+           "Auf dem iPhone erkennt die App Sprache mit einem Sprachmodell, das auf deinem Telefon läuft. Das Modell wird einmal heruntergeladen (etwa 40 oder 80 MB; am besten über WLAN). Danach funktioniert es auch ohne Internet. Tippe auf das Mikrofon, sprich den spanischen Satz und tippe auf Stopp. Funktioniert die Spracherkennung nicht gut, tippe den Satz in das Eingabefeld. Im Dolmetschmodus und bei Ich sage erkennt dasselbe Modell auch deine eigene Sprache.",
+           "Sur iPhone, l'application reconnaît la voix grâce à un modèle vocal qui tourne sur ton téléphone. Le modèle se télécharge une fois (environ 40 ou 80 Mo ; de préférence en Wi-Fi). Ensuite il fonctionne aussi hors ligne. Appuie sur le micro, dis la phrase espagnole puis appuie sur « Arrêter ». Si la reconnaissance vocale ne marche pas bien, tape la phrase dans la zone de saisie. Dans le mode interprète et avec Je dis, le même modèle reconnaît aussi ta propre langue.") },
     { t: m("Aanleren", "Teaching the app", "Der App etwas beibringen", "Enseigner à l'application"),
       b: m("Herkent de app een zin of woord niet? Dan kun je het zelf aanleren. Doe dat alleen als je de betekenis zeker weet; de app geeft je daarvoor een controleknop (vraag het na of controleer online). Wat je aanleert, blijft op je eigen toestel.",
            "If the app doesn't recognise a sentence or word, you can teach it yourself. Only do this if you are sure of the meaning; the app gives you a check button for that (ask or check online). What you teach stays on your own device.",
@@ -2237,13 +2271,15 @@
       k: [m("Tik op het luidsprekertje om een voorbeeld te horen.", "Tap the speaker icon to hear an example.", "Tippe auf das Lautsprechersymbol, um ein Beispiel zu hören.", "Touche le haut-parleur pour entendre un exemple."),
           m("Doe de test om te zien wat je onthoudt.", "Take the test to see what you remember.", "Mach den Test, um zu sehen, was du behältst.", "Fais le test pour voir ce que tu retiens.")] },
     { n: m("Gesprek", "Conversation", "Gespräch", "Conversation"),
-      w: m("Je gesprekspartner spreekt in of typt, de app vertaalt en geeft antwoorden.", "Your partner speaks or types, the app translates and suggests answers.", "Dein Gesprächspartner spricht oder tippt, die App übersetzt und schlägt Antworten vor.", "Ton interlocuteur parle ou écrit, l'application traduit et propose des réponses."),
-      k: [m("Tik op Opnemen en spreek Spaans, of typ de zin in het veld.", "Tap Record and speak Spanish, or type the sentence in the field.", "Tippe auf Aufnehmen und sprich Spanisch, oder tippe den Satz ins Feld.", "Touche Enregistrer et parle espagnol, ou écris la phrase dans le champ."),
-          m("Elke zin krijgt een vertaling, met uitleg per woord.", "Every sentence gets a translation, with an explanation per word.", "Jeder Satz bekommt eine Übersetzung, mit Erklärung pro Wort.", "Chaque phrase reçoit une traduction, avec une explication par mot."),
-          m("Rechts staan mogelijke antwoorden in bellen.", "Possible answers are shown on the right in bubbles.", "Rechts stehen mögliche Antworten in Sprechblasen.", "À droite, les réponses possibles dans des bulles."),
-          m("Verbeter een vertaling of voeg een eigen antwoord toe.", "Correct a translation or add your own answer.", "Verbessere eine Übersetzung oder füge eine eigene Antwort hinzu.", "Corrige une traduction ou ajoute ta propre réponse."),
-          m("Met 'Wis gesprek' begin je het gesprek opnieuw.", "With 'Clear conversation' you start the conversation over.", "Mit 'Gespräch leeren' fängst du das Gespräch neu an.", "Avec « Effacer la conversation », tu recommences la conversation."),
-          m("Op de iPhone wordt spraak herkend met een model dat je eenmalig downloadt, met jouw toestemming.", "On iPhone, speech is recognised with a model you download once, with your permission.", "Auf dem iPhone wird Sprache mit einem Modell erkannt, das du einmalig mit deiner Zustimmung herunterlädst.", "Sur iPhone, la parole est reconnue par un modèle que tu télécharges une fois, avec ton accord.")] },
+      w: m("Chat met je gesprekspartner en een tolkmodus. Bovenaan de pagina kies je Chat of Tolkmodus.", "Chat with your partner and an interpreter mode. At the top of the page you choose Chat or Interpreter mode.", "Chat mit deinem Gesprächspartner und ein Dolmetschmodus. Oben auf der Seite wählst du Chat oder Dolmetschmodus.", "Chat avec ton interlocuteur et un mode interprète. En haut de la page, tu choisis Chat ou Mode interprète."),
+      k: [m("Chat: kies Hij/zij zei, tik op de microfoon en laat je gesprekspartner Spaans spreken, of typ de zin.", "Chat: choose He/she said, tap the microphone and let your partner speak Spanish, or type the sentence.", "Chat: Wähle Er/sie sagte, tippe auf das Mikrofon und lass deinen Gesprächspartner Spanisch sprechen, oder tippe den Satz.", "Chat : choisis Il/elle a dit, touche le micro et laisse ton interlocuteur parler espagnol, ou écris la phrase."),
+          m("Kies Ik zeg om zelf iets te zeggen of te typen in je eigen taal. De app vertaalt het en leest het voor.", "Choose I say to say or type something yourself in your own language. The app translates it and reads it aloud.", "Wähle Ich sage, um selbst etwas in deiner eigenen Sprache zu sagen oder zu tippen. Die App übersetzt es und liest es vor.", "Choisis Je dis pour dire ou écrire quelque chose dans ta langue. L'application le traduit et le lit à voix haute."),
+          m("Je gesprekspartner staat links, jij rechts. Elk bericht toont de zin en de vertaling.", "Your partner is on the left, you are on the right. Each message shows the sentence and the translation.", "Dein Gesprächspartner steht links, du rechts. Jede Nachricht zeigt den Satz und die Übersetzung.", "Ton interlocuteur est à gauche, toi à droite. Chaque message montre la phrase et la traduction."),
+          m("Boven het invoervak staan snelle antwoorden. Tik erop: het antwoord wordt jouw bericht en wordt voorgelezen.", "Above the input box are quick answers. Tap one: it becomes your message and is read aloud.", "Über dem Eingabefeld stehen schnelle Antworten. Tippe darauf: Die Antwort wird deine Nachricht und wird vorgelesen.", "Au-dessus de la zone de saisie, il y a des réponses rapides. Touche-en une : elle devient ton message et est lue à voix haute."),
+          m("Tik op een bericht voor de uitleg per woord, andere manieren om het te zeggen, Verbeter vertaling en Eigen antwoord toevoegen.", "Tap a message for the word-by-word explanation, other ways to say it, Improve translation and Add your own answer.", "Tippe auf eine Nachricht für die Erklärung Wort für Wort, andere Möglichkeiten, es zu sagen, Übersetzung verbessern und Eigene Antwort hinzufügen.", "Touche un message pour l'explication mot à mot, d'autres façons de le dire, Améliorer la traduction et Ajouter ta propre réponse."),
+          m("Tolkmodus: jij en je gesprekspartner hebben elk een eigen microfoonknop. Ieder spreekt in de eigen taal; de app vertaalt en leest de vertaling voor.", "Interpreter mode: you and your partner each have your own microphone button. Each speaks in their own language; the app translates and reads the translation aloud.", "Dolmetschmodus: Du und dein Gesprächspartner habt jeweils einen eigenen Mikrofonknopf. Jeder spricht in seiner eigenen Sprache; die App übersetzt und liest die Übersetzung vor.", "Mode interprète : toi et ton interlocuteur avez chacun votre bouton micro. Chacun parle dans sa langue ; l'application traduit et lit la traduction."),
+          m("Ligt de telefoon tussen jullie in? Draai in de tolkmodus de bovenkant om, dan kan je gesprekspartner zijn deel van de andere kant lezen. De tolkmodus vind je alleen op de pagina Gesprek.", "Is the phone lying between you? In interpreter mode, turn the top upside down so your partner can read their part from the other side. Interpreter mode is only on the Conversation page.", "Liegt das Telefon zwischen euch? Dreh im Dolmetschmodus den oberen Teil um, dann kann dein Gesprächspartner seinen Teil von der anderen Seite lesen. Den Dolmetschmodus gibt es nur auf der Seite Gespräch.", "Le téléphone est posé entre vous ? En mode interprète, retourne le haut pour que ton interlocuteur lise sa partie de l'autre côté. Le mode interprète se trouve uniquement sur la page Conversation."),
+          m("Met 'Wis gesprek' begin je opnieuw. Op de iPhone wordt spraak herkend met een model dat je eenmalig downloadt, met jouw toestemming.", "With 'Clear conversation' you start again. On iPhone, speech is recognised with a model you download once, with your permission.", "Mit 'Gespräch leeren' fängst du neu an. Auf dem iPhone wird Sprache mit einem Modell erkannt, das du einmalig mit deiner Zustimmung herunterlädst.", "Avec « Effacer la conversation », tu recommences. Sur iPhone, la parole est reconnue par un modèle que tu télécharges une fois, avec ton accord.")] },
     { n: m("Uitspraak", "Pronunciation", "Aussprache", "Prononciation"),
       w: m("Oefen je uitspraak met opnemen en vergelijken, met minimale paren en shadowing.", "Practise your pronunciation by recording and comparing, with minimal pairs and shadowing.", "Übe deine Aussprache mit Aufnehmen und Vergleichen, mit Minimalpaaren und Shadowing.", "Entraîne ta prononciation en enregistrant et en comparant, avec paires minimales et shadowing."),
       k: [m("Luister, herhaal en neem jezelf op.", "Listen, repeat and record yourself.", "Hör zu, wiederhole und nimm dich auf.", "Écoute, répète et enregistre-toi."),
@@ -2373,7 +2409,7 @@
 
     // Blad: privacy (los document, dus een gewone link)
     var privA = el("a", "", L(m("Lees de privacyverklaring", "Read the privacy statement", "Zur Datenschutzerklärung", "Lire la déclaration de confidentialité")));
-    privA.href = "privacy.html";
+    privA.href = "privacy.html#" + lang;
     page(L(m("Privacy", "Privacy", "Datenschutz", "Confidentialité")), [el("p", "", L(m(
       "De app heeft geen account, geen advertenties en geen gebruiksstatistieken. Je voortgang blijft op je eigen toestel.",
       "The app has no account, no ads and no analytics. Your progress stays on your own device.",
@@ -2432,14 +2468,377 @@
     return w;
   }
 
+  // ---------- Gesprek: chat (links je gesprekspartner, rechts jij) en tolkmodus ----------
+  // De tolkmodus is alleen bereikbaar via het tabblad Gesprek (knop bovenaan deze pagina).
+  var G_BCP = { nl: "nl-NL", en: "en-GB", de: "de-DE", fr: "fr-FR", es: "es-ES" };
+  var G_WH = { nl: "dutch", en: "english", de: "german", fr: "french", es: "spanish" };
+  // Korte aanwijzing voor de gesprekspartner, in de taal die die spreekt (de doeltaal van de app)
+  var G_PARTNER_TIK = { es: "Toca y habla", de: "Tippen und sprechen", fr: "Touche et parle", en: "Tap and speak", nl: "Tik en spreek" };
+  var G_PARTNER_WIE = { es: "Tú", de: "Du", fr: "Toi", en: "You", nl: "Jij" };
+  function gDoelCode() { return (typeof DOELC !== "undefined" && DOELC) ? DOELC : "es"; }
+  function gMode() { return S.gMode === "tolk" ? "tolk" : "chat"; }
+  function gWho() { return S.gWho === "ik" ? "ik" : "partner"; }
+  // Voorlezen in je eigen taal (ingebouwde stem van het toestel)
+  function speakEigen(text) {
+    if (!text || !("speechSynthesis" in window)) return;
+    try {
+      speechSynthesis.cancel();
+      var u = new SpeechSynthesisUtterance(text);
+      u.lang = G_BCP[lang] || "nl-NL";
+      u.rate = rate;
+      var vs = speechSynthesis.getVoices().filter(function (v) { return new RegExp("^" + lang, "i").test(v.lang); });
+      if (vs.length) u.voice = vs[0];
+      speechSynthesis.speak(u);
+    } catch (e) {}
+  }
+  function speakEigenBtn(text) {
+    var b = el("button", "speak", "🔊");
+    b.type = "button";
+    b.title = T("Luister");
+    b.setAttribute("aria-label", T("Luister"));
+    b.onclick = function (e) { e.stopPropagation(); speakEigen(text); };
+    return b;
+  }
+  // Wat jij zegt (in je eigen taal) wordt naar de doeltaal vertaald en is jouw beurt rechts
+  function gIkZegt(raw) {
+    raw = String(raw || "").trim();
+    if (!raw) return false;
+    // Komt de getypte zin overeen met een snel antwoord bij de laatste beurt? Dan dat antwoord ("Heel goed, en met jou?" = "Muy bien, ¿y tú?")
+    var lastP = null;
+    for (var li = S.convo.length - 1; li >= 0; li--) { if (!S.convo[li].me) { lastP = S.convo[li]; break; } }
+    if (lastP && lastP.options) {
+      for (var oi = 0; oi < lastP.options.length; oi++) {
+        var o = lastP.options[oi];
+        if (o.m && clean(L(o.m)) === clean(raw)) { S.convo.push({ me: true, es: o.es, src: raw }); S.note = ""; speak(o.es); return true; }
+      }
+    }
+    var r = translateText(raw);
+    if (!r || !r.text) {
+      S.note = (r && r.missing && r.missing.length)
+        ? T("Niet in de lijst:") + " " + r.missing.join(", ")
+        : T("Deze zin kan ik nog niet grammaticaal vertalen. Probeer een eenvoudiger zin.");
+      return false;
+    }
+    S.convo.push({ me: true, es: r.text, src: raw, missing: r.missing || [] });
+    S.note = "";
+    speak(r.text);
+    return true;
+  }
+  // Een snel antwoord kiezen: het wordt jouw beurt en wordt uitgesproken
+  function gZeg(t, o) {
+    if (t && t.help) { pickHelp(t, o); return; }
+    S.convo.push({ me: true, es: o.es, m: o.m });
+    S.note = "";
+    speak(o.es);
+    render();
+    scrollGesprekEnd();
+  }
+  // Vertaling van een beurt in jouw taal
+  function gVertaling(t) {
+    if (t.me) {
+      if (t.src) return t.src;
+      if (t.m) return L(t.m);
+      var rm = esToLang(t.es);
+      return rm && rm.text ? rm.text : "";
+    }
+    var trr = t.fixedM ? { text: L(t.fixedM) } : (esToLang(t.es) || t.tr || {});
+    return trr.text || "";
+  }
+
   function viewGesprek() {
-    var w = el("div");
-    var built = [];
-    var row = el("div", "chips");
-    if (S.listening) row.appendChild(btn("⏹ " + T("Stop"), "primary", stopMic));
-    else row.appendChild(btn("🎤 " + T("Opnemen"), "primary", startMic));
-    if (S.convo.length) row.appendChild(btn(T("Wis gesprek"), "small", function () { S.convo = []; S.chatStartTurn = null; S.note = ""; render(); }));
-    w.appendChild(row);
+    var out = el("div", "gsp");
+    // Keuze tussen chat en tolkmodus: alleen hier, op de pagina Gesprek
+    var seg = el("div", "gsp-seg");
+    seg.setAttribute("role", "tablist");
+    [["chat", "💬 " + T("Chat")], ["tolk", "🗣️ " + T("Tolkmodus")]].forEach(function (x) {
+      var on = gMode() === x[0];
+      var b = btn(x[1], "gsp-tab" + (on ? " active" : ""), function () {
+        if (S.listening) stopMic();
+        S.gMode = x[0]; S.gDetail = null; S.teach = null; S.note = ""; render();
+      });
+      b.setAttribute("role", "tab");
+      b.setAttribute("aria-selected", on ? "true" : "false");
+      seg.appendChild(b);
+    });
+    out.appendChild(seg);
+    out.appendChild(el("div", "gsp-uitleg", gMode() === "tolk"
+      ? T("Tolkmodus: jij en je gesprekspartner spreken om de beurt, ieder in de eigen taal. De app vertaalt en leest de vertaling voor. Je vindt de tolkmodus alleen hier, op de pagina Gesprek.")
+      : T("Chat: wat je gesprekspartner zegt staat links, wat jij zegt rechts. Tik op een bericht voor de uitleg per woord en andere manieren om het te zeggen.")));
+    out.appendChild(gMode() === "tolk" ? viewTolk() : viewChat());
+    return out;
+  }
+
+  function viewChat() {
+    var w = el("div", "chat");
+    var top = el("div", "chips chat-top");
+    if (S.convo.length) top.appendChild(btn(T("Wis gesprek"), "small", function () { S.convo = []; S.chatStartTurn = null; S.note = ""; S.gDetail = null; render(); }));
+    if (top.childNodes.length) w.appendChild(top);
+
+    var list = el("div", "chat-list");
+    if (!S.convo.length) list.appendChild(el("div", "note", T("Nog geen gesprek. Tik op de microfoon en zeg bijvoorbeeld ¿Qué tal?")));
+    S.convo.forEach(function (t, ti) {
+      var mine = !!t.me;
+      var b = el("div", "chat-b " + (mine ? "me" : "partner"));
+      b.setAttribute("role", "button");
+      b.tabIndex = 0;
+      b.setAttribute("aria-label", (mine ? T("Jij zei") : T("Gesprekspartner zei")) + ": " + t.es);
+      var head = el("div", "chat-line");
+      head.appendChild(el("div", "chat-es", t.es));
+      head.appendChild(speakBtn(t.es));
+      b.appendChild(head);
+      var tr = gVertaling(t);
+      if (tr) b.appendChild(el("div", "chat-tr", tr));
+      else if (!mine) b.appendChild(el("div", "chat-tr geen", T("Nog geen volledige zinsvertaling. Tik op Verbeter vertaling om er een toe te voegen.")));
+      b.appendChild(el("div", "chat-meer", T("Tik voor uitleg")));
+      var open = function () { S.gDetail = ti; S.teach = null; render(); };
+      b.addEventListener("click", function (e) { if (e.target.closest && e.target.closest(".speak")) return; open(); });
+      b.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } });
+      list.appendChild(b);
+    });
+    w.appendChild(list);
+
+    // Snelle antwoorden bij de laatste beurt van je gesprekspartner
+    var last = S.convo.length ? S.convo[S.convo.length - 1] : null;
+    if (last && !last.me && last.options && last.options.length) {
+      var qa = el("div", "chat-snel");
+      qa.appendChild(el("div", "sec-title", last.help ? T("Kies wat je wilt vragen:") : T("Jij kunt zeggen")));
+      var rij = el("div", "snel-rij");
+      last.options.forEach(function (o) {
+        var c = el("button", "snel");
+        c.type = "button";
+        c.appendChild(el("span", "snel-es", o.es));
+        if (o.m) c.appendChild(el("span", "snel-tr", L(o.m)));
+        c.onclick = function () { gZeg(last, o); };
+        rij.appendChild(c);
+      });
+      qa.appendChild(rij);
+      w.appendChild(qa);
+    } else if (last && last.me) {
+      w.appendChild(el("div", "chat-wacht", T("Laat je gesprekspartner antwoorden: kies Hij/zij zei en tik op de microfoon.")));
+    }
+
+    // Spraakmodel op de iPhone
+    if (isIOS()) {
+      if (S.whAsk) w.appendChild(whConsentCard());
+      else if (store.get("whModel", null) && !WH.ready && !WH.pending) whLoadWithNote();
+      var ws = el("div", "note", S.whStatus || "");
+      ws.id = "whStatus";
+      if (!S.whStatus) ws.style.display = "none";
+      w.appendChild(ws);
+    }
+    if (S.note) w.appendChild(el("div", "bad", S.note));
+    var heeftSR = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+    if (!heeftSR && !isIOS()) w.appendChild(el("div", "note", T("Spraak hangt af van je browser. Het typvak werkt altijd.")));
+
+    // Invoer: altijd onderaan in beeld
+    var comp = el("div", "chat-comp");
+    var who = gWho();
+    var wrij = el("div", "who-rij");
+    wrij.setAttribute("role", "radiogroup");
+    wrij.setAttribute("aria-label", T("Wissel wie er spreekt"));
+    [["partner", "👤 " + T("Hij/zij zei")], ["ik", "🙋 " + T("Ik zeg")]].forEach(function (x) {
+      var on = who === x[0];
+      var wb = btn(x[1], "who-opt" + (on ? " active" : ""), function () {
+        if (S.listening) return;
+        S.gWho = x[0]; render();
+        var ni = document.getElementById("gIn"); if (ni) ni.focus();
+      });
+      wb.setAttribute("role", "radio");
+      wb.setAttribute("aria-checked", on ? "true" : "false");
+      wrij.appendChild(wb);
+    });
+    comp.appendChild(wrij);
+    var irij = el("div", "in-rij");
+    comp.appendChild(irij);
+    var inp = document.createElement("textarea");
+    inp.id = "gIn";
+    inp.rows = 1;
+    inp.className = "chat-in";
+    inp.placeholder = who === "ik" ? T("Wat wil je zeggen?") : T("Wat zei je gesprekspartner?");
+    inp.setAttribute("aria-label", inp.placeholder);
+    irij.appendChild(inp);
+    var verstuur = function () {
+      var v = inp.value.trim();
+      if (!v) { if (who === "ik") S.note = T("Typ eerst iets."); render(); return; }
+      S.note = "";
+      if (who === "ik") { if (!gIkZegt(v)) { render(); return; } }
+      else S.convo.push(makeTurn(v));
+      render();
+      scrollGesprekEnd();
+    };
+    inp.addEventListener("keydown", function (e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); verstuur(); } });
+    inp.addEventListener("input", function () { inp.style.height = "auto"; inp.style.height = Math.min(inp.scrollHeight, 120) + "px"; });
+    var sb = btn("➤", "send-btn", verstuur);
+    sb.title = T("Verwerk"); sb.setAttribute("aria-label", T("Verwerk"));
+    irij.appendChild(sb);
+    var mb = btn(S.listening ? "⏹" : "🎤", "mic-btn" + (S.listening ? " rec" : ""), function () {
+      if (S.listening) { stopMic(); return; }
+      if (who === "ik") startMic({ bcp: G_BCP[lang], wh: G_WH[lang], onText: function (t) { gIkZegt(t); } });
+      else startMic();
+    });
+    mb.title = S.listening ? T("Stop") : T("Opnemen");
+    mb.setAttribute("aria-label", mb.title);
+    irij.appendChild(mb);
+    w.appendChild(comp);
+    if (isIOS() && store.get("whModel", null) && !S.whAsk && !S.listening) {
+      w.appendChild(btn(T("Spraakmodel wijzigen"), "small", function () { S.whAsk = true; render(); }));
+    }
+
+    if (S.gDetail !== null && S.gDetail !== undefined && S.convo[S.gDetail]) w.appendChild(gDetailSheet(S.convo[S.gDetail], S.gDetail));
+    return w;
+  }
+
+  // Paneel met alles over één bericht: vertaling, woord voor woord, andere manieren, aanleren
+  function gDetailSheet(t, ti) {
+    var bg = el("div", "sheet-bg");
+    bg.addEventListener("click", function (e) { if (e.target === bg) { S.gDetail = null; S.teach = null; render(); } });
+    var sh = el("div", "sheet card");
+    sh.setAttribute("role", "dialog");
+    sh.setAttribute("aria-modal", "true");
+    var kop = el("div", "sheet-kop");
+    kop.appendChild(el("div", "nl", t.me ? T("Jij zei") : T("Gesprekspartner zei")));
+    var x = btn("✕", "small sheet-dicht", function () { S.gDetail = null; S.teach = null; render(); });
+    x.setAttribute("aria-label", T("Sluiten"));
+    kop.appendChild(x);
+    sh.appendChild(kop);
+    var line = el("div", "line-row");
+    var tx = el("div", "txt");
+    tx.appendChild(el("div", "es", t.es));
+    line.appendChild(tx);
+    line.appendChild(speakBtn(t.es));
+    sh.appendChild(line);
+    sh.appendChild(el("div", "nl", T("Vertaling")));
+    var trr = t.me ? { text: gVertaling(t) } : (t.fixedM ? { text: L(t.fixedM) } : (esToLang(t.es) || t.tr || {}));
+    if (trr.text) sh.appendChild(el("div", "sentence-tr", trr.text));
+    else sh.appendChild(el("div", "note", T("Nog geen volledige zinsvertaling. Tik op Verbeter vertaling om er een toe te voegen.")));
+    var pgl = glossBlock(t.es); if (pgl) sh.appendChild(pgl);
+    if (altsFor(t.es).length) sh.appendChild(altBlock(altsFor(t.es)));
+    if (t.me) {
+      if (t.missing && t.missing.length) sh.appendChild(el("div", "bad", T("Niet in de lijst:") + " " + t.missing.join(", ")));
+      var mopts = t.flow ? [] : makeTurn(t.es).options;
+      if (mopts.length) {
+        sh.appendChild(el("div", "sec-title", T("Wat je gesprekspartner kan antwoorden")));
+        mopts.forEach(function (o) {
+          var l = el("div", "line-row opt");
+          var ox = el("div", "txt");
+          ox.appendChild(el("div", "nl", L(o.label)));
+          ox.appendChild(el("div", "es", o.es));
+          if (o.m) ox.appendChild(el("div", "nl", L(o.m)));
+          l.appendChild(ox);
+          l.appendChild(speakBtn(o.es));
+          sh.appendChild(l);
+        });
+      }
+      bg.appendChild(sh);
+      return bg;
+    }
+    if (t.gen) sh.appendChild(el("div", "nl", T("Uit de zin afgeleid: vorm voor de gesprekspartner") + " (" + (t.gen === "zij" ? "zij" : "hij") + ")"));
+    if (trr.about && trr.es) sh.appendChild(el("div", "nl", T("Herkend als:") + " " + trr.es));
+    if (trr.learned) sh.appendChild(el("div", "nl", T("Door jou aangeleerd")));
+    var teach = (S.teach && S.teach.i === ti) ? S.teach : null;
+    if (trr.missing && trr.missing.length) {
+      sh.appendChild(el("div", "bad", T("Niet in de lijst. Tik op een woord om het de app te leren:")));
+      var mr = el("div", "chips");
+      trr.missing.forEach(function (wd) {
+        mr.appendChild(btn(wd + " = ?", teach && teach.word === wd ? "primary small" : "small", function () { S.teach = { i: ti, kind: "word", word: wd }; render(); }));
+      });
+      sh.appendChild(mr);
+    }
+    if (t.options && t.options.length) {
+      sh.appendChild(el("div", "sec-title", T("Jij kunt zeggen")));
+      t.options.forEach(function (o) {
+        var l = el("div", "line-row opt pick");
+        l.setAttribute("role", "button");
+        var ox = el("div", "txt");
+        ox.appendChild(el("div", "nl", L(o.label)));
+        ox.appendChild(el("div", "es", o.es));
+        if (o.m) ox.appendChild(el("div", "nl", L(o.m)));
+        l.appendChild(ox);
+        l.appendChild(speakBtn(o.es));
+        l.onclick = function (e) { if (e.target.closest && e.target.closest(".speak")) return; S.gDetail = null; gZeg(t, o); };
+        sh.appendChild(l);
+      });
+    }
+    var tr2 = el("div", "chips");
+    tr2.appendChild(btn(T("Verbeter vertaling"), "small", function () { S.teach = { i: ti, kind: "zin" }; render(); }));
+    tr2.appendChild(btn(T("Eigen antwoord toevoegen"), "small", function () { S.teach = { i: ti, kind: "antwoord" }; render(); }));
+    sh.appendChild(tr2);
+    function refresh() { var nt = makeTurn(t.es); t.tr = nt.tr; t.options = nt.options; S.teach = null; render(); }
+    if (teach && teach.kind === "word") gTeachForm(sh, teach.word + " = …", function (v) { learnWord(teach.word, v); refresh(); }, { kind: "word", text: teach.word });
+    if (teach && teach.kind === "zin") gTeachForm(sh, T("Wat betekent deze zin?"), function (v) { learnSentence(t.es, v); refresh(); }, { kind: "zin", text: t.es.replace(/[¿?¡!.]+/g, "").trim() });
+    if (teach && teach.kind === "antwoord") gTeachForm(sh, T("Jouw antwoord in het Spaans"), function (v) { learnReply(t.es, v); refresh(); }, { kind: "antwoord", text: t.es });
+    bg.appendChild(sh);
+    return bg;
+  }
+
+  // ---------- Tolkmodus ----------
+  function gTolkZeg(who, text) {
+    text = String(text || "").trim();
+    if (!text) return;
+    var tr = null;
+    if (who === "partner") {
+      var r = esToLang(text);
+      tr = r && r.text && !r.unsupported && !r.about ? r.text : null;
+    } else {
+      var r2 = translateText(text);
+      tr = r2 && r2.text ? r2.text : null;
+    }
+    S.tolk = S.tolk || [];
+    S.tolk.push({ who: who, src: text, tr: tr });
+    S.note = tr ? "" : T("Deze zin kan ik nog niet grammaticaal vertalen. Probeer een eenvoudiger zin.");
+    if (tr) { if (who === "partner") speakEigen(tr); else speak(tr); }
+  }
+  function viewTolk() {
+    var w = el("div", "tolk" + (S.tolkFlip ? " flip" : ""));
+    var doel = gDoelCode();
+    var log = S.tolk || [];
+    var laatste = log.length ? log[log.length - 1] : null;
+    var luistert = S.listening ? S.tolkWie : null;
+    function micKnop(who) {
+      var bezig = luistert === who;
+      var lbl = who === "partner"
+        ? (bezig ? "⏹ " + T("Stop") : "🎤 " + T("Gesprekspartner") + " · " + doel.toUpperCase())
+        : (bezig ? "⏹ " + T("Stop") : "🎤 " + T("Ik") + " · " + lang.toUpperCase());
+      var b = btn(lbl, "tolk-mic " + who + (bezig ? " rec" : ""), function () {
+        if (S.listening) { stopMic(); return; }
+        S.tolkWie = who;
+        if (who === "partner") startMic({ bcp: (typeof DOELTAAL !== "undefined" ? DOELTAAL.cfg.bcp : "es-ES"), wh: G_WH[doel], onText: function (t) { gTolkZeg("partner", herstelZin(t)); } });
+        else startMic({ bcp: G_BCP[lang], wh: G_WH[lang], onText: function (t) { gTolkZeg("ik", t); } });
+      });
+      b.setAttribute("aria-label", lbl);
+      return b;
+    }
+    // Bovenkant voor de gesprekspartner, omgedraaid als de telefoon tussen jullie in ligt
+    if (S.tolkFlip) {
+      var boven = el("div", "tolk-boven");
+      boven.appendChild(el("div", "tolk-wie", G_PARTNER_WIE[doel] || ""));
+      var bt = laatste ? (laatste.who === "partner" ? laatste.src : (laatste.tr || "")) : "";
+      boven.appendChild(el("div", "tolk-groot", bt || "…"));
+      var pm = micKnop("partner");
+      if (!(luistert === "partner")) pm.textContent = "🎤 " + (G_PARTNER_TIK[doel] || "");
+      boven.appendChild(pm);
+      w.appendChild(boven);
+    }
+    var lijst = el("div", "tolk-lijst");
+    if (!log.length) lijst.appendChild(el("div", "note", T("Tik op jouw knop en spreek, of laat je gesprekspartner op de andere knop tikken.")));
+    log.forEach(function (e) {
+      var r = el("div", "tolk-r " + e.who);
+      r.appendChild(el("div", "nl", e.who === "partner" ? T("Gesprekspartner") : T("Ik")));
+      var a = el("div", "line-row");
+      var at = el("div", "txt");
+      at.appendChild(el("div", e.who === "partner" ? "es" : "tolk-eigen", e.src));
+      a.appendChild(at);
+      a.appendChild(e.who === "partner" ? speakBtn(e.src) : speakEigenBtn(e.src));
+      r.appendChild(a);
+      var bb = el("div", "line-row");
+      var bt2 = el("div", "txt");
+      bt2.appendChild(el("div", "tolk-tr " + (e.who === "partner" ? "tolk-eigen" : "es"), e.tr || T("Geen vertaling")));
+      bb.appendChild(bt2);
+      if (e.tr) bb.appendChild(e.who === "partner" ? speakEigenBtn(e.tr) : speakBtn(e.tr));
+      r.appendChild(bb);
+      lijst.appendChild(r);
+    });
+    w.appendChild(lijst);
     if (S.note) w.appendChild(el("div", "bad", S.note));
     if (isIOS()) {
       if (S.whAsk) w.appendChild(whConsentCard());
@@ -2448,161 +2847,58 @@
       ws.id = "whStatus";
       if (!S.whStatus) ws.style.display = "none";
       w.appendChild(ws);
-      if (store.get("whModel", null) && !S.whAsk && !S.listening) {
-        w.appendChild(btn(T("Spraakmodel wijzigen"), "small", function () { S.whAsk = true; render(); }));
-      }
     }
-    w.appendChild(el("div", "note", T("Spraak hangt af van je browser. Het typvak werkt altijd.")));
-
-    var box = el("div", "card");
-    box.appendChild(el("div", "nl", T("Of typ wat je gesprekspartner zei")));
-    var tIn = document.createElement("textarea");
-    tIn.className = "big-input";
-    tIn.style.minHeight = "56px";
-    tIn.placeholder = T("Typ hier de Spaanse zin");
-    box.appendChild(tIn);
-    box.appendChild(btn(T("Verwerk"), "primary", function () {
-      var v = tIn.value.trim();
-      if (!v) return;
-      S.note = "";
-      S.convo.push(makeTurn(v));
-      render();
-    }));
-    w.appendChild(box);
-
-    if (!S.convo.length) {
-      w.appendChild(el("div", "note", T("Nog geen gesprek. Tik op de microfoon en zeg bijvoorbeeld ¿Qué tal?")));
-      return w;
+    var knoppen = el("div", "tolk-knoppen");
+    if (!S.tolkFlip) knoppen.appendChild(micKnop("partner"));
+    knoppen.appendChild(micKnop("ik"));
+    w.appendChild(knoppen);
+    // Typen kan altijd
+    var typ = el("div", "tolk-typ");
+    var ti = document.createElement("textarea");
+    ti.rows = 1; ti.className = "chat-in"; ti.id = "tIn";
+    ti.placeholder = T("Of typ een zin");
+    ti.setAttribute("aria-label", ti.placeholder);
+    typ.appendChild(ti);
+    var rij = el("div", "chips");
+    rij.appendChild(btn(T("Verstuur als ik"), "small", function () { var v = ti.value.trim(); if (!v) return; gTolkZeg("ik", v); render(); scrollGesprekEnd(); }));
+    rij.appendChild(btn(T("Verstuur als gesprekspartner"), "small", function () { var v = ti.value.trim(); if (!v) return; gTolkZeg("partner", v); render(); scrollGesprekEnd(); }));
+    typ.appendChild(rij);
+    w.appendChild(typ);
+    var opt = el("div", "chips tolk-opties");
+    opt.appendChild(btn((S.tolkFlip ? "✓ " : "") + T("Bovenkant omdraaien voor je gesprekspartner"), "small", function () { S.tolkFlip = !S.tolkFlip; render(); }));
+    if (log.length) opt.appendChild(btn(T("Wis gesprek"), "small", function () { S.tolk = []; S.note = ""; render(); }));
+    w.appendChild(opt);
+    return w;
+  }
+  // Aanleren: eerst uitleg en twee manieren om het na te gaan (vraag het na in de doeltaal, of controleer online)
+  var G_VRAAG = { es: function (x) { return "¿Qué significa " + x + "?"; }, de: function (x) { return "Was bedeutet " + x + "?"; },
+    fr: function (x) { return "Que veut dire " + x + " ?"; }, en: function (x) { return "What does " + x + " mean?"; }, nl: function (x) { return "Wat betekent " + x + "?"; } };
+  function gTeachForm(card, ph, onSave, ctx) {
+    var doel = gDoelCode();
+    var info = el("div", "card panel");
+    info.appendChild(el("div", "sec-title", T("Eerst controleren, dan aanleren")));
+    info.appendChild(el("div", "", ctx.kind === "antwoord"
+      ? T("Voeg alleen een antwoord toe waarvan je zeker weet dat het goed Spaans is. De app toont het daarna zonder controle.")
+      : T("Leer de app alleen iets aan als je de betekenis zeker weet. De app toont jouw vertaling daarna als juist. Weet je het niet zeker? Vraag het na of controleer het online, of sla niets op.")));
+    var hr = el("div", "chips");
+    if (ctx.kind !== "antwoord") {
+      var q = (G_VRAAG[doel] || G_VRAAG.es)(ctx.text);
+      hr.appendChild(btn("🔊 " + T("Vraag het na") + ": " + q, "small", function () { speak(q); }));
     }
-    function refresh(t) { var nt = makeTurn(t.es); t.tr = nt.tr; t.options = nt.options; S.teach = null; render(); }
-    function teachForm(card, ph, onSave, ctx) {
-      // Eerst uitleg: alleen aanleren wat je zeker weet, met twee manieren om het na te gaan.
-      var info = el("div", "card panel");
-      info.appendChild(el("div", "sec-title", T("Eerst controleren, dan aanleren")));
-      info.appendChild(el("div", "", ctx.kind === "antwoord"
-        ? T("Voeg alleen een antwoord toe waarvan je zeker weet dat het goed Spaans is. De app toont het daarna zonder controle.")
-        : T("Leer de app alleen iets aan als je de betekenis zeker weet. De app toont jouw vertaling daarna als juist. Weet je het niet zeker? Vraag het na of controleer het online, of sla niets op.")));
-      var hr = el("div", "chips");
-      if (ctx.kind !== "antwoord") {
-        var q = "¿Qué significa " + ctx.text + "?";
-        hr.appendChild(btn("🔊 " + T("Vraag het na") + ": " + q, "small", function () { speak(q); }));
-      }
-      var a = document.createElement("a");
-      a.className = "btn small"; a.target = "_blank"; a.rel = "noopener";
-      a.textContent = T("Controleer online");
-      a.href = "https://translate.google.com/?sl=es&tl=" + lang + "&text=" + encodeURIComponent(ctx.text) + "&op=translate";
-      hr.appendChild(a);
-      info.appendChild(hr);
-      card.appendChild(info);
-      var f = el("div", "row");
-      var inp = document.createElement("input");
-      inp.type = "text"; inp.className = "teach-input"; inp.placeholder = ph;
-      f.appendChild(inp);
-      f.appendChild(btn(T("Opslaan"), "primary small", function () { var v = inp.value.trim(); if (v) onSave(v); }));
-      f.appendChild(btn(T("Annuleer"), "small", function () { S.teach = null; render(); }));
-      card.appendChild(f);
-    }
-    S.convo.forEach(function (t, ti) {
-      // Jouw eigen beurt (vanuit de vertaalbox): rechts, met de andere manieren om het te zeggen
-      if (t.me) {
-        var mt = el("div", "turn");
-        var mb = el("div", "line-row bubble me");
-        var mx = el("div", "txt");
-        mx.appendChild(el("div", "nl", T("Jij zei")));
-        mx.appendChild(el("div", "es", t.es));
-        mb.appendChild(mx);
-        mb.appendChild(speakBtn(t.es));
-        mt.appendChild(mb);
-        if (t.missing && t.missing.length) mt.appendChild(el("div", "bad", T("Niet in de lijst:") + " " + t.missing.join(", ")));
-        // Woord voor woord: elk Spaans woord met zijn betekenis in de gekozen taal
-        var grb = glossBlock(t.es);
-        if (grb) mt.appendChild(grb);
-        var mrep = el("div", "replies");
-        if (altsFor(t.es).length) mrep.appendChild(altBlock(altsFor(t.es)));
-        // Vervolgopties: wat de gesprekspartner kan antwoorden, en vragen die je zelf kunt stellen
-        var mopts = t.flow ? [] : makeTurn(t.es).options;
-        if (mopts.length) {
-          mrep.appendChild(el("div", "sec-title", T("Mogelijke vervolg")));
-          mopts.forEach(function (o) {
-            var l = el("div", "line-row bubble me");
-            var x = el("div", "txt");
-            x.appendChild(el("div", "nl", L(o.label)));
-            x.appendChild(el("div", "es", o.es));
-            if (o.m) x.appendChild(el("div", "nl", L(o.m)));
-            l.appendChild(x);
-            l.appendChild(speakBtn(o.es));
-            mrep.appendChild(l);
-          });
-        }
-        mt.appendChild(mrep);
-        built.push(mt);
-        return;
-      }
-      var turn = el("div", "turn");
-      var card = el("div", "card bubble partner");
-      card.appendChild(el("div", "nl", T("Gesprekspartner zei")));
-      var line = el("div", "line-row");
-      var tx = el("div", "txt");
-      tx.appendChild(el("div", "es", t.es));
-      line.appendChild(tx);
-      line.appendChild(speakBtn(t.es));
-      card.appendChild(line);
-      card.appendChild(el("div", "nl", T("Vertaling")));
-      // De vertaling wordt bij het tonen opnieuw gemaakt, zodat ze altijd de gekozen taal volgt.
-      var trr = t.fixedM ? { text: L(t.fixedM) } : (esToLang(t.es) || t.tr);
-      // Eerst de volledige zinvertaling, daaronder de woord-voor-woord-laag (één keer)
-      if (trr.text) card.appendChild(el("div", "sentence-tr", trr.text));
-      else card.appendChild(el("div", "note", T("Nog geen volledige zinsvertaling. Tik op Verbeter vertaling om er een toe te voegen.")));
-      var pgl = glossBlock(t.es); if (pgl) card.appendChild(pgl);
-      if (altsFor(t.es).length) card.appendChild(altBlock(altsFor(t.es)));
-      if (t.gen) card.appendChild(el("div", "nl", T("Uit de zin afgeleid: vorm voor de gesprekspartner") + " (" + (t.gen === "zij" ? "zij" : "hij") + ")"));
-      if (trr.about && trr.es) card.appendChild(el("div", "nl", T("Herkend als:") + " " + trr.es));
-      if (trr.learned) card.appendChild(el("div", "nl", T("Door jou aangeleerd")));
-      var teach = (S.teach && S.teach.i === ti) ? S.teach : null;
-      if (trr.missing && trr.missing.length) {
-        card.appendChild(el("div", "bad", T("Niet in de lijst. Tik op een woord om het de app te leren:")));
-        var mr = el("div", "chips");
-        trr.missing.forEach(function (wd) {
-          mr.appendChild(btn(wd + " = ?", teach && teach.word === wd ? "primary small" : "small", function () { S.teach = { i: ti, kind: "word", word: wd }; render(); }));
-        });
-        card.appendChild(mr);
-      }
-      var tr2 = el("div", "chips");
-      tr2.appendChild(btn(T("Verbeter vertaling"), "small", function () { S.teach = { i: ti, kind: "zin" }; render(); }));
-      tr2.appendChild(btn(T("Eigen antwoord toevoegen"), "small", function () { S.teach = { i: ti, kind: "antwoord" }; render(); }));
-      card.appendChild(tr2);
-      if (teach && teach.kind === "word") teachForm(card, teach.word + " = …", function (v) { learnWord(teach.word, v); refresh(t); }, { kind: "word", text: teach.word });
-      if (teach && teach.kind === "zin") teachForm(card, T("Wat betekent deze zin?"), function (v) { learnSentence(t.es, v); refresh(t); }, { kind: "zin", text: t.es.replace(/[¿?¡!.]+/g, "").trim() });
-      if (teach && teach.kind === "antwoord") teachForm(card, T("Jouw antwoord in het Spaans"), function (v) { learnReply(t.es, v); refresh(t); }, { kind: "antwoord", text: t.es });
-      turn.appendChild(card);
-      // Vervolgopties als eigen bellen aan de andere kant van het gesprek
-      var rep = el("div", "replies");
-      if (t.options.length) {
-        rep.appendChild(el("div", "sec-title", t.help ? T("Kies wat je wilt vragen:") : T("Mogelijke vervolg")));
-        t.options.forEach(function (o) {
-          var l = el("div", "line-row bubble me" + (t.help ? " pick" : ""));
-          var x = el("div", "txt");
-          x.appendChild(el("div", "nl", L(o.label)));
-          x.appendChild(el("div", "es", o.es));
-          if (o.m) x.appendChild(el("div", "nl", L(o.m)));
-          l.appendChild(x);
-          l.appendChild(speakBtn(o.es));
-          if (t.help) {
-            l.setAttribute("role", "button");
-            l.onclick = function () { pickHelp(t, o); };
-          }
-          rep.appendChild(l);
-        });
-        // De start van de chat (vanuit de vertaalbox) krijgt de antwoorden pas na de opneemfunctie
-        turn.appendChild(rep);
-      }
-      built.push(turn);
-    });
-    // Chronologisch: de nieuwste beurt staat onderaan, en de opneemkaart volgt direct daarna
-    var out = el("div");
-    built.forEach(function (x) { out.appendChild(x); });
-    out.appendChild(w);
-    return out;
+    var a = document.createElement("a");
+    a.className = "btn small"; a.target = "_blank"; a.rel = "noopener";
+    a.textContent = T("Controleer online");
+    a.href = "https://translate.google.com/?sl=" + doel + "&tl=" + lang + "&text=" + encodeURIComponent(ctx.text) + "&op=translate";
+    hr.appendChild(a);
+    info.appendChild(hr);
+    card.appendChild(info);
+    var f = el("div", "row");
+    var inp = document.createElement("input");
+    inp.type = "text"; inp.className = "teach-input"; inp.placeholder = ph;
+    f.appendChild(inp);
+    f.appendChild(btn(T("Opslaan"), "primary small", function () { var v = inp.value.trim(); if (v) onSave(v); }));
+    f.appendChild(btn(T("Annuleer"), "small", function () { S.teach = null; render(); }));
+    card.appendChild(f);
   }
 
   // ---------- Uitspraaktrainer ----------
