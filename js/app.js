@@ -552,7 +552,21 @@
     var s = sitHuidig();
     w.appendChild(el("h2", "", s.n + ". " + sitTitel(s)));
     var lijst = el("div", "sit-gesprek");
-    s.r.forEach(function (r) { lijst.appendChild(sitZin(r, r[0] === "j" ? "me" : "partner", r[0] === "j" ? T("Jij") : T("De ander"))); });
+    s.r.forEach(function (r, i) {
+      var b = sitZin(r, r[0] === "j" ? "me" : "partner", r[0] === "j" ? T("Jij") : T("De ander"));
+      // Andere manieren om hetzelfde te zeggen (uit het boek), klein onder het bericht
+      ((s.v && s.v[String(i)]) || []).forEach(function (v) {
+        var vr = [r[0]].concat(v);
+        var line = el("div", "line-row sit-of");
+        var tx = el("div", "txt");
+        tx.appendChild(el("div", "es", T("Of:") + " " + sitDoelTx(vr)));
+        tx.appendChild(el("div", "nl", sitEigenTx(vr)));
+        line.appendChild(tx);
+        line.appendChild(speakBtn(sitDoelTx(vr)));
+        b.appendChild(line);
+      });
+      lijst.appendChild(b);
+    });
     w.appendChild(lijst);
     return w;
   }
@@ -2045,7 +2059,7 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "3.4";
+  var APP_VERSION = "3.5";
   // Versies waarvoor gebruikers de app opnieuw op hun beginscherm moeten zetten (oude icoon weg, nieuwe erop).
   // Bij zo'n update verschijnt eenmalig een melding met uitleg.
   var REINSTALL_VERSIONS = ["1.8"];

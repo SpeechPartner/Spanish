@@ -120,6 +120,7 @@ var UI = {
   "Wat wil je zeggen?": m("Wat wil je zeggen?", "What do you want to say?", "Was willst du sagen?", "Que veux-tu dire ?"),
   "Chat": m("Chat", "Chat", "Chat", "Chat"),
   "Tolkmodus": m("Tolkmodus", "Interpreter mode", "Dolmetschmodus", "Mode interprète"),
+  "Of:": m("Of:", "Or:", "Oder:", "Ou :"),
   "Vragen": m("Vragen", "Questions", "Fragen", "Questions"),
   "Situaties": m("Situaties", "Situations", "Situationen", "Situations"),
   "Oefenen": m("Oefenen", "Practise", "Üben", "S'entraîner"),

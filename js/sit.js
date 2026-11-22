@@ -14,22 +14,86 @@ var SIT = (function () {
     var m = String(t || "").match(/[^.!?…]+[.!?…]*["”»]?/g);
     return m ? m.map(function (x) { return x.trim(); }).filter(Boolean) : [];
   }
-  // Index per taal: sleutel -> lijst van { s: situatie, i: beurt, z: zin (-1 = hele beurt) }
+  // Index per taal: sleutel -> lijst van { s: situatie, i: beurt, v: variant (-1 = de beurt zelf), z: zin (-1 = hele beurt) }
+  // Een variant ("(ook)" in het boek) is een andere manier om dezelfde beurt te zeggen: zelfde plek in het gesprek.
   var IDX = {};
   TALEN.forEach(function (l) { IDX[l] = {}; });
   function voeg(l, k, v) { if (!k) return; (IDX[l][k] = IDX[l][k] || []).push(v); }
+  function cel(s, i, v, l) { return v < 0 ? s.r[i][KOL[l]] : s.v[String(i)][v][KOL[l] - 1]; }
   (typeof SITUATIES !== "undefined" ? SITUATIES : []).forEach(function (s, si) {
     s.r.forEach(function (r, ri) {
-      var tel = TALEN.map(function (l) { return zinnen(r[KOL[l]]).length; });
-      var gelijk = tel.every(function (n) { return n === tel[0]; }) && tel[0] > 1;
-      TALEN.forEach(function (l) {
-        voeg(l, sleutel(r[KOL[l]]), { s: si, i: ri, z: -1 });
-        if (gelijk) zinnen(r[KOL[l]]).forEach(function (z, zi) { voeg(l, sleutel(z), { s: si, i: ri, z: zi }); });
+      var vs = [-1].concat(((s.v && s.v[String(ri)]) || []).map(function (x, k) { return k; }));
+      vs.forEach(function (v) {
+        var tel = TALEN.map(function (l) { return zinnen(cel(s, ri, v, l)).length; });
+        var gelijk = tel.every(function (n) { return n === tel[0]; }) && tel[0] > 1;
+        TALEN.forEach(function (l) {
+          var t = cel(s, ri, v, l);
+          voeg(l, sleutel(t), { s: si, i: ri, v: v, z: -1 });
+          if (gelijk) zinnen(t).forEach(function (z, zi) { voeg(l, sleutel(z), { s: si, i: ri, v: v, z: zi }); });
+        });
       });
     });
   });
   function rij(h) { return SITUATIES[h.s].r[h.i]; }
-  function tekst(h, l) { var t = rij(h)[KOL[l]]; return h.z < 0 ? t : zinnen(t)[h.z]; }
+  function heel(h, l) { return cel(SITUATIES[h.s], h.i, h.v === undefined ? -1 : h.v, l); }
+  function tekst(h, l) { var t = heel(h, l); return h.z < 0 ? t : zinnen(t)[h.z]; }
+
+  // Losse zinnen met een open plek ([plaats], [getal], [tijd], [dag]): de app vult in wat er gezegd is
+  var DAG = { nl: ["maandag", "dinsdag", "woensdag", "donderdag", "vrijdag", "zaterdag", "zondag"],
+    de: ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"],
+    en: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+    fr: ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"],
+    es: ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"] };
+  var TAL = { nl: "een twee drie vier vijf zes zeven acht negen tien elf twaalf", de: "eins zwei drei vier fünf sechs sieben acht neun zehn elf zwölf",
+    en: "one two three four five six seven eight nine ten eleven twelve", fr: "un deux trois quatre cinq six sept huit neuf dix onze douze",
+    es: "uno dos tres cuatro cinco seis siete ocho nueve diez once doce" };
+  function vorm(t) { return String(t || "").replace(/[’`]/g, "'").replace(/[¿¡?!.,;:…"“”«»()]+/g, " ").replace(/\s+/g, " ").trim(); }
+  var VRIJ = {};
+  TALEN.forEach(function (l) { VRIJ[l] = []; });
+  (typeof SITUATIES !== "undefined" ? SITUATIES : []).forEach(function (s) {
+    (s.p || []).forEach(function (r) {
+      TALEN.forEach(function (l) {
+        var namen = [], pat = vorm(r[KOL[l] - 1]).replace(/[.*+?^${}|\\]/g, "\\$&").replace(/\\\[(plaats|getal|tijd|dag)\\\]|\[(plaats|getal|tijd|dag)\]/g, function (m0, a, b) {
+          var n = a || b; namen.push(n);
+          if (n === "tijd") return "(\\d{1,2}(?:[:.h]\\d{2})?)";
+          if (n === "getal") return "(\\d+|" + TAL[l].split(" ").join("|") + ")";
+          if (n === "dag") return "(" + DAG[l].join("|") + ")";
+          return "(.+?)";
+        });
+        if (namen.length) VRIJ[l].push({ re: new RegExp("^" + pat + "$", "i"), namen: namen, r: r });
+      });
+    });
+  });
+  function vulIn(n, w, from, to) {
+    if (n === "dag") { var i = DAG[from].map(function (x) { return x.toLowerCase(); }).indexOf(w.toLowerCase()); return i >= 0 ? DAG[to][i] : null; }
+    if (n === "getal" && !/^\d+$/.test(w)) { var j = TAL[from].split(" ").indexOf(w.toLowerCase()); return j >= 0 ? String(j + 1) : null; }
+    // Een plaats is een naam: met een hoofdletter en zonder lidwoord ("the station" of "la gare" is geen plaatsnaam)
+    // (wel: "Den Haag", "La Haye", waar het tweede woord ook met een hoofdletter begint)
+    if (n === "plaats") {
+      var ws = w.split(/\s+/), LW = ["the", "a", "an", "de", "het", "een", "der", "die", "das", "den", "dem", "ein", "eine", "le", "la", "les", "un", "une", "el", "los", "las", "lo", "unos", "unas"];
+      if (!/^[A-ZÀ-ÝÄÖÜ]/.test(w)) return null;
+      if (LW.indexOf(ws[0].toLowerCase()) >= 0 && !(ws[1] && /^[A-ZÀ-ÝÄÖÜ]/.test(ws[1]))) return null;
+      if (/^l'/i.test(w) && !/^l'[A-ZÀ-ÝÄÖÜ]/i.test(w.replace(/^l'/i, "l'"))) return null;
+      return w;
+    }
+    return w;
+  }
+  function vrij(text, from, to) {
+    var t = vorm(text);
+    for (var k = 0; k < VRIJ[from].length; k++) {
+      var e = VRIJ[from][k], m = t.match(e.re);
+      if (!m) continue;
+      var uit = e.r[KOL[to] - 1], ok = true, idx = 0;
+      uit = uit.replace(/\[(plaats|getal|tijd|dag)\]/g, function (m0, n) {
+        var p = e.namen.indexOf(n, idx); if (p < 0) p = e.namen.indexOf(n);
+        var w = p >= 0 ? vulIn(n, m[p + 1], from, to) : null;
+        if (w === null) ok = false;
+        return w || "";
+      });
+      if (ok) return uit;
+    }
+    return null;
+  }
 
   // Waar het gesprek in het boek is (situatie en beurt van de laatst herkende zin). Zinnen die in meer
   // situaties voorkomen, krijgen zo de vertaling en het vervolg uit de situatie van dit gesprek.
@@ -60,7 +124,7 @@ var SIT = (function () {
       if (hier.length) return hier;
     }
     // Voor voorstellen telt ook de laatste zin van een beurt: daar antwoordt de volgende beurt op
-    return hits.filter(function (h) { return h.z < 0 || (laatsteZin && h.z === zinnen(rij(h)[KOL.nl]).length - 1); });
+    return hits.filter(function (h) { return h.z < 0 || (laatsteZin && h.z === zinnen(heel(h, "nl")).length - 1); });
   }
   function woorden(t) { return sleutel(t).split(" ").filter(Boolean).length; }
   function wis() { CTX = null; }
@@ -68,7 +132,7 @@ var SIT = (function () {
   function vertaal(text, from, to) {
     if (!KOL[from] || !KOL[to] || from === to) return null;
     var h = beste(bruikbaar(IDX[from][sleutel(text)]));
-    if (!h) return null;
+    if (!h) return vrij(text, from, to);
     var uit = tekst(h, to);
     if (!uit) return null;
     // Een vraag blijft een vraag, ook als de spraakherkenning het vraagteken weglaat (alleen als de zin in het
@@ -131,12 +195,15 @@ var SIT = (function () {
     hits.forEach(function (h) {
       var s = SITUATIES[h.s];
       if (h.i + 1 >= s.r.length) return;
-      var nx = s.r[h.i + 1], t = nx[KOL[l]];
-      if (seen[t]) return;
-      seen[t] = 1;
-      var m = {};
-      TALEN.forEach(function (x) { m[x] = nx[KOL[x]]; });
-      out.push({ doel: t, m: m, situatie: s.t });
+      // de volgende beurt, en daarna de andere manieren om die te zeggen
+      [-1].concat(((s.v && s.v[String(h.i + 1)]) || []).map(function (x, k) { return k; })).forEach(function (v) {
+        var t = cel(s, h.i + 1, v, l);
+        if (seen[sleutel(t)]) return;
+        seen[sleutel(t)] = 1;
+        var m = {};
+        TALEN.forEach(function (x) { m[x] = cel(s, h.i + 1, v, x); });
+        out.push({ doel: t, m: m, situatie: s.t, variant: v >= 0 });
+      });
     });
     return out;
   }

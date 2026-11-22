@@ -309,3 +309,13 @@ body .sit-kies .btn.sit-pijl { margin: 0; flex: 0 0 auto; }
 .sit-b .es { font-weight: 700; }
 body .quiz-list .btn.sit-fout { text-decoration: line-through; opacity: 0.7; }
 .ww-chips { margin-bottom: 10px; }
+
+/* Snel twee keer tikken (bijv. op de pijltjes) mag op iOS niet inzoomen; knijpen om te zoomen blijft werken */
+html, body, button, .btn, select, input, textarea, a { touch-action: manipulation; }
+/* Uitzoomen gaat niet verder dan de schermbreedte, en de pagina kan niet zijwaarts verschuiven */
+html { overflow-x: hidden; }
+body { overflow-x: clip; }
+
+/* Andere manieren om een zin uit het boek te zeggen */
+.sit-of { margin-top: 8px; padding-top: 8px; border-top: 2px dashed rgba(0,0,0,0.15); }
+.sit-of .es { font-weight: 600; font-size: 0.92em; }
