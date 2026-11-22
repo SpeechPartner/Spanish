@@ -472,10 +472,188 @@
   }
 
   // ---------- Onderwerpen ----------
+  // Drie tabbladen: gespreksvragen (de vaste vragen), situaties en oefenen (uit het situatieboek)
   function viewOnderwerpen() {
+    if (!sitOk()) return viewVragen();
+    var tab = ["vragen", "situaties", "oefenen"].indexOf(S.onTab) >= 0 ? S.onTab : "vragen";
+    var w = el("div");
+    w.appendChild(subSeg([["vragen", T("Vragen")], ["situaties", T("Situaties")], ["oefenen", T("Oefenen")]], tab, function (k) { S.onTab = k; }));
+    w.appendChild(tab === "situaties" ? viewSituaties() : tab === "oefenen" ? viewOefenen() : viewVragen());
+    return w;
+  }
+  function viewVragen() {
     var w = el("div");
     w.appendChild(el("div", "note", T("Stel zo'n vraag als het gesprek stilvalt. Lees hem hardop en luister na.")));
     TOPICS.forEach(function (it) { var c = phraseCard(it, null); if (c) w.appendChild(c); });
+    return w;
+  }
+
+  // ---------- Situatieboek op de pagina's Onderwerpen en Zin bouwen ----------
+  function sitOk() { return typeof SITUATIES !== "undefined" && SITUATIES.length > 0; }
+  var SIT_KOL = { de: 1, nl: 2, en: 3, fr: 4, es: 5 };
+  function sitTitel(s) { return (s.tt && (s.tt[lang] || s.tt.nl)) || s.t; }
+  function sitDoelTx(r) { return r[SIT_KOL[sitDoel()]]; }
+  function sitEigenTx(r) { return r[SIT_KOL[lang]] || r[SIT_KOL.nl]; }
+  function sitHuidig() { var i = S.sitSel || 0; if (i < 0 || i >= SITUATIES.length) i = 0; S.sitSel = i; return SITUATIES[i]; }
+  // Tabbladen bovenaan een pagina (zelfde opbouw als Chat / Tolkmodus op Gesprek)
+  function subSeg(items, cur, onPick) {
+    var seg = el("div", "sub-seg");
+    seg.setAttribute("role", "tablist");
+    items.forEach(function (x) {
+      var on = cur === x[0];
+      var b = btn(x[1], "sub-tab" + (on ? " active" : ""), function () { onPick(x[0]); render(); });
+      b.setAttribute("role", "tab");
+      b.setAttribute("aria-selected", on ? "true" : "false");
+      seg.appendChild(b);
+    });
+    return seg;
+  }
+  // Situatie kiezen: vorige, lijst, volgende
+  function sitKiezer() {
+    var w = el("div", "sit-kies");
+    var i = S.sitSel || 0, n = SITUATIES.length;
+    function kies(k) { S.sitSel = (k + n) % n; S.wwVerb = null; S.oef = null; render(); }
+    var vorige = btn("◀", "small sit-pijl", function () { kies(i - 1); });
+    vorige.setAttribute("aria-label", T("Vorige situatie"));
+    var sel = document.createElement("select");
+    sel.className = "sit-select";
+    sel.setAttribute("aria-label", T("Situatie"));
+    SITUATIES.forEach(function (s, k) {
+      var o = document.createElement("option");
+      o.value = String(k); o.textContent = s.n + ". " + sitTitel(s);
+      if (k === i) o.selected = true;
+      sel.appendChild(o);
+    });
+    sel.onchange = function () { kies(+sel.value); };
+    var volgende = btn("▶", "small sit-pijl", function () { kies(i + 1); });
+    volgende.setAttribute("aria-label", T("Volgende situatie"));
+    w.appendChild(vorige); w.appendChild(sel); w.appendChild(volgende);
+    return w;
+  }
+  // Eén zin uit het boek: tekst in de doeltaal, vertaling, luisterknop
+  function sitZin(r, cls, wie) {
+    var c = el("div", "sit-b " + cls);
+    if (wie) c.appendChild(el("div", "sit-wie", wie));
+    var line = el("div", "line-row");
+    var tx = el("div", "txt");
+    tx.appendChild(el("div", "es", sitDoelTx(r)));
+    tx.appendChild(el("div", "nl", sitEigenTx(r)));
+    line.appendChild(tx);
+    line.appendChild(speakBtn(sitDoelTx(r)));
+    c.appendChild(line);
+    return c;
+  }
+
+  // Onderwerpen > Situaties: het hele gesprek uit het boek
+  function viewSituaties() {
+    var w = el("div");
+    w.appendChild(el("div", "note", T("Kies een situatie. Lees het gesprek en luister naar elke zin.")));
+    w.appendChild(sitKiezer());
+    var s = sitHuidig();
+    w.appendChild(el("h2", "", s.n + ". " + sitTitel(s)));
+    var lijst = el("div", "sit-gesprek");
+    s.r.forEach(function (r) { lijst.appendChild(sitZin(r, r[0] === "j" ? "me" : "partner", r[0] === "j" ? T("Jij") : T("De ander"))); });
+    w.appendChild(lijst);
+    return w;
+  }
+
+  // Onderwerpen > Oefenen: wat zeg jij terug? (antwoord uit het boek, twee andere zinnen van jou uit dezelfde situatie)
+  function sitVragen(s) {
+    var out = [];
+    s.r.forEach(function (r, i) { if (r[0] === "a" && s.r[i + 1] && s.r[i + 1][0] === "j") out.push(i); });
+    return out;
+  }
+  function sitNieuweOef(k) {
+    var s = sitHuidig(), vr = sitVragen(s);
+    if (!vr.length) return null;
+    k = ((k || 0) % vr.length + vr.length) % vr.length;
+    var ai = vr[k], goed = s.r[ai + 1];
+    var gezien = {}; gezien[SIT.sleutel(sitDoelTx(goed))] = 1;
+    var andere = s.r.filter(function (r, j) {
+      if (r[0] !== "j" || j === ai + 1) return false;
+      var kk = SIT.sleutel(sitDoelTx(r));
+      if (gezien[kk]) return false;
+      gezien[kk] = 1; return true;
+    });
+    // Vaste maar wisselende keuze (geen toeval, zodat het per vraag hetzelfde blijft)
+    var fout = [];
+    for (var t = 0; t < andere.length && fout.length < 2; t++) fout.push(andere[(k * 3 + t * 5) % andere.length]);
+    fout = fout.filter(function (x, idx) { return fout.indexOf(x) === idx; });
+    var opts = [{ r: goed, goed: true }].concat(fout.map(function (r) { return { r: r, goed: false }; }));
+    var rot = k % opts.length;
+    opts = opts.slice(rot).concat(opts.slice(0, rot));
+    return { s: S.sitSel, k: k, n: vr.length, ai: ai, opts: opts, gekozen: null };
+  }
+  function viewOefenen() {
+    var w = el("div");
+    w.appendChild(el("div", "note", T("De ander zegt iets. Wat zeg jij terug? Kies het beste antwoord.")));
+    w.appendChild(sitKiezer());
+    if (!S.oef || S.oef.s !== S.sitSel) S.oef = sitNieuweOef(0);
+    var o = S.oef;
+    if (!o) return w;
+    var s = sitHuidig();
+    w.appendChild(el("div", "stat", T("Vraag") + " " + (o.k + 1) + " / " + o.n));
+    w.appendChild(sitZin(s.r[o.ai], "partner", T("De ander")));
+    var list = el("div", "quiz-list");
+    o.opts.forEach(function (x, idx) {
+      var cls = o.gekozen === null ? "" : (x.goed ? "primary" : (idx === o.gekozen ? "sit-fout" : ""));
+      var b = btn(sitDoelTx(x.r), cls, function () {
+        if (o.gekozen !== null) return;
+        o.gekozen = idx; speak(sitDoelTx(x.r)); render();
+      });
+      b.disabled = o.gekozen !== null;
+      list.appendChild(b);
+    });
+    w.appendChild(list);
+    if (o.gekozen !== null) {
+      var goed = o.opts[o.gekozen].goed;
+      var fb = el("div", "card");
+      fb.appendChild(el("div", goed ? "ok" : "bad", goed ? T("Goed! Zo gaat het gesprek verder.") : T("Niet helemaal. Het goede antwoord staat hieronder.")));
+      o.opts.forEach(function (x) { if (x.goed) fb.appendChild(sitZin(x.r, "me", T("Jij"))); });
+      w.appendChild(fb);
+      w.appendChild(btn(T("Volgende vraag →"), "primary", function () { S.oef = sitNieuweOef(o.k + 1); render(); }));
+    }
+    return w;
+  }
+
+  // Zin bouwen > Werkwoorden: werkwoorden per situatie met de zinnen uit het gesprek
+  function sitWerkwoorden(si) {
+    var d = sitDoel(), uit = [], per = {};
+    ((typeof SIT_WW !== "undefined" && SIT_WW[si]) || []).forEach(function (v) {
+      var rs = v.r[d] || [];
+      if (!rs.length) return;
+      var k = v.inf[d];
+      if (per[k]) { rs.forEach(function (x) { if (per[k].r.indexOf(x) < 0) per[k].r.push(x); }); per[k].r.sort(function (a, b) { return a - b; }); return; }
+      per[k] = { id: v.id, doel: k, eigen: v.inf[lang] || v.inf.nl, r: rs.slice() };
+      uit.push(per[k]);
+    });
+    return uit;
+  }
+  function viewWerkwoorden() {
+    var w = el("div");
+    w.appendChild(el("div", "note", T("Werkwoorden uit het gesprek van deze situatie. Tik op een werkwoord voor de zinnen waarin het staat.")));
+    w.appendChild(sitKiezer());
+    var s = sitHuidig(), ww = sitWerkwoorden(S.sitSel);
+    if (!ww.length) return w;
+    if (!ww.some(function (v) { return v.doel === S.wwVerb; })) S.wwVerb = ww[0].doel;
+    var chips = el("div", "chips ww-chips");
+    var cur = null;
+    ww.forEach(function (v) {
+      if (v.doel === S.wwVerb) cur = v;
+      chips.appendChild(btn(v.doel + " (" + v.eigen + ")", v.doel === S.wwVerb ? "primary small" : "small", function () { S.wwVerb = v.doel; render(); }));
+    });
+    w.appendChild(chips);
+    var kop = el("div", "card big");
+    var line = el("div", "line-row");
+    var tx = el("div", "txt");
+    tx.appendChild(el("div", "big-es", cur.doel));
+    tx.appendChild(el("div", "nl", cur.eigen));
+    line.appendChild(tx);
+    line.appendChild(speakBtn(cur.doel.split(" / ")[0]));
+    kop.appendChild(line);
+    w.appendChild(kop);
+    w.appendChild(el("h2", "", T("Zo zeg je het in deze situatie")));
+    cur.r.forEach(function (i) { var r = s.r[i]; w.appendChild(sitZin(r, r[0] === "j" ? "me" : "partner", r[0] === "j" ? T("Jij") : T("De ander"))); });
     return w;
   }
 
@@ -616,8 +794,16 @@
     return w;
   }
 
-  // ---------- Zin bouwen: patronen en analyse ----------
+  // ---------- Zin bouwen: startzinnen en werkwoorden per situatie ----------
   function viewBouwen() {
+    if (!sitOk() || typeof SIT_WW === "undefined") return viewStartzinnen();
+    var tab = S.bwTab === "ww" ? "ww" : "start";
+    var w = el("div");
+    w.appendChild(subSeg([["start", T("Startzinnen")], ["ww", T("Werkwoorden")]], tab, function (k) { S.bwTab = k; }));
+    w.appendChild(tab === "ww" ? viewWerkwoorden() : viewStartzinnen());
+    return w;
+  }
+  function viewStartzinnen() {
     var w = el("div");
     var stems = IS_ES ? BUILD_STEMS : globalThis.BOUW_SRC.stems, cats = IS_ES ? BUILDABLE_CATS : globalThis.BOUW_SRC.cats;
     w.appendChild(el("div", "note", IS_ES ? T("Kies een startzin en bouw hem verder.") : T("Kies een startzin en bouw hem verder. Lukt de zin niet grammaticaal in deze taal, dan zie je alleen de woorden.")));
@@ -1021,8 +1207,9 @@
       comp: function (X, vid, ci) {
         var v = null; VERBS.forEach(function (x) { if (x.id === vid) v = x; });
         var c = v && v.comps[ci]; if (!c) return null;
-        if (X === tgt) return c.es;
         if (X === "es") return c.bron !== undefined ? c.bron : c.es;
+        // De vervolgdelen van VERBS staan in het Spaans (es) met vertalingen (m); alleen het Spaans gebruikt c.es
+        if (X === tgt && c.bron !== undefined) return c.es;
         return c.m ? (c.m[X] || null) : null;
       } };
   }
@@ -1858,7 +2045,7 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "3.3";
+  var APP_VERSION = "3.4";
   // Versies waarvoor gebruikers de app opnieuw op hun beginscherm moeten zetten (oude icoon weg, nieuwe erop).
   // Bij zo'n update verschijnt eenmalig een melding met uitleg.
   var REINSTALL_VERSIONS = ["1.8"];
@@ -2289,7 +2476,9 @@
            "Fragen pro Thema, um ein Gespräch zu beginnen oder am Laufen zu halten.",
            "Questions par sujet pour lancer ou entretenir une conversation."),
       k: [m("Lees de vraag hardop en luister naar het voorbeeld.", "Read the question aloud and listen to the example.", "Lies die Frage laut vor und höre das Beispiel an.", "Lis la question à voix haute et écoute l'exemple."),
-          m("Gebruik ze als het gesprek stilvalt.", "Use them when the conversation stalls.", "Nutze sie, wenn das Gespräch stockt.", "Utilise-les quand la conversation s'arrête.")] },
+          m("Gebruik ze als het gesprek stilvalt.", "Use them when the conversation stalls.", "Nutze sie, wenn das Gespräch stockt.", "Utilise-les quand la conversation s'arrête."),
+          m("Situaties: lees en beluister een heel gesprek uit 25 situaties, zoals station, restaurant en dokter.", "Situations: read and listen to a whole conversation from 25 situations, such as the station, a restaurant and the doctor.", "Situationen: Lies und hör ein ganzes Gespräch aus 25 Situationen, zum Beispiel Bahnhof, Restaurant und Arzt.", "Situations : lis et écoute une conversation entière parmi 25 situations, comme la gare, le restaurant et le médecin."),
+          m("Oefenen: de ander zegt iets en jij kiest wat je terugzegt.", "Practise: the other person says something and you choose what to say back.", "Üben: Die andere Person sagt etwas und du wählst, was du antwortest.", "S'entraîner : l'autre personne dit quelque chose et tu choisis ce que tu réponds.")] },
     { n: m("Vastlopen", "Stuck", "Hänger", "Bloqué"),
       w: m("Wat je zegt als je even niets weet.", "What to say when you don't know what to say.", "Was du sagst, wenn dir nichts einfällt.", "Que dire quand tu ne sais plus quoi dire."),
       k: [m("Een grote zin met luisterknop.", "A large sentence with a listen button.", "Ein großer Satz mit Hörknopf.", "Une grande phrase avec bouton d'écoute."),
@@ -2298,7 +2487,8 @@
     { n: m("Zin bouwen", "Build a sentence", "Satz bauen", "Construire une phrase"),
       w: m("Bouw zelf zinnen vanuit een startzin, met het juiste werkwoord bij de gekozen persoon.", "Build your own sentences from a starter sentence, with the right verb form for the person you choose.", "Baue eigene Sätze aus einem Startsatz, mit der richtigen Verbform für die gewählte Person.", "Construis tes propres phrases à partir d'une phrase de départ, avec la bonne forme du verbe pour la personne choisie."),
       k: [m("Kies een startzin en tik op 'Bouw verder →'.", "Choose a starter sentence and tap 'Continue →'.", "Wähle einen Startsatz und tippe auf 'Weiter →'.", "Choisis une phrase de départ et touche « Continuer → »."),
-          m("Kies een verbindingswoord, wie het doet en wat die persoon doet.", "Choose a connecting word, who does it and what that person does.", "Wähle ein Bindewort, wer es tut und was die Person tut.", "Choisis un mot de liaison, qui le fait et ce que fait cette personne.")] },
+          m("Kies een verbindingswoord, wie het doet en wat die persoon doet.", "Choose a connecting word, who does it and what that person does.", "Wähle ein Bindewort, wer es tut und was die Person tut.", "Choisis un mot de liaison, qui le fait et ce que fait cette personne."),
+          m("Werkwoorden: kies een situatie en een werkwoord, en zie de zinnen uit dat gesprek waarin het staat.", "Verbs: choose a situation and a verb, and see the sentences from that conversation that use it.", "Verben: Wähle eine Situation und ein Verb und sieh dir die Sätze aus dem Gespräch an, in denen es vorkommt.", "Verbes : choisis une situation et un verbe, et vois les phrases de la conversation où il apparaît.")] },
     { n: m("Reageren", "React", "Reagieren", "Réagir"),
       w: m("Antwoorden op wat je gesprekspartner vraagt, of op wat een vriend vertelt.", "Answers to what your partner asks, or to what a friend tells you.", "Antworten auf das, was dein Gesprächspartner fragt, oder auf das, was ein Freund erzählt.", "Réponses à ce que ton interlocuteur demande, ou à ce qu'un ami raconte."),
       k: [m("'Ik vraag': antwoorden op vragen van je partner.", "'I ask': answers to questions from your partner.", "'Ich frage': Antworten auf Fragen deines Partners.", "« Je demande » : réponses aux questions de ton interlocuteur."),

@@ -291,3 +291,21 @@ body .gsp.gsp .tolk-boven .btn.tolk-mic { width: 100%; }
 body .gsp.gsp .chat-b .speak { width: 34px; height: 34px; min-width: 34px; padding: 0; font-size: 15px; }
 .in-rij .chat-in:placeholder-shown { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 body .gsp.gsp .btn.tolk-mic { padding: 11px 8px; font-size: 15px; line-height: 1.25; }
+
+/* Tabbladen bovenaan Onderwerpen en Zin bouwen (zelfde stijl als Chat / Tolkmodus) */
+.sub-seg { display: flex; gap: 6px; margin: 0 0 10px; padding: 4px; border-radius: 16px; background: var(--card, #fff); border: 3px solid var(--ink-k, #161616); }
+body .sub-seg .btn.sub-tab { flex: 1; min-width: 0; margin: 0; padding: 9px 1px; font-size: 0.8em; line-height: 1.15; letter-spacing: -0.01em; border-radius: 12px; border: none; box-shadow: none; background: transparent; color: var(--ink-k, #161616); font-weight: 700; white-space: normal; overflow-wrap: normal; }
+body .sub-seg .btn.sub-tab.active { background: var(--s, #b22234); color: var(--sInk, #fff); }
+/* Situatie kiezen */
+.sit-kies { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; }
+.sit-kies .sit-select { flex: 1; min-width: 0; font: inherit; font-weight: 700; padding: 10px 12px; border-radius: 14px; border: 3px solid var(--ink-k, #161616); background: var(--card, #fff); color: var(--ink-k, #161616); }
+body .sit-kies .btn.sit-pijl { margin: 0; flex: 0 0 auto; }
+/* Gesprek uit het boek: de ander links, jij rechts */
+.sit-gesprek { display: flex; flex-direction: column; gap: 8px; }
+.sit-b { max-width: 88%; padding: 10px 12px; border-radius: 16px; border: 3px solid var(--ink-k, #161616); background: var(--card, #fff); margin: 0 0 8px; }
+.sit-b.partner { align-self: flex-start; border-bottom-left-radius: 4px; }
+.sit-b.me { align-self: flex-end; margin-left: auto; border-bottom-right-radius: 4px; background: var(--acc-soft, #e4ebfa); }
+.sit-wie { font-size: 0.8em; font-weight: 700; opacity: 0.7; margin: 0 0 2px; }
+.sit-b .es { font-weight: 700; }
+body .quiz-list .btn.sit-fout { text-decoration: line-through; opacity: 0.7; }
+.ww-chips { margin-bottom: 10px; }
