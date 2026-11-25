@@ -1379,7 +1379,36 @@
     if (r && r.text) return r;
     return viaDelen(text, from, to, translateOneSit) || r;
   }
+  // Woorden van meer dan één woord (post office, centro comercial) gaan als één woord door de vertaler
+  function mwUit(r) {
+    if (!r || typeof ALLEDAAGS_MW === "undefined") return r;
+    if (r.text) r.text = ALLEDAAGS_MW.los(r.text);
+    if (r.parts) r.parts.forEach(function (p) { if (p && typeof p === "object") Object.keys(p).forEach(function (k) { p[k] = ALLEDAAGS_MW.los(p[k]); }); });
+    return r;
+  }
+  // Namen van winkels en ketens (McDonald's, Albert Heijn): eerst gewoon vertalen; staat de naam er dan niet goed in,
+  // dan vertalen met een gewoon woord op de plaats van de naam en de naam daarna terugzetten (zie namen.js)
+  function metNamen(fn, text, van, naar) {
+    var r = fn(text);
+    if (typeof NAMEN === "undefined") return r;
+    var heel = !!(r && r.text && !r.unsupported);
+    var info = NAMEN.zoek(text, van, !heel);
+    if (!info) return r;
+    if (heel && info.namen.every(function (x) { return r.text.toLowerCase().indexOf(x.naam.toLowerCase()) >= 0; })) return r;
+    var r2 = fn(info.text);
+    if (r2 && r2.text && !r2.unsupported) {
+      var t = NAMEN.terug(r2.text, info, naar);
+      if (t) { r2.text = t; r2.whole = false; return r2; }
+    }
+    return r;
+  }
   function translateOneBase(text) {
+    return metNamen(function (t) {
+      if (typeof ALLEDAAGS_MW === "undefined") return translateOneKern(t);
+      return mwUit(translateOneKern(ALLEDAAGS_MW.samen(t, lang)));
+    }, text, lang, sitDoel());
+  }
+  function translateOneKern(text) {
     var t = clean(text);
     if (!t) return null;
     var hit = null;
@@ -1493,6 +1522,10 @@
     var doel = typeof DOEL !== "undefined" ? DOEL : "es";
     valseVriendenInTekst(bronTekst, lang, doel).forEach(function (v) {
       box.appendChild(el("div", "note", T("Let op: {w} betekent {b}, niet {l} ({bl}).").replace("{w}", v.woord).replace("{b}", v.betekenis).replace("{l}", v.lijkt_op).replace("{bl}", v.betekenis_lijkt_op)));
+    });
+    // Woorden met meer betekenissen (glasses = bril of glazen): toon de andere vertalingen
+    if (typeof dubbelzinnigInTekst === "function") dubbelzinnigInTekst(bronTekst, lang, doel, lang).forEach(function (d) {
+      box.appendChild(el("div", "note", T("Let op: {w} kan meer betekenen: {o}.").replace("{w}", d.woord).replace("{o}", d.opties)));
     });
   }
 
@@ -1611,6 +1644,12 @@
     return viaDelen(text, from, to, esToLangSit) || r;
   }
   function esToLangBase(text) {
+    return metNamen(function (t) {
+      if (typeof ALLEDAAGS_MW === "undefined") return esToLangKern(t);
+      return mwUit(esToLangKern(ALLEDAAGS_MW.samen(t, sitDoel())));
+    }, text, sitDoel(), lang);
+  }
+  function esToLangKern(text) {
     var t = clean(text), n = norm(text);
     var ls = learned("geleerdZin")[n];
     if (ls && ls[lang]) return { text: ls[lang], whole: true, learned: true };
@@ -2059,7 +2098,7 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "3.5";
+  var APP_VERSION = "3.6";
   // Versies waarvoor gebruikers de app opnieuw op hun beginscherm moeten zetten (oude icoon weg, nieuwe erop).
   // Bij zo'n update verschijnt eenmalig een melding met uitleg.
   var REINSTALL_VERSIONS = ["1.8"];
@@ -3258,6 +3297,17 @@
     return wrap;
   }
 
+  // De zin met een kleur per woord (groen goed, oranje bijna, rood nog niet); tik op een woord om het te horen
+  function prWoordKleuren(lijst) {
+    var wl = el("div", "klank-words");
+    lijst.forEach(function (x) {
+      var sp = el("span", "ws-" + x.s, x.w);
+      sp.setAttribute("role", "button");
+      sp.onclick = function () { speak(x.w); };
+      wl.appendChild(sp);
+    });
+    return wl;
+  }
   // Opneemblok: opnemen, herkennen, de klanken vergelijken met het voorbeeld en de eigen opname afspelen.
   // Herkenning: de spraakherkenning van de browser; op de iPhone (of zonder browserherkenning) het Whisper-model.
   function prRecordBlock(target) {
@@ -3279,11 +3329,13 @@
     function showResult(text) {
       result.innerHTML = "";
       var k = KLANK.compare(target, text, lang);
-      result.appendChild(el("div", "heard", T("Herkend") + col + text));
-      var wl = el("div", "klank-words");
-      k.words.forEach(function (w) { wl.appendChild(el("span", w.ok ? "good" : "bad", (w.ok ? "✓ " : "✗ ") + w.w)); });
-      result.appendChild(wl);
+      // Kleur per woord: woordvergelijking, aangevuld met de klankregels (een klankfout maakt een goed woord oranje)
+      var wsE = WOORDSCORE.vergelijk(target, text, "es");
+      if (wsE.woorden.length === k.words.length) wsE.woorden.forEach(function (x, i) { if (x.s === "goed" && !k.words[i].ok) x.s = "bijna"; });
+      result.appendChild(prWoordKleuren(wsE.woorden));
       result.appendChild(el("div", k.score >= 85 ? "good" : "bad", T("Klankovereenkomst") + col + k.score + "%"));
+      result.appendChild(el("div", "heard", T("Herkend") + col + text));
+      result.appendChild(el("div", "note", T("Groen = goed, oranje = bijna, rood = nog niet. Tik op een woord om het te horen.")));
       k.msgs.forEach(function (msg) { result.appendChild(el("div", "nl", msg)); });
       if (k.tip) result.appendChild(el("div", "note", T("Tip") + col + k.tip));
       result.appendChild(el("div", "note", KLANK.note(lang)));

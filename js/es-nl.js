@@ -183,15 +183,30 @@ var ES_NL = (function () {
     esposo: "man", esposa: "vrouw", novio: "vriend", novia: "vriendin", perro: "hond", gato: "kat",
     te: "thee", nina: "meisje", jefa: "bazin", companera: "collega", colegio: "school", bicicleta: "fiets", cena: "avondeten", billete: "kaartje",
     movil: "mobiel", examen: "examen", postre: "toetje", apartamento: "appartement", pausa: "pauze", aeropuerto: "luchthaven", mapa: "kaart",
-    piscina: "zwembad", biblioteca: "bibliotheek", guitarra: "gitaar", equipo: "team", tele: "tv" };
+    piscina: "zwembad", biblioteca: "bibliotheek", cocina: "keuken", reserva: "reservering", cuenta: "rekening", ducha: "douche", entrada: "ingang", salida: "uitgang", guitarra: "gitaar", equipo: "team", tele: "tv" };
 
+  // Meervoud met lange klinker in plaats van dubbele medeklinker (glas -> glazen, dak -> daken)
+  var PL_LANG = { glas: "glazen", bad: "baden", dak: "daken", gat: "gaten", pad: "paden", weg: "wegen", schip: "schepen", lid: "leden", god: "goden", slot: "sloten", hof: "hoven", spel: "spellen" };
+  // Meervoud van leenwoorden en woorden met de klemtoon achteraan
+  var PL_LEEN = { toilet: "toiletten", restaurant: "restaurants", ticket: "tickets", perron: "perrons", café: "cafés", bureau: "bureaus", museum: "musea", menu: "menu's", lift: "liften", hotel: "hotels", winkel: "winkels" };
   function plural(nl) {
     if (PLURAL[nl]) return PLURAL[nl];
+    if (PL_LANG[nl]) return PL_LANG[nl];
+    if (PL_LEEN[nl]) return PL_LEEN[nl];
+    var last = nl.split(" ").pop();
+    if (last !== nl) { var pk = plural(last); return nl.slice(0, nl.length - last.length) + pk; }
+    if (/heid$/.test(nl)) return nl.slice(0, -4) + "heden";
     // Lange klinker in een open lettergreep: zoon -> zonen, boom -> bomen, beer -> beren
     var lk = /^(.*[^aeiou])(aa|ee|oo|uu)([bcdfgklmnprt])$/.exec(nl);
     if (lk) return lk[1] + lk[2].charAt(0) + lk[3] + "en";
     if (/(el|em|en|er|or)$/.test(nl)) return nl + "s";
     if (/ie$/.test(nl)) return nl + "s";          // vakantie -> vakanties (geen apostrof bij -ie)
+    if (/e$/.test(nl)) return nl + "s";           // groente -> groentes, pauze -> pauzes, kaartje -> kaartjes
+    // lange klinker of tweeklank + s/f: kaas -> kazen, huis -> huizen, brief -> brieven
+    var sf = /^(.*?)(aa|ee|oo|uu|ij|ei|ui|ou|au|eu|oe|ie)([sf])$/.exec(nl);
+    if (sf) return sf[1] + (sf[2].length === 2 && /^(aa|ee|oo|uu)$/.test(sf[2]) ? sf[2].charAt(0) : sf[2]) + (sf[3] === "s" ? "z" : "v") + "en";
+    // één lettergreep met een korte klinker: trap -> trappen, bus -> bussen, bril -> brillen
+    if (/^[^aeiouy]*[aeiou][bdfgklmnprst]$/.test(nl)) return nl + nl.charAt(nl.length - 1) + "en";
     if (/(eau|a|o|u|i)$/.test(nl)) return nl + "'s";
     return nl + "en";
   }
@@ -218,6 +233,9 @@ var ES_NL = (function () {
   // Zelfstandig naamwoord (Spaans enkelvoud) -> { nl, gen, plural } of null
   function noun(es, rev, gen) {
     var s = nf(es);
+    // tweede betekenis met eigen sleutel: "baños_zzb" = meervoud van "baño_zzb" (toilet)
+    var zk = /^(.+?)(es|s)?(_zz[a-h])$/.exec(s);
+    if (zk && rev[zk[1] + zk[3]] !== undefined) { var zv = rev[zk[1] + zk[3]]; return /\s/.test(zv) ? null : { nl: zv, gen: gen(zk[1] + zk[3]) || nlGen(zv), plural: !!zk[2], base: zk[1] + zk[3] }; }
     if (NOUN_NL[s]) return { nl: NOUN_NL[s], gen: gen(s) || nlGen(NOUN_NL[s]), plural: false, base: s };
     // Meervoud: eerst het enkelvoud zoeken (het woordenboek geeft meervouden al in het Nederlands)
     var base = s, pl = false, v;
@@ -260,8 +278,12 @@ var ES_NL = (function () {
     }
     var out = [];
     var isPl = nn.plural || pl || (num && num !== "veel") || false;
+    // Eén ding met een meervoudsvorm in het Spaans (las gafas = de bril, los bomberos = de brandweer)
+    if (isPl && !num && typeof ALLEDAAGS_MW !== "undefined" && ALLEDAAGS_MW.enkelNl && ALLEDAAGS_MW.enkelNl[nf(nounTok)]) isPl = false;
     // "hijos" is meestal "kinderen" (zonen én dochters); "hijo" alleen is "zoon"
-    var nlN = isPl ? (nn.nl === "zoon" && /^hijos$/.test(nf(nounTok)) ? "kinderen" : plural(nn.nl)) : nn.nl;
+    // Spaanse meervouden die samen een groep zijn: padres = ouders (niet "vaders"), abuelos = grootouders
+    var GROEP = { hijos: "kinderen", padres: "ouders", abuelos: "grootouders", hermanos: "broers en zussen", tios: "ooms en tantes" };
+    var nlN = isPl ? (GROEP[nf(nounTok)] && (!num || nf(nounTok) === "hijos") ? GROEP[nf(nounTok)] : plural(nn.nl)) : nn.nl;
     if (det === "def") {
       var a = defArt(nn.gen, isPl);
       if (!a) return null;
@@ -376,6 +398,8 @@ var ES_NL = (function () {
       if (!CLITIC[toks[k]]) continue;
       var nx = toks[k + 1];
       if ((toks[k] === "me" || toks[k] === "te" || toks[k] === "nos") && NOT_CLITIC_V.test(nx)) continue;
+      // "está la cocina": na een werkwoord is "la/el + zelfstandig naamwoord" een lidwoord, geen voorwerp ("kookt het")
+      if (/^(la|lo|los|las)$/.test(toks[k]) && NOUN_NL[nx] && k > 0 && FORM[toks[k - 1]] !== undefined) continue;
       var perf = HABER_P[nx] !== undefined && toks.length > k + 2;
       buildPast();
       var isV = FORM[nx] !== undefined || (PASTES && PASTES[nx] !== undefined) || (PASTES && PASTES[nx + "§"] !== undefined);
@@ -393,6 +417,19 @@ var ES_NL = (function () {
     rev = normRev(rev);
     var raw = String(text).trim();
     var isQ = /^¿/.test(raw) || /\?\s*$/.test(raw);
+    // "¿Hay un supermercado cerca?" -> "Is er een supermarkt in de buurt?" (hay = er is)
+    var hm = /^[¿¡]?\s*(no\s+)?hay\s+(un|una|ningún|ninguna|ningun)?\s*([a-záéíóúñü_]+)(?:\s+(cerca|aquí|aqui|por aquí|por aqui|cerca de aquí|cerca de aqui))?\s*[?.!]?$/i.exec(raw);
+    if (hm) {
+      var hw = nf(hm[3].toLowerCase()), hn = NOUN_NL[hw] || rev[hw];
+      if (hn && !/\s/.test(hn)) {
+        var geen = !!hm[1] || /^ning/i.test(hm[2] || "");
+        var hdet = geen ? "geen " : (hm[2] ? "een " : "");
+        var hplek = hm[4] ? (/cerca/i.test(hm[4]) ? " in de buurt" : " hier") : "";
+        // "hier" vóór het lidwoord: "Is er hier een apotheek?"
+        if (hplek === " hier") return isQ ? "Is er hier " + hdet + hn + "?" : "Er is hier " + hdet + hn + ".";
+        return isQ ? "Is er " + hdet + hn + hplek + "?" : "Er is " + hdet + hn + hplek + ".";
+      }
+    }
     var s = nf(raw.replace(/([a-záéíóúñ]+)ó(?![a-záéíóúñ])/gi, "$1o§")).replace(/[¿?¡!.]/g, " ").replace(/\s+/g, " ").trim();
     var pleaseAdd = false, prefixNl = "";
     if (/,?\s*por favor$/.test(s)) { s = s.replace(/,?\s*por favor$/, ""); pleaseAdd = true; }
@@ -465,7 +502,9 @@ var ES_NL = (function () {
       if (w0 === "donde" && restQ[0] && FORM[restQ[0]] && FORM[restQ[0]].v === "estar") {
         var locQ = phrase(restQ, 1, rev, gen);
         if (!locQ || locQ.end !== restQ.length) return null;
-        return "Waar " + (FORM[restQ[0]].p === 4 ? "zijn" : "is") + " " + locQ.s + "?";
+        // "¿Dónde están las gafas?" -> "Waar is de bril?": het werkwoord volgt het Nederlandse getal
+        var wPl = FORM[restQ[0]].p === 4 && !(locQ.np && locQ.np.plural === false);
+        return "Waar " + (wPl ? "zijn" : "is") + " " + locQ.s + "?";
       }
       if (fv) {
         var r = clauseParts(fv, restQ.slice(fv.len || 1), rev, gen, { inv: true, qw: wq });

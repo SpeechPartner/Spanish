@@ -586,8 +586,25 @@ var NL_ES = (function () {
   function cijfersNl(text) {
     return String(text).replace(/(^|[^\d:.,])(\d{1,2})(?![\d:.,]\d)/g, function (m0, voor, d) { return voor + getalNl(parseInt(d, 10)); });
   }
+  // "Is er een supermarkt in de buurt?" / "Er is geen wifi." -> hay (Spaans "er is" = hay, nooit "allí es")
+  var ER_PLEK = { "in de buurt": "cerca", "hier in de buurt": "cerca", "dichtbij": "cerca", "hier": "aquí", "hier ergens": "por aquí", "ergens": "por aquí" };
+  function erIsZin(text, dict) {
+    var t = String(text || "").trim(), q = /\?\s*$/.test(t);
+    var m = /^(?:is er|er is)\s+(?:(hier|ook|nog)\s+)?(een|geen)?\s*([a-zà-ÿ_'-]+)(?:\s+(in de buurt|hier in de buurt|dichtbij|hier ergens|hier|ergens))?\s*[?.!]?$/i.exec(t);
+    if (!m || (!q && !/^er is/i.test(t))) return undefined;
+    var w = m[3].toLowerCase(), es = dict[w];
+    if (!es || /\s/.test(es) || Object.prototype.hasOwnProperty.call(VERB, es)) return undefined;
+    var g = isFem(es) ? "f" : "m";
+    // "geen" -> "no hay" + woord ("No hay wifi"); "een" -> un/una
+    var det = m[2] && m[2].toLowerCase() === "een" ? (g === "f" ? "una " : "un ") : "";
+    var plek = m[4] ? " " + ER_PLEK[m[4].toLowerCase()] : (m[1] && m[1].toLowerCase() === "hier" ? " aquí" : "");
+    var neg = m[2] && m[2].toLowerCase() === "geen" ? "no " : "";
+    var zin = neg + "hay " + det + es + plek;
+    return q ? "¿" + zin.charAt(0).toUpperCase() + zin.slice(1) + "?" : zin.charAt(0).toUpperCase() + zin.slice(1) + ".";
+  }
   function translate(text, dict, gen) {
     if (typeof text === "string" && /\d/.test(text)) text = cijfersNl(text);
+    if (typeof text === "string" && dict) { var erEs = erIsZin(text, dict); if (erEs !== undefined) return erEs; }
     // In- en uitstappen ("ik stap de bus uit" = bajo del autobús, "stap je in de trein?" = ¿subes al tren?)
     // en de trap op/af ("ik ga de trap op" = subo las escaleras). Ook met omgekeerde volgorde, een tijd of "niet".
     if (typeof text === "string") {

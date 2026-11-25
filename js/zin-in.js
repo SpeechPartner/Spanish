@@ -17,9 +17,13 @@ var ZINI = (function () {
   function addN(form, key, pl) { var k = fold(form); if (!has(ESN, k)) ESN[k] = { n: key, pl: pl }; }
   Object.keys(NOUN).filter(function (k) { return NOUN[k].esPlOnly; }).forEach(function (k) { addN(k, k, true); });
   Object.keys(NOUN).forEach(function (k) { var e = NOUN[k]; addN(k, k, e.esPlOnly); if (!e.esPlOnly) addN(C.esPlural(k), k, true); });
-  function esNoun(tok) {
+  // naDet: het woord staat direct achter een lidwoord of bezittelijk voornaamwoord ("la cocina", "mi casa");
+  // dan is het een zelfstandig naamwoord, ook als dezelfde vorm een werkwoord kan zijn (cocina = kookt)
+  function esNoun(tok, naDet) {
     var t = fold(tok);
     if (has(ESPRON, t)) return null;   // voornaamwoorden (él, ella, …) zijn nooit een zelfstandig naamwoord
+    // lidwoorden, voorzetsels en voegwoorden zijn nooit een zelfstandig naamwoord ("esta la casa" is geen "deze la")
+    if (/^(el|la|lo|los|las|un|una|unos|unas|de|del|a|al|en|y|o|que|se|me|te|le|les|nos|os|con|por|para|sin)$/.test(low(tok))) return null;
     if (has(ESN, t)) return ESN[t];
     // woorden uit de woordenlijsten: alleen als er een vertaling in het Engels, Duits of Frans is
     var cand = [[tok, false]];
@@ -29,8 +33,8 @@ var ZINI = (function () {
     if (/iones$/.test(tok)) cand.push([tok.slice(0, -5) + "ión", true]);
     for (var i = 0; i < cand.length; i++) {
       var w = cand[i][0];
-      if (has(VERB, w) || has(C.INFIDX, fold(w))) continue;
-      if (REV("en")[w] !== undefined && REV("de")[w] !== undefined && REV("fr")[w] !== undefined && /^[a-záéíóúñü]+$/.test(w) && !has(ADJ, w)) return { n: w, pl: cand[i][1] };
+      if (!naDet && (has(VERB, w) || has(C.INFIDX, fold(w)))) continue;
+      if (REV("en")[w] !== undefined && REV("de")[w] !== undefined && REV("fr")[w] !== undefined && /^[a-záéíóúñü_]+$/.test(w) && !has(ADJ, w)) return { n: w, pl: cand[i][1] };
     }
     return null;
   }
@@ -95,7 +99,8 @@ var ZINI = (function () {
     // "fin de semana"
     if (T[j] === "fin" && T[j + 1] === "de" && T[j + 2] === "semana") { np.n = "fin de semana"; np.pl = np.pl || false; j += 3; }
     else {
-      var nn = T[j] !== undefined ? esNoun(O[j]) || esNoun(T[j]) : null;
+      var nd = np.det !== "none" || np.num !== undefined;
+      var nn = T[j] !== undefined ? esNoun(O[j], nd) || esNoun(T[j], nd) : null;
       if (!nn) return null;
       np.n = nn.n; if (nn.pl) np.pl = true; else if (np.det !== "none" && !np.num) np.pl = !!np.pl;
       if (np.pl && !nn.pl && !(NOUN[nn.n] && NOUN[nn.n].esPlOnly)) return null;     // "los casa"
@@ -603,7 +608,7 @@ var ZINI = (function () {
     if (/s$/.test(k)) cand.push([k.slice(0, -1), true]);
     for (var i = 0; i < cand.length; i++) {
       var es = d[cand[i][0]];
-      if (es && /^[a-záéíóúñü]+$/.test(es) && !has(VERB, es) && !/(ar|er|ir)$/.test(es) && !has(ADJ, es) && !has(ENV, cand[i][0])) return { es: es, pl: cand[i][1] };
+      if (es && /^[a-záéíóúñü_]+$/.test(es) && !has(VERB, es) && !/(ar|er|ir)$/.test(es) && !has(ADJ, es) && !has(ENV, cand[i][0])) return { es: es, pl: cand[i][1] };
     }
     return null;
   }
@@ -992,7 +997,7 @@ var ZINI = (function () {
       var ck = cand[i][0];
       if (has(C.NIDX.de, ck)) return { es: C.NIDX.de[ck][0].es, pl: cand[i][1] || C.NIDX.de[ck][0].pl };
       var es = d[ck] || d["der " + ck] || d["die " + ck] || d["das " + ck];
-      if (es && /^[a-záéíóúñü]+$/.test(es) && !has(VERB, es) && !/(ar|er|ir)$/.test(es) && !has(ADJ, es) && (has(ZINO.GEN.de, ck) || d["der " + ck] || d["die " + ck] || d["das " + ck])) return { es: es, pl: cand[i][1] };
+      if (es && /^[a-záéíóúñü_]+$/.test(es) && !has(VERB, es) && !/(ar|er|ir)$/.test(es) && !has(ADJ, es) && (has(ZINO.GEN.de, ck) || d["der " + ck] || d["die " + ck] || d["das " + ck])) return { es: es, pl: cand[i][1] };
     }
     return null;
   }
@@ -1371,7 +1376,7 @@ var ZINI = (function () {
       var ck = cand[i][0];
       if (has(C.NIDX.fr, ck)) return { es: C.NIDX.fr[ck][0].es, pl: true };
       var es = d[ck] || d["le " + ck] || d["la " + ck] || d["l'" + ck];
-      if (es && /^[a-záéíóúñü]+$/.test(es) && !has(VERB, es) && !/(ar|er|ir)$/.test(es) && !has(ADJ, es) && (has(ZINO.GEN.fr, ck) || d["le " + ck] || d["la " + ck])) return { es: es, pl: cand[i][1] };
+      if (es && /^[a-záéíóúñü_]+$/.test(es) && !has(VERB, es) && !/(ar|er|ir)$/.test(es) && !has(ADJ, es) && (has(ZINO.GEN.fr, ck) || d["le " + ck] || d["la " + ck])) return { es: es, pl: cand[i][1] };
     }
     return null;
   }

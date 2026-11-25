@@ -81,6 +81,8 @@ var ZINC = (function () {
   var STRESSED_A = { agua: 1, hambre: 1, "área": 1, alma: 1, arma: 1, aula: 1, "águila": 1, hacha: 1 };
   function stripAcc(s) { return s.normalize("NFD").replace(/[̀-ͯ]/g, "").normalize("NFC"); }
   function esPlural(w) {
+    var zk = /^(.*)(_zz[a-h])$/.exec(w);   // tweede betekenis "baño_zzb": meervoud van "baño", sleutel blijft
+    if (zk) return esPlural(zk[1]) + zk[2];
     if (/(s|x)$/.test(w) && !/(és|ás|ís|ós|ús)$/.test(w) && w.length > 3) return w;     // lunes, crisis, cumpleaños
     if (/[aeiouáéó]$/.test(w)) return w + "s";
     if (/z$/.test(w)) return w.slice(0, -1) + "ces";
@@ -171,6 +173,8 @@ var ZINC = (function () {
     ADV[f[0]] = { es: f[0], en: f[1], de: f[2], fr: f[3], k: f[4] };
     ADVIDX.es[fold(f[0])] = f[0]; ADVIDX.en[low(f[1])] = ADVIDX.en[low(f[1])] || f[0];
     ADVIDX.de[low(f[2])] = ADVIDX.de[low(f[2])] || f[0]; ADVIDX.fr[low(f[3])] = ADVIDX.fr[low(f[3])] || f[0];
+    // de Franse tokenizer splitst "d'ici" in "d' ici": ook die vorm opnemen ("près d'ici")
+    var frTok = low(f[3]).replace(/\b([dl])'/g, "$1' "); if (frTok !== low(f[3])) ADVIDX.fr[frTok] = ADVIDX.fr[frTok] || f[0];
   });
   var TENER = {}, TIDX = { en: {}, de: {}, fr: {} };
   L.TENER.forEach(function (line) {

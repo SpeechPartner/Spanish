@@ -467,3 +467,9 @@ body.speels.cafe .iconbtn.on { background: var(--accent) !important; color: #fff
 /* onderste 40% volledig helder; vanaf 40% hoogte vervaagt de band zacht naar de rest van de achtergrond (mask hierboven) */
 #bgBand.on { opacity: 1; }
 body.th-donker #bgBand.on, body.th-nacht #bgBand.on { opacity: 1; }
+
+/* Uitspraak per woord: groen goed, oranje bijna, rood nog niet (tik op een woord om het te horen) */
+.klank-words span[class^="ws-"] { cursor: pointer; padding: 2px 8px; border-radius: 10px; font-size: 1.15em; line-height: 1.5; }
+.ws-goed { color: #fff; background: #2e7d32; }
+.ws-bijna { color: #3a2500; background: #f5b335; }
+.ws-mis { color: #fff; background: #c62828; text-decoration: underline; text-underline-offset: 3px; }

@@ -9,11 +9,23 @@ var ZINO = (function () {
   var REV = function (lang) { return (typeof REVS !== "undefined" && REVS[lang]) || {}; };
 
   // ---------------- Zelfstandige naamwoorden opzoeken (kerntabel, anders woordenlijst + PDF-geslacht) ----------------
+  // Getal van een zelfstandig naamwoord in de doeltaal t (en/de/fr).
+  // Woorden die in één taal alleen meervoud zijn (bril = glasses = gafas, brandweer = bomberos) zijn één ding:
+  // in een taal met een enkelvoud blijven ze enkelvoud ("Wo ist die Brille?", "Where is the fire brigade?").
+  // Een taal zonder meervoud (Gemüse) krijgt enkelvoud. Een getal ("dos gafas") houdt het meervoud.
+  function numFor(np, e, t) {
+    var own = t === "en" ? e.enPlOnly : (t === "de" ? e.dg === "pl" : e.frPlOnly);
+    if (own) return true;
+    var pl = !!np.pl || !!e.esPlOnly;
+    if (pl && !np.num && (e.esPlOnly || e.enPlOnly || e.dg === "pl" || e.frPlOnly)) pl = false;
+    if (pl && t === "de" && !e.dePl) pl = false;
+    return pl;
+  }
   function nounEntry(es) {
     if (has(NOUN, es)) return NOUN[es];
     var e = { es: es, fallback: true };
     var en = REV("en")[es];
-    if (en && /^[a-z][a-z-]*$/i.test(en) && !/^to /.test(en)) { e.en = en; }
+    if (en && /^[a-z][a-z_-]*$/i.test(en) && !/^to /.test(en)) { e.en = en; }
     var de = REV("de")[es];
     if (de) {
       var m = /^(der|die|das) (\S+)$/.exec(de);
@@ -70,7 +82,7 @@ var ZINO = (function () {
     if (np.k !== "n") return null;
     var e = nounEntry(np.n);
     if (!e.en) return null;
-    var pl = np.pl || e.esPlOnly;
+    var pl = numFor(np, e, "en");
     var w;
     if (e.enPlOnly) w = e.en;
     else if (pl) { if (e.enMass && !np.num) w = e.en; else w = C.enPlural(e); }
@@ -119,7 +131,7 @@ var ZINO = (function () {
     var s = c.s;
     var subj = s.np ? enNP(s.np, "subj") : enPron(s, "subj");
     if (!subj && !(c.type === "wh" && c.wh === "quien" && !s.np)) return null;
-    var s3 = s.np ? !s.np.pl && !(s.np.k === "n" && nounEntry(s.np.n).esPlOnly) && !(s.np.k === "n" && nounEntry(s.np.n).enPlOnly) : enIsS3(s);
+    var s3 = s.np ? (s.np.k === "n" ? !numFor(s.np, nounEntry(s.np.n), "en") : !s.np.pl) : enIsS3(s);
     var sp = { p: s.p, s3: s3, formal: s.formal };
     var neg = c.neg, never = c.never, q = c.type !== "stmt";
     // bijwoorden
@@ -446,7 +458,7 @@ var ZINO = (function () {
     if (np.k !== "n") return null;
     var e = nounEntry(np.n);
     if (!e.de || !e.dg) return null;
-    var plur = np.pl || e.esPlOnly || e.dg === "pl";
+    var plur = numFor(np, e, "de");
     if (plur && !np.num && e.enMass && e.dg !== "pl" && !e.dePl) plur = false;
     var g = plur ? "pl" : e.dg;
     var w = plur ? (e.dg === "pl" ? e.de : e.dePl) : e.de;
@@ -567,7 +579,7 @@ var ZINO = (function () {
     var subj = s.np ? deNP(s.np, "nom") : dePron(s, "nom");
     var isWhoSubj = c.type === "wh" && c.wh === "quien" && !s.np && !s.pron && s.p === 2;
     if (!subj && !isWhoSubj) return null;
-    if (s.np) pp = s.np.pl || (s.np.k === "n" && nounEntry(s.np.n).dg === "pl") ? 5 : 2;
+    if (s.np) pp = (s.np.k === "n" ? numFor(s.np, nounEntry(s.np.n), "de") : s.np.pl) ? 5 : 2;
     var neg = c.neg, never = c.never;
     var tAdv = [], fAdv = [], dAdv = [], pAdv = [], auch = false;
     (c.advs || []).forEach(function (k) {
@@ -833,7 +845,7 @@ var ZINO = (function () {
     if (np.k !== "n") return null;
     var e = nounEntry(np.n);
     if (!e.fr || !e.fg) return null;
-    var pl = np.pl || e.esPlOnly || e.frPlOnly;
+    var pl = numFor(np, e, "fr");
     if (pl && e.enMass && !np.num && !e.frPlOnly) pl = false;
     var fem = e.fg === "f";
     var w = pl ? C.frPlural(e) : e.fr;
@@ -917,7 +929,7 @@ var ZINO = (function () {
       .replace(/' /g, "'");
   }
   function frPpAgree(pp, s) {
-    if (s.np) { var e = s.np.k === "n" ? nounEntry(s.np.n) : null; var f = e && e.fg === "f"; return pp + (f ? "e" : "") + (s.np.pl ? "s" : ""); }
+    if (s.np) { var e = s.np.k === "n" ? nounEntry(s.np.n) : null; var f = e && e.fg === "f"; return pp + (f ? "e" : "") + ((e ? numFor(s.np, e, "fr") : s.np.pl) ? "s" : ""); }
     var fem = s.g === "f", pl = s.p >= 3;
     if (s.formal && s.p === 2) pl = false;
     return pp + (fem ? "e" : "") + (pl && !/s$/.test(pp) ? "s" : "");
@@ -928,7 +940,7 @@ var ZINO = (function () {
     var subj = s.np ? frNP(s.np) : frSubj(s);
     var isWhoSubj = c.type === "wh" && c.wh === "quien" && !s.np && !s.pron && s.p === 2;
     if (!subj && !isWhoSubj) return null;
-    if (s.np) pp = s.np.pl || (s.np.k === "n" && nounEntry(s.np.n).frPlOnly) ? 5 : 2;
+    if (s.np) pp = (s.np.k === "n" ? numFor(s.np, nounEntry(s.np.n), "fr") : s.np.pl) ? 5 : 2;
     var neg = c.neg || c.never, pas = c.never ? "jamais" : "pas";
     var tAdv = [], vAdv = [], pAdv = [], aussi = false;
     (c.advs || []).forEach(function (k) {

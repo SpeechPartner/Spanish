@@ -121,7 +121,7 @@ var ZIN_LEX = (function () {
     "bar|bar|Bar f Bars|bar m",
     "cuenta|bill|Rechnung f Rechnungen|addition f",
     "billete|ticket|Fahrkarte f Fahrkarten|billet m",
-    "entrada|ticket|Eintrittskarte f Eintrittskarten|billet m",
+    "entrada|entrance|Eingang m Eingänge|entrée f",
     "pregunta|question|Frage f Fragen|question f",
     "respuesta|answer|Antwort f Antworten|réponse f",
     "problema|problem|Problem n Probleme|problème m",

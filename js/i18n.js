@@ -3,6 +3,9 @@
 function m(nl, en, de, fr) { return { nl: nl, en: en, de: de, fr: fr }; }
 
 var UI = {
+  "Uitspraakscore": m("Uitspraakscore", "Pronunciation score", "Aussprache-Punktzahl", "Score de prononciation"),
+  "Groen = goed, oranje = bijna, rood = nog niet. Tik op een woord om het te horen.": m("Groen = goed, oranje = bijna, rood = nog niet. Tik op een woord om het te horen.", "Green = good, orange = almost, red = not yet. Tap a word to hear it.", "Grün = gut, Orange = fast, Rot = noch nicht. Tippe auf ein Wort, um es zu hören.", "Vert = bien, orange = presque, rouge = pas encore. Touche un mot pour l'entendre."),
+  "Let op: {w} kan meer betekenen: {o}.": m("Let op: {w} kan meer betekenen: {o}.", "Note: {w} can mean more than one thing: {o}.", "Achtung: {w} kann mehreres bedeuten: {o}.", "Attention : {w} peut avoir plusieurs sens : {o}."),
   "Let op: {w} betekent {b}, niet {l} ({bl}).": m("Let op: {w} betekent {b}, niet {l} ({bl}).", "Note: {w} means {b}, not {l} ({bl}).", "Achtung: {w} bedeutet {b}, nicht {l} ({bl}).", "Attention : {w} signifie {b}, et non {l} ({bl})."),
   "Andere manieren om dit te zeggen:": m("Andere manieren om dit te zeggen:", "Other ways to say this:", "Andere Möglichkeiten, das zu sagen:", "Autres façons de le dire :"),
   "SpeechPartner.Spanish": m("SpeechPartner.Spanish", "SpeechPartner.Spanish", "SpeechPartner.Spanish", "SpeechPartner.Spanish"),
