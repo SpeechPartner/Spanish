@@ -1,6 +1,6 @@
 // Service worker: maakt de app offline bruikbaar.
 // BELANGRIJK: verhoog CACHE_VERSION bij elke nieuwe versie, anders blijft de oude versie op het toestel.
-const CACHE_VERSION = "gespreksgids-v3.7";
+const CACHE_VERSION = "gespreksgids-v3.8";
 const ASSETS = [
   "./",
   "./index.html",
@@ -66,7 +66,9 @@ self.addEventListener("install", (event) => {
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys()
-      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE_VERSION).map((k) => caches.delete(k))))
+      // Alleen oude versies van de app zelf wissen. Andere caches (zoals het gedownloade spraakmodel
+      // "transformers-cache") blijven staan, zodat de gebruiker dat niet bij elke update opnieuw downloadt.
+      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE_VERSION && k.indexOf(CACHE_VERSION.replace(/v[\d.]+$/, "")) === 0).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });

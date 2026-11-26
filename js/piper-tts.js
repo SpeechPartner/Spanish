@@ -11,6 +11,10 @@
     es: "es_ES-davefx-medium"
   };
   var ready = {}, warming = {}, failed = {}, chain = Promise.resolve(), cur = null;
+  // Pas na toestemming (Instellingen > Natuurlijke stem) wordt het stemmodel gedownload. Zonder toestemming
+  // gebruikt de app de ingebouwde stem van het toestel en maakt Piper geen contact met internet.
+  var allowed = false;
+  function setAllowed(b) { allowed = !!b; }
 
   function available(voice) {
     return !failed[voice] && !!window.PIPER && typeof window.PIPER.predict === "function" && typeof WebAssembly !== "undefined";
@@ -42,7 +46,7 @@
   // De ingebouwde stem wordt ook gebruikt als het afspelen zelf mislukt (fallback).
   function speak(text, code, rate, fallback) {
     var voice = VOICES[code];
-    if (!voice || !available(voice)) return false;
+    if (!allowed || !voice || !available(voice)) return false;
     if (!ready[voice]) { warm(voice); return false; }
     stop();
     synth(text, voice).then(function (blob) {
@@ -58,5 +62,5 @@
     return true;
   }
 
-  window.PiperTTS = { speak: speak, stop: stop, voices: VOICES };
+  window.PiperTTS = { speak: speak, stop: stop, voices: VOICES, setAllowed: setAllowed };
 })();

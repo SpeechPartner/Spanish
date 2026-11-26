@@ -5,8 +5,12 @@ self.onmessage = async (ev) => {
   const d = ev.data || {};
   try {
     if (d.type === "load") {
-      const lib = await import("https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1");
+      // De software (transformers.js en onnxruntime) staat in de app zelf (js/vendor/whisper), niet op een CDN.
+      // Alleen het spraakmodel (gegevens, geen code) komt eenmalig van Hugging Face.
+      const base = new URL("./vendor/whisper/", self.location.href).href;
+      const lib = await import(base + "transformers.min.js");
       lib.env.allowLocalModels = false;
+      lib.env.backends.onnx.wasm.wasmPaths = base;
       pipe = await lib.pipeline("automatic-speech-recognition", d.model, {
         dtype: "q8",
         device: "wasm",

@@ -2100,7 +2100,7 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "3.7";
+  var APP_VERSION = "3.8";
   // Versies waarvoor gebruikers de app opnieuw op hun beginscherm moeten zetten (oude icoon weg, nieuwe erop).
   // Bij zo'n update verschijnt eenmalig een melding met uitleg.
   var REINSTALL_VERSIONS = ["1.8"];
@@ -2587,6 +2587,7 @@
         m("Mijn geslacht: man (Estoy cansado) of vrouw (Estoy cansada). Zo krijgen zinnen over jezelf de juiste Spaanse vorm.", "My gender: male (Estoy cansado) or female (Estoy cansada). This gives sentences about yourself the right Spanish form.", "Mein Geschlecht: männlich (Estoy cansado) oder weiblich (Estoy cansada). So bekommen Sätze über dich die richtige spanische Form.", "Mon genre : masculin (Estoy cansado) ou féminin (Estoy cansada). Ainsi, les phrases sur toi ont la bonne forme en espagnol."),
         m("Snelheid van voorlezen: stel het tempo in.", "Reading speed: set the tempo.", "Vorlesegeschwindigkeit: stelle das Tempo ein.", "Vitesse de lecture : règle le rythme."),
         m("'Begrepen items resetten' zet de begrepen items terug. 'Voortgang resetten' wist je voortgang.", "'Reset understood items' brings back the understood items. 'Reset progress' clears your progress.", "'Verstandene zurücksetzen' holt die verstandenen Elemente zurück. 'Fortschritt zurücksetzen' löscht deinen Fortschritt.", "« Réinitialiser les éléments compris » remet les éléments compris. « Réinitialiser la progression » efface ta progression."),
+        m("Natuurlijke stem gebruiken zet een stem aan die echter klinkt; die wordt dan eenmalig gedownload (ongeveer 60 MB). Met Exporteer mijn gegevens bewaar je alles wat de app over jou opslaat in een bestand. Wis alle gegevens wist alles van deze app op je toestel (tik twee keer).", "Use the natural voice turns on a more natural-sounding voice; it is then downloaded once (about 60 MB). Export my data saves everything the app stores about you in a file. Delete all data erases everything from this app on your device (tap twice).", "Natürliche Stimme verwenden schaltet eine natürlicher klingende Stimme ein; sie wird dann einmal heruntergeladen (etwa 60 MB). Mit Meine Daten exportieren speicherst du alles, was die App über dich speichert, in einer Datei. Alle Daten löschen löscht alles von dieser App auf deinem Gerät (zweimal tippen).", "Utiliser la voix naturelle active une voix plus naturelle ; elle est alors téléchargée une seule fois (environ 60 Mo). Exporter mes données enregistre dans un fichier tout ce que l'application garde sur toi. Effacer toutes les données efface tout de cette application sur ton appareil (touche deux fois)."),
         m("De onderste balk verdwijnt na een paar seconden. Tik op het belletje of scroll naar het einde van de pagina om hem terug te halen.", "The bottom bar disappears after a few seconds. Tap the bell or scroll to the end of the page to bring it back.", "Die untere Leiste verschwindet nach ein paar Sekunden. Tippe auf das Glöckchen oder scrolle bis zum Ende der Seite, um sie zurückzuholen.", "La barre du bas disparaît après quelques secondes. Touche la cloche ou fais défiler jusqu'à la fin de la page pour la faire revenir."),
         m("De uil in de koptekst reageert op het gesprek. Tik erop voor een sprong.", "The owl in the header reacts to the conversation. Tap it for a hop.", "Die Eule im Kopfbereich reagiert auf das Gespräch. Tippe darauf für einen Hüpfer.", "La chouette dans l'en-tête réagit à la conversation. Touche-la pour un petit saut."),
         m("De tabbladen staan altijd op dezelfde plek. Info opent met het ?-knopje in de banner.", "The tabs always stay in the same place. Info opens with the ? button in the banner.", "Die Reiter bleiben immer an derselben Stelle. Info öffnest du mit dem ?-Knopf im Banner.", "Les onglets restent toujours au même endroit. Info s'ouvre avec le bouton ? dans la bannière.")] };
@@ -3360,7 +3361,7 @@
         return whRun(pcm);
       }).then(function (text) {
         text = String(text || "").trim();
-        if (!text || /^[\[(]|m[uú]sica|subt[ií]tulo/i.test(text)) { result.innerHTML = ""; result.appendChild(el("div", "bad", T("Niets verstaan. Probeer het opnieuw."))); return; }
+        if (!text || /^[\[(*]|^m[uú]si[ck]a?\W*$|musique|subt[ií]tulo/i.test(text)) { result.innerHTML = ""; result.appendChild(el("div", "bad", T("Niets verstaan. Probeer het opnieuw."))); return; }
         showResult(text);
       }).catch(function (e) {
         result.innerHTML = "";
@@ -3514,11 +3515,21 @@
     mrow.appendChild(mic); mrow.appendChild(status); mrow.appendChild(pass);
     rc.appendChild(mrow);
     mic.onclick = function () {
-      mic.disabled = true;
+      // Op de iPhone (en zonder spraakherkenning in de browser) luistert Whisper op het toestel zelf:
+      // er gaat dan geen geluid naar Apple of een andere dienst.
+      var hoor = (!(window.SpeechRecognition || window.webkitSpeechRecognition) || isIOS()) ? prHearWhisper : prHear;
+      if (hoor === prHearWhisper && prWhRec) { prWhRec(); return; }
+      mic.disabled = hoor !== prHearWhisper;
       status.textContent = T("Luistert…");
-      prHear(function (text) {
-        mic.disabled = false; status.textContent = "";
+      hoor(function (text) {
+        mic.disabled = false; status.textContent = ""; mic.textContent = "🎤 " + T("Spreek");
         fb.innerHTML = "";
+        if (text === "geen-model") {
+          fb.appendChild(el("div", "note", T("Download het spraakmodel om je antwoord te laten controleren. Je kunt ook 'Ik heb het gezegd' kiezen.")));
+          fb.appendChild(whConsentCard());
+          pass.style.display = "inline-block";
+          return;
+        }
         if (text === null) {
           fb.appendChild(el("div", "note", T("Spraakherkenning werkt niet in deze browser. Zeg het hardop en klik op 'Ik heb het gezegd'.")));
           pass.style.display = "inline-block";
@@ -3533,7 +3544,7 @@
           fb.appendChild(el("div", "bad", T("Nog niet helemaal. Probeer opnieuw of kijk naar het voorbeeld.")));
           fb.appendChild(el("div", "heard", T("Herkend") + ": " + text));
         }
-      });
+      }, mic);
     };
     rc.appendChild(fb);
     var ex = el("div", "chips");
@@ -3543,6 +3554,29 @@
     rc.appendChild(ex);
     w.appendChild(rc);
     return w;
+  }
+
+  // Luisteren met Whisper op het toestel: eerste tik start de opname, tweede tik (Stop) zet hem om in tekst.
+  // cb(tekst), cb(null) als het niet lukt, cb("geen-model") als het spraakmodel nog niet gedownload is.
+  var prWhRec = null;
+  function prHearWhisper(cb, micBtn) {
+    prStartRecording(function (url, blob) {
+      prWhRec = null;
+      if (!store.get("whModel", null)) { cb("geen-model"); return; }
+      whLoad().then(function () { return whDecode(blob); }).then(function (pcm) {
+        var peak = 0, i;
+        for (i = 0; i < pcm.length; i++) { var a = Math.abs(pcm[i]); if (a > peak) peak = a; }
+        if (peak > 0 && peak < 0.9) { var f = 0.9 / peak; for (i = 0; i < pcm.length; i++) pcm[i] *= f; }
+        return whRun(pcm);
+      }).then(function (text) {
+        text = String(text || "").trim();
+        cb(!text || /^[\[(*]|^m[uú]si[ck]a?\W*$|musique|subt[ií]tulo/i.test(text) ? null : text);
+      }).catch(function () { cb(null); });
+    }).then(function (ok) {
+      if (!ok) { prWhRec = null; cb(null); return; }
+      prWhRec = function () { prStopRecording(); };
+      if (micBtn) micBtn.textContent = "■ " + T("Stop");
+    });
   }
 
   function prLogView() {
@@ -3810,6 +3844,36 @@
     document.addEventListener("click", closeLangMenu);
     document.getElementById("resetUnd").onclick = function () {
       store.set("begrepen", []); render();
+    };
+    // Natuurlijke stem (Piper): alleen na toestemming
+    var pOk = document.getElementById("piperOk");
+    if (window.PiperTTS && PiperTTS.setAllowed) PiperTTS.setAllowed(!!store.get("piperOk", false));
+    if (pOk) {
+      pOk.checked = !!store.get("piperOk", false);
+      pOk.onchange = function () { store.set("piperOk", pOk.checked); if (window.PiperTTS && PiperTTS.setAllowed) PiperTTS.setAllowed(pOk.checked); };
+    }
+    // Eigen gegevens exporteren (JSON-bestand) of allemaal wissen. Alleen de gegevens van deze app:
+    // de vijf apps delen één website, maar elk heeft een eigen voorvoegsel in de opslag.
+    var MYPFX = typeof PFX !== "undefined" ? PFX : "gg_";
+    function eigenSleutels() {
+      var ks = [];
+      for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (k && k.indexOf(MYPFX) === 0) ks.push(k); }
+      return ks;
+    }
+    if (document.getElementById("exportData")) document.getElementById("exportData").onclick = function () {
+      var data = {};
+      eigenSleutels().forEach(function (k) { var v = localStorage.getItem(k); try { v = JSON.parse(v); } catch (e) {} data[k.slice(MYPFX.length)] = v; });
+      var blob = new Blob([JSON.stringify({ app: document.title, versie: APP_VERSION, datum: new Date().toISOString(), gegevens: data }, null, 2)], { type: "application/json" });
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob); a.download = "speechpartner-gegevens.json";
+      document.body.appendChild(a); a.click();
+      setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+    };
+    var wipeB = document.getElementById("wipeAll"), wipeArm = 0;
+    if (wipeB) wipeB.onclick = function () {
+      if (Date.now() - wipeArm > 5000) { wipeArm = Date.now(); wipeB.textContent = T("Tik nogmaals om alles te wissen"); return; }
+      eigenSleutels().forEach(function (k) { localStorage.removeItem(k); });
+      location.reload();
     };
     document.getElementById("resetProg").onclick = function () {
       store.set("gekend", []); S.lIdx = 0; S.lShow = false; S.score = [0, 0]; S.quiz = null; S.rAns = {}; render();
