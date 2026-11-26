@@ -202,9 +202,10 @@
   function explainBox(es, opts) {
     var box = el("div", "explain");
     var words = clean(es).split(" ").filter(Boolean);
+    // Betekenis per woord: eigen uitleglijst, kleine woorden, woordenboek en werkwoordsvormen (js/woorduitleg.js)
     var parts = words.map(function (w) {
-      var g = GLOSS[w];
-      return w + " = " + (g ? L(g) : "?");
+      var g = typeof WOORDUITLEG !== "undefined" ? WOORDUITLEG.woord(w, lang, GLOSS) : (GLOSS[w] ? L(GLOSS[w]) : null);
+      return w + " = " + (g || "?");
     });
     if (words.length) box.appendChild(el("div", "", T("Woord voor woord:") + " " + parts.join(" · ")));
     if (WHEN[es]) box.appendChild(el("div", "", T("Wanneer zeg je dit:") + " " + L(WHEN[es])));
@@ -1837,6 +1838,7 @@
           else if (lemmas.indexOf(v) >= 0 && (g === undefined || (hits[0].tense === "pres" && hits[0].p === 0) || c === "como")) g = rev[v] !== undefined ? rev[v] : g;
         }
       }
+      if (g === undefined && typeof WOORDUITLEG !== "undefined") { var wu = WOORDUITLEG.woord(raw, lang, GLOSS); if (wu) g = wu; }
       out.push({ es: raw.replace(/[¿?¡!.,;:…"“”()]+/g, ""), m: g === undefined ? "?" : g });
     });
     return out;
@@ -2098,7 +2100,7 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "3.6";
+  var APP_VERSION = "3.7";
   // Versies waarvoor gebruikers de app opnieuw op hun beginscherm moeten zetten (oude icoon weg, nieuwe erop).
   // Bij zo'n update verschijnt eenmalig een melding met uitleg.
   var REINSTALL_VERSIONS = ["1.8"];
@@ -3338,7 +3340,7 @@
       result.appendChild(el("div", "note", T("Groen = goed, oranje = bijna, rood = nog niet. Tik op een woord om het te horen.")));
       k.msgs.forEach(function (msg) { result.appendChild(el("div", "nl", msg)); });
       if (k.tip) result.appendChild(el("div", "note", T("Tip") + col + k.tip));
-      result.appendChild(el("div", "note", KLANK.note(lang)));
+      result.appendChild(el("div", "note", T("De app vergelijkt de opname met het voorbeeld. Speech Partner maakt van je klanken altijd een bestaand woord; luister daarom ook altijd je eigen opname terug.")));
     }
     // Whisper op de eigen opname (alleen als het model gedownload is)
     function checkWithWhisper() {

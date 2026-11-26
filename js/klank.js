@@ -101,10 +101,10 @@ var KLANK = (function () {
     del: ["In „{w}” was {a} niet te horen.", "In “{w}”, {a} could not be heard.", "In „{w}“ war {a} nicht zu hören.", "Dans « {w} », {a} ne s'entendait pas."],
     ins: ["In „{w}” hoorde de app een extra klank: {b}.", "In “{w}”, the app heard an extra sound: {b}.", "In „{w}“ hörte die App einen zusätzlichen Laut: {b}.", "Dans « {w} », l'application a entendu un son en plus : {b}."],
     allok: ["Alle klanken komen overeen met het voorbeeld.", "All sounds match the example.", "Alle Laute stimmen mit dem Beispiel überein.", "Tous les sons correspondent à l'exemple."],
-    note: ["De app vergelijkt de klanken van wat de spraakherkenning verstond met het voorbeeld. Een spraakherkenner maakt van je klanken altijd een bestaand woord; luister daarom ook naar je eigen opname.",
-           "The app compares the sounds of what the speech recogniser understood with the example. A recogniser always turns your sounds into an existing word, so listen to your own recording as well.",
-           "Die App vergleicht die Laute dessen, was die Spracherkennung verstanden hat, mit dem Beispiel. Eine Spracherkennung macht aus deinen Lauten immer ein bestehendes Wort; hör dir deshalb auch deine eigene Aufnahme an.",
-           "L'application compare les sons de ce que la reconnaissance vocale a compris avec l'exemple. Une reconnaissance vocale transforme toujours tes sons en un mot existant ; écoute donc aussi ton propre enregistrement."]
+    note: ["De app vergelijkt de opname met het voorbeeld. Speech Partner maakt van je klanken altijd een bestaand woord; luister daarom ook altijd je eigen opname terug.",
+           "The app compares your recording with the example. Speech Partner always turns your sounds into an existing word, so always listen back to your own recording too.",
+           "Die App vergleicht die Aufnahme mit dem Beispiel. Speech Partner macht aus deinen Lauten immer ein bestehendes Wort; hör dir deshalb auch immer deine eigene Aufnahme an.",
+           "L'application compare l'enregistrement avec l'exemple. Speech Partner transforme toujours tes sons en un mot existant ; réécoute donc toujours ton propre enregistrement."]
   };
   var LI = { nl: 0, en: 1, de: 2, fr: 3 };
   function name(p, li) {
