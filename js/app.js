@@ -2100,7 +2100,7 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "3.8";
+  var APP_VERSION = "3.9";
   // Versies waarvoor gebruikers de app opnieuw op hun beginscherm moeten zetten (oude icoon weg, nieuwe erop).
   // Bij zo'n update verschijnt eenmalig een melding met uitleg.
   var REINSTALL_VERSIONS = ["1.8"];
@@ -2579,18 +2579,28 @@
       w: m("Deze pagina: uitleg over de app en de tabbladen.", "This page: an explanation of the app and the tabs.", "Diese Seite: Erklärung der App und der Reiter.", "Cette page : explication de l'application et des onglets."),
       k: [] }
   ];
+  // Instellingen en extra's, in groepen (Info-boekje). Nieuwe instelling? Zet hem in de juiste groep.
   var EXTRA_GUIDE = { n: m("Instellingen en extra's", "Settings and extras", "Einstellungen und Extras", "Réglages et extras"),
-    k: [m("Vertaalbalk bovenaan: typ Nederlands en tik op Vertaal.", "Translation bar at the top: type English and tap Translate.", "Übersetzungsleiste oben: Gib einen deutschen Satz ein und tippe auf Übersetzen.", "Barre de traduction en haut : écris en français et touche Traduire."),
-        m("Taal: via het logo of het tandwiel (Nederlands, Engels, Duits, Frans).", "Language: via the logo or the gear icon (Dutch, English, German, French).", "Sprache: über das Logo oder das Zahnrad (Niederländisch, Englisch, Deutsch, Französisch).", "Langue : via le logo ou la roue crantée (néerlandais, anglais, allemand, français)."),
-        m("Thema: Standaard, Systeem (donker als je telefoon dat is), Café, IJs, Jungle of Ruimte.", "Theme: Standard, System (dark when your phone is), Café, Ice, Jungle or Outer space.", "Design: Standard, System (dunkel, wenn dein Telefon es ist), Café, Eis, Dschungel oder Weltraum.", "Thème : Standard, Système (sombre si ton téléphone l'est), Café, Glace, Jungle ou Espace."),
-        m("Gesprekspartner: automatisch, neutraal (o/a), man (hij) of vrouw (zij). Automatisch leidt het alleen af uit een zin die de partner over zichzelf zegt.", "Conversation partner: automatic, neutral (o/a), man (he) or woman (she). Automatic only uses a sentence in which the partner describes themselves.", "Gesprächspartner: automatisch, neutral (o/a), Mann (er) oder Frau (sie). Automatisch leitet nur aus einem Satz ab, in dem der Partner sich selbst beschreibt.", "Partenaire : automatique, neutre (o/a), homme (il) ou femme (elle). Automatique ne se base que sur une phrase où le partenaire se décrit lui-même."),
-        m("Mijn geslacht: man (Estoy cansado) of vrouw (Estoy cansada). Zo krijgen zinnen over jezelf de juiste Spaanse vorm.", "My gender: male (Estoy cansado) or female (Estoy cansada). This gives sentences about yourself the right Spanish form.", "Mein Geschlecht: männlich (Estoy cansado) oder weiblich (Estoy cansada). So bekommen Sätze über dich die richtige spanische Form.", "Mon genre : masculin (Estoy cansado) ou féminin (Estoy cansada). Ainsi, les phrases sur toi ont la bonne forme en espagnol."),
-        m("Snelheid van voorlezen: stel het tempo in.", "Reading speed: set the tempo.", "Vorlesegeschwindigkeit: stelle das Tempo ein.", "Vitesse de lecture : règle le rythme."),
-        m("'Begrepen items resetten' zet de begrepen items terug. 'Voortgang resetten' wist je voortgang.", "'Reset understood items' brings back the understood items. 'Reset progress' clears your progress.", "'Verstandene zurücksetzen' holt die verstandenen Elemente zurück. 'Fortschritt zurücksetzen' löscht deinen Fortschritt.", "« Réinitialiser les éléments compris » remet les éléments compris. « Réinitialiser la progression » efface ta progression."),
-        m("Natuurlijke stem gebruiken zet een stem aan die echter klinkt; die wordt dan eenmalig gedownload (ongeveer 60 MB). Met Exporteer mijn gegevens bewaar je alles wat de app over jou opslaat in een bestand. Wis alle gegevens wist alles van deze app op je toestel (tik twee keer).", "Use the natural voice turns on a more natural-sounding voice; it is then downloaded once (about 60 MB). Export my data saves everything the app stores about you in a file. Delete all data erases everything from this app on your device (tap twice).", "Natürliche Stimme verwenden schaltet eine natürlicher klingende Stimme ein; sie wird dann einmal heruntergeladen (etwa 60 MB). Mit Meine Daten exportieren speicherst du alles, was die App über dich speichert, in einer Datei. Alle Daten löschen löscht alles von dieser App auf deinem Gerät (zweimal tippen).", "Utiliser la voix naturelle active une voix plus naturelle ; elle est alors téléchargée une seule fois (environ 60 Mo). Exporter mes données enregistre dans un fichier tout ce que l'application garde sur toi. Effacer toutes les données efface tout de cette application sur ton appareil (touche deux fois)."),
-        m("De onderste balk verdwijnt na een paar seconden. Tik op het belletje of scroll naar het einde van de pagina om hem terug te halen.", "The bottom bar disappears after a few seconds. Tap the bell or scroll to the end of the page to bring it back.", "Die untere Leiste verschwindet nach ein paar Sekunden. Tippe auf das Glöckchen oder scrolle bis zum Ende der Seite, um sie zurückzuholen.", "La barre du bas disparaît après quelques secondes. Touche la cloche ou fais défiler jusqu'à la fin de la page pour la faire revenir."),
-        m("De uil in de koptekst reageert op het gesprek. Tik erop voor een sprong.", "The owl in the header reacts to the conversation. Tap it for a hop.", "Die Eule im Kopfbereich reagiert auf das Gespräch. Tippe darauf für einen Hüpfer.", "La chouette dans l'en-tête réagit à la conversation. Touche-la pour un petit saut."),
-        m("De tabbladen staan altijd op dezelfde plek. Info opent met het ?-knopje in de banner.", "The tabs always stay in the same place. Info opens with the ? button in the banner.", "Die Reiter bleiben immer an derselben Stelle. Info öffnest du mit dem ?-Knopf im Banner.", "Les onglets restent toujours au même endroit. Info s'ouvre avec le bouton ? dans la bannière.")] };
+    g: [
+      { h: m("Taal en weergave", "Language and display", "Sprache und Anzeige", "Langue et affichage"),
+        k: [m("Taal: via het logo of het tandwiel (Nederlands, Engels, Duits, Frans).", "Language: via the logo or the gear icon (Dutch, English, German, French).", "Sprache: über das Logo oder das Zahnrad (Niederländisch, Englisch, Deutsch, Französisch).", "Langue : via le logo ou la roue crantée (néerlandais, anglais, allemand, français)."),
+            m("Thema: Standaard, Systeem (donker als je telefoon dat is), Café, IJs, Jungle of Ruimte.", "Theme: Standard, System (dark when your phone is), Café, Ice, Jungle or Outer space.", "Design: Standard, System (dunkel, wenn dein Telefon es ist), Café, Eis, Dschungel oder Weltraum.", "Thème : Standard, Système (sombre si ton téléphone l'est), Café, Glace, Jungle ou Espace."),
+            m("Vertaalbalk bovenaan: typ Nederlands en tik op Vertaal.", "Translation bar at the top: type English and tap Translate.", "Übersetzungsleiste oben: Gib einen deutschen Satz ein und tippe auf Übersetzen.", "Barre de traduction en haut : écris en français et touche Traduire.")] },
+      { h: m("Voorlezen en spreken", "Reading aloud and speaking", "Vorlesen und Sprechen", "Lecture et parole"),
+        k: [m("Gesprekspartner: automatisch, neutraal (o/a), man (hij) of vrouw (zij). Automatisch leidt het alleen af uit een zin die de partner over zichzelf zegt.", "Conversation partner: automatic, neutral (o/a), man (he) or woman (she). Automatic only uses a sentence in which the partner describes themselves.", "Gesprächspartner: automatisch, neutral (o/a), Mann (er) oder Frau (sie). Automatisch leitet nur aus einem Satz ab, in dem der Partner sich selbst beschreibt.", "Partenaire : automatique, neutre (o/a), homme (il) ou femme (elle). Automatique ne se base que sur une phrase où le partenaire se décrit lui-même."),
+            m("Mijn geslacht: man (Estoy cansado) of vrouw (Estoy cansada). Zo krijgen zinnen over jezelf de juiste Spaanse vorm.", "My gender: male (Estoy cansado) or female (Estoy cansada). This gives sentences about yourself the right Spanish form.", "Mein Geschlecht: männlich (Estoy cansado) oder weiblich (Estoy cansada). So bekommen Sätze über dich die richtige spanische Form.", "Mon genre : masculin (Estoy cansado) ou féminin (Estoy cansada). Ainsi, les phrases sur toi ont la bonne forme en espagnol."),
+            m("Snelheid van voorlezen: stel het tempo in.", "Reading speed: set the tempo.", "Vorlesegeschwindigkeit: stelle das Tempo ein.", "Vitesse de lecture : règle le rythme."),
+            m("Stem van voorlezen: Automatisch kiest de beste stem van je telefoon; je kunt ook zelf een stem kiezen.", "Reading voice: Automatic picks the best voice on your phone; you can also choose one yourself.", "Vorlesestimme: Automatisch wählt die beste Stimme deines Telefons; du kannst auch selbst eine wählen.", "Voix de lecture : Automatique choisit la meilleure voix de ton téléphone ; tu peux aussi en choisir une."),
+            m("Natuurlijke stem gebruiken: een stem die echter klinkt. Hij wordt pas gedownload als je dit aanzet (eenmalig ongeveer 60 MB, van Hugging Face).", "Use the natural voice: a voice that sounds more natural. It is only downloaded when you turn this on (once, about 60 MB, from Hugging Face).", "Natürliche Stimme verwenden: eine Stimme, die natürlicher klingt. Sie wird erst heruntergeladen, wenn du das einschaltest (einmalig etwa 60 MB, von Hugging Face).", "Utiliser la voix naturelle : une voix plus naturelle. Elle n'est téléchargée que si tu l'actives (une seule fois, environ 60 Mo, depuis Hugging Face).")] },
+      { h: m("Je gegevens", "Your data", "Deine Daten", "Tes données"),
+        k: [m("Exporteer mijn gegevens: bewaar alles wat de app over jou opslaat in een bestand.", "Export my data: save everything the app stores about you in a file.", "Meine Daten exportieren: speichere alles, was die App über dich speichert, in einer Datei.", "Exporter mes données : enregistre dans un fichier tout ce que l'application garde sur toi."),
+            m("Wis alle gegevens: wist alles van deze app op je toestel. Tik twee keer om het te bevestigen.", "Delete all data: erases everything from this app on your device. Tap twice to confirm.", "Alle Daten löschen: löscht alles von dieser App auf deinem Gerät. Zweimal tippen zum Bestätigen.", "Effacer toutes les données : efface tout de cette application sur ton appareil. Touche deux fois pour confirmer."),
+            m("'Begrepen items resetten' zet de begrepen items terug. 'Voortgang resetten' wist je voortgang.", "'Reset understood items' brings back the understood items. 'Reset progress' clears your progress.", "'Verstandene zurücksetzen' holt die verstandenen Elemente zurück. 'Fortschritt zurücksetzen' löscht deinen Fortschritt.", "« Réinitialiser les éléments compris » remet les éléments compris. « Réinitialiser la progression » efface ta progression.")] },
+      { h: m("Handig om te weten", "Good to know", "Gut zu wissen", "Bon à savoir"),
+        k: [m("De tabbladen staan altijd op dezelfde plek. Info opent met het ?-knopje in de banner.", "The tabs always stay in the same place. Info opens with the ? button in the banner.", "Die Reiter bleiben immer an derselben Stelle. Info öffnest du mit dem ?-Knopf im Banner.", "Les onglets restent toujours au même endroit. Info s'ouvre avec le bouton ? dans la bannière."),
+            m("De onderste balk verdwijnt na een paar seconden. Tik op het belletje of scroll naar het einde van de pagina om hem terug te halen.", "The bottom bar disappears after a few seconds. Tap the bell or scroll to the end of the page to bring it back.", "Die untere Leiste verschwindet nach ein paar Sekunden. Tippe auf das Glöckchen oder scrolle bis zum Ende der Seite, um sie zurückzuholen.", "La barre du bas disparaît après quelques secondes. Touche la cloche ou fais défiler jusqu'à la fin de la page pour la faire revenir."),
+            m("De uil in de koptekst reageert op het gesprek. Tik erop voor een sprong.", "The owl in the header reacts to the conversation. Tap it for a hop.", "Die Eule im Kopfbereich reagiert auf das Gespräch. Tippe darauf für einen Hüpfer.", "La chouette dans l'en-tête réagit à la conversation. Touche-la pour un petit saut.")] }
+    ] };
   // Info als boekje: vaste bladgrootte, lange onderdelen verdeeld over meerdere bladen.
   // Over de maker, bronnen en licenties en de versie blijven onderaan als vaste kaarten staan.
   function infoSec(title, body) {
@@ -2635,76 +2645,70 @@
       pages.push(p);
     }
 
-    // Blad: wat is het
-    page(L(INFO_SECTIONS[0].t), [infoSec(L(m("Waar het over gaat", "What it is about", "Worum es geht", "De quoi il s'agit")), L(INFO_SECTIONS[0].b))]);
+    // Opbouw (efficiënter): 1 inhoud met snelkoppelingen · stap voor stap per onderdeel (inklapbaar, zes per blad)
+    // · instellingen in groepen · spraak, offline en privacy op één blad · aanleren. Geen dubbele uitleg meer.
+    var vervalt = function (x) { return typeof DOELTAAL !== "undefined" && DOELTAAL.vervalt ? DOELTAAL.vervalt(x) : false; };
+    var inhoud = el("div", "chips leaf-index");
+    page(L(m("Inhoud", "Contents", "Inhalt", "Sommaire")), [el("p", "", L(INFO_SECTIONS[0].b)), inhoud]);
 
-    // Blad: het gespreksmodel dat één keer gedownload wordt
-    page(L(m("Gespreksmodel en offline gebruik", "Conversation model and offline use", "Gesprächsmodell und Offline-Nutzung", "Modèle de conversation et usage hors ligne")), [
-      infoSec(L(m("Eenmalige download", "One-time download", "Einmaliger Download", "Téléchargement unique")), L(m(
-        "Voor de spraakherkenning heeft de app eenmalig een gespreksmodel nodig. Dat wordt op je toestel gedownload: ongeveer 40 MB voor de snelle versie of 80 MB voor de nauwkeurige.",
-        "For speech recognition the app needs a conversation model once. It is downloaded to your device: about 40 MB for the fast version or 80 MB for the more accurate one.",
-        "Für die Spracherkennung braucht die App einmalig ein Gesprächsmodell. Es wird auf dein Gerät heruntergeladen: etwa 40 MB für die schnelle Version oder 80 MB für die genauere.",
-        "Pour la reconnaissance vocale, l'application a besoin, une seule fois, d'un modèle de conversation. Il est téléchargé sur ton appareil : environ 40 Mo pour la version rapide ou 80 Mo pour la version plus précise.")))
-      , infoSec(L(m("Offline gebruik", "Offline use", "Offline-Nutzung", "Usage hors ligne")), L(m(
-        "Daarna kun je de dienst offline gebruiken.",
-        "After that you can use the service offline.",
-        "Danach kannst du den Dienst offline nutzen.",
-        "Ensuite, tu peux utiliser le service hors ligne.")))
-    ]);
-
-    // Bladen: de Help, per vier onderdelen op één blad
-    var helpTitle = L(m("Help: stappenplan", "Help: step plan", "Hilfe: Schritt-für-Schritt-Plan", "Aide : plan pas à pas"));
-    pack(HELP_GUIDE, function () { return 130; }, 500).forEach(function (group) {
+    // Stap voor stap: elk onderdeel inklapbaar, met de korte omschrijving van het tabblad erbij
+    var korte = {};
+    TAB_GUIDE.forEach(function (tb) { korte[L(tb.n)] = L(tb.w); });
+    var EIGEN = ["Instellingen en extra's", "Spraak en offline gebruik"];   // die hebben een eigen blad
+    var stappen = HELP_GUIDE.filter(function (sec) { return EIGEN.indexOf(sec.t.nl) < 0 && !vervalt(sec.t); });
+    pack(stappen, function () { return 1; }, 6).forEach(function (group, gi) {
       var blocks = [];
       group.forEach(function (sec) {
         var d = el("details", "help-sec");
         d.appendChild(el("summary", "", L(sec.t)));
+        if (korte[L(sec.t)]) d.appendChild(el("p", "note", korte[L(sec.t)]));
         var ol = el("ol", "help-steps");
-        sec.s.forEach(function (x) { ol.appendChild(el("li", "", L(x))); });
+        sec.s.forEach(function (x) { if (!vervalt(x)) ol.appendChild(el("li", "", L(x))); });
         d.appendChild(ol);
         blocks.push(d);
       });
-      page(helpTitle, blocks);
+      page(L(m("Stap voor stap", "Step by step", "Schritt für Schritt", "Pas à pas")), blocks);
     });
 
-    // Bladen: het overzicht per tabblad, twee per blad
-    pack(TAB_GUIDE, function (tb) {
-      return 80 + L(tb.w).length + tb.k.reduce(function (a, k) { return a + L(k).length + 25; }, 0);
-    }, TAB_BUDGET).forEach(function (group) {
-      var tblocks = [];
-      group.forEach(function (tb) {
-        var sec = infoSec(L(tb.n), L(tb.w));
-        if (tb.k.length) {
-          var ul = el("ul", "guide-list");
-          tb.k.forEach(function (k) { ul.appendChild(el("li", "", L(k))); });
-          sec.appendChild(ul);
-        }
-        tblocks.push(sec);
-      });
-      page(T("Tabbladen"), tblocks);
-    });
+    // Instellingen en extra's: vier inklapbare groepen op één blad
+    page(L(EXTRA_GUIDE.n), EXTRA_GUIDE.g.map(function (gr) {
+      var d = el("details", "help-sec");
+      d.appendChild(el("summary", "", L(gr.h)));
+      var ul = el("ul", "guide-list");
+      gr.k.forEach(function (k) { if (!vervalt(k)) ul.appendChild(el("li", "", L(k))); });
+      d.appendChild(ul);
+      return d;
+    }));
 
-    // Blad: instellingen en extra's
-    pack(EXTRA_GUIDE.k, function (k) { return L(k).length + 25; }, TAB_BUDGET).forEach(function (group, gi) {
-      var exl = el("ul", "guide-list");
-      group.forEach(function (k) { exl.appendChild(el("li", "", L(k))); });
-      page(L(EXTRA_GUIDE.n), [exl]);
-    });
-
-    // Blad: spreken op de iPhone
-    page(L(INFO_SECTIONS[2].t), [el("p", "", L(INFO_SECTIONS[2].b))]);
+    // Spraak, offline en privacy op één blad (de iPhone-tekst noemt het offline gebruik al)
+    var privA = el("a", "", L(m("Lees de privacyverklaring", "Read the privacy statement", "Zur Datenschutzerklärung", "Lire la déclaration de confidentialité")));
+    privA.href = "privacy.html#" + lang;
+    // Inklapbaar, net als de andere bladen, zodat alles op één blad past
+    function klap(titel, tekst) { var d = el("details", "help-sec"); d.appendChild(el("summary", "", titel)); d.appendChild(el("p", "", tekst)); return d; }
+    var priv = klap(L(m("Privacy", "Privacy", "Datenschutz", "Confidentialité")), L(m(
+      "De app heeft geen account, geen advertenties en geen gebruiksstatistieken. Je voortgang blijft op je eigen toestel. Alleen bij een download (spraakmodel, natuurlijke stem) of als je zelf op Controleer online tikt, is er contact met een andere dienst.",
+      "The app has no account, no ads and no analytics. Your progress stays on your own device. Only a download (speech model, natural voice) or tapping Check online yourself contacts another service.",
+      "Die App hat kein Konto, keine Werbung und keine Nutzungsanalyse. Dein Fortschritt bleibt auf deinem Gerät. Nur bei einem Download (Sprachmodell, natürliche Stimme) oder wenn du selbst auf Online prüfen tippst, gibt es Kontakt mit einem anderen Dienst.",
+      "L'application n'a ni compte, ni publicité, ni statistiques d'utilisation. Ta progression reste sur ton appareil. Seul un téléchargement (modèle vocal, voix naturelle) ou un appui sur Vérifier en ligne contacte un autre service.")));
+    priv.appendChild(privA);
+    page(L(m("Spraak, offline en privacy", "Speech, offline and privacy", "Sprache, offline und Datenschutz", "Parole, hors ligne et confidentialité")), [
+      klap(L(INFO_SECTIONS[2].t), L(INFO_SECTIONS[2].b)),
+      priv
+    ]);
 
     // Blad: aanleren
     page(L(INFO_SECTIONS[3].t), [el("p", "", L(INFO_SECTIONS[3].b))]);
 
-    // Blad: privacy (los document, dus een gewone link)
-    var privA = el("a", "", L(m("Lees de privacyverklaring", "Read the privacy statement", "Zur Datenschutzerklärung", "Lire la déclaration de confidentialité")));
-    privA.href = "privacy.html#" + lang;
-    page(L(m("Privacy", "Privacy", "Datenschutz", "Confidentialité")), [el("p", "", L(m(
-      "De app heeft geen account, geen advertenties en geen gebruiksstatistieken. Je voortgang blijft op je eigen toestel.",
-      "The app has no account, no ads and no analytics. Your progress stays on your own device.",
-      "Die App hat kein Konto, keine Werbung und keine Nutzungsanalyse. Dein Fortschritt bleibt auf deinem Gerät.",
-      "L'application n'a ni compte, ni publicité, ni statistiques d'utilisation. Ta progression reste sur ton appareil.")) ), privA]);
+    // Inhoud: een knop per blad (zelfde titel komt één keer voor)
+    var gezien = {};
+    pages.forEach(function (pg, i) {
+      if (i === 0) return;
+      var t = pg.firstChild.textContent;
+      if (gezien[t] !== undefined) return;
+      gezien[t] = i;
+      var bt = btn(t, "small", function (e) { if (e) e.stopPropagation(); goLeaf(i); });
+      inhoud.appendChild(bt);
+    });
 
     // Het boekje zelf: één blad tegelijk, een vaste grootte, stipjes onderaan
     var n = pages.length;
