@@ -11,7 +11,7 @@
 
   var LANGS = ["nl", "en", "de", "fr"];
   var TABS = [
-    ["zinnen", "Zinnen"], ["onderwerpen", "Onderwerpen"], ["vastlopen", "Vastlopen"],
+    ["zinnen", "Zinnen"], ["nood", "Nood"], ["vastlopen", "Vastlopen"], ["onderwerpen", "Onderwerpen"],
     ["bouwen", "Zin bouwen"], ["reageren", "Reageren"], ["leren", "Leren"],
     ["regels", "Regels"], ["gesprek", "Gesprek"], ["uitspraak", "Uitspraak"], ["info", "Info"],
     ["shop", "Webshop"]
@@ -356,6 +356,8 @@
   }
   function go(tab) {
     if (typeof prRelease === "function") prRelease();
+    // De belpagina van Nood is alleen te zien direct na de dubbele bevestiging
+    S.noodBel = null; S.noodVraag = null; S.noodWis = false;
     var view = document.getElementById("view");
     // Info werkt als schakelaar: tik je er nog eens op, dan ga je terug naar de pagina waar je vandaan kwam
     if (tab === "info" && S.tab === "info") {
@@ -414,9 +416,10 @@
     var apply = navTarget("tab", dir);
     if (apply) flipTo(null, dir, apply);
   });
-  // Vier vaste tabbladen staan op een eigen plek: Zinnen links, Vastlopen boven, Gesprek rechts,
-  // Info rechtsonder (boven de onderste balk). De rest blijft in de onderste balk.
-  var DOCK_POS = { zinnen: "dock-l", vastlopen: "dock-t", gesprek: "dock-r", info: "dock-br" };
+  // Vier vaste tabbladen staan op een eigen plek: Zinnen links, Nood boven, Gesprek rechts,
+  // Info rechtsonder (boven de onderste balk). De rest blijft in de onderste balk (Vastlopen staat daar tussen Zinnen en Onderwerpen).
+  // Nood verdwijnt nooit, ook niet als de andere knoppen wegschuiven (zie .dock-nood in speels.css).
+  var DOCK_POS = { zinnen: "dock-l", nood: "dock-t", gesprek: "dock-r", info: "dock-br" };
   function renderNav() {
     var nav = document.getElementById("nav");
     var dock = document.getElementById("dock");
@@ -429,8 +432,8 @@
     TABS.forEach(function (t) {
       if (t[0] === "info") return;   // Info staat niet meer onderaan: die opent u via het ?-knopje in de banner
       var where = DOCK_POS[t[0]] && dockOk ? dock : nav;
-      var cls = DOCK_POS[t[0]] && dockOk ? "dock-btn " + DOCK_POS[t[0]] + (S.tab === t[0] ? " active" : "") : (S.tab === t[0] ? "active small" : "small");
-      var b = btn(T(t[1]), cls, function () { go(t[0]); });
+      var cls = DOCK_POS[t[0]] && dockOk ? "dock-btn " + DOCK_POS[t[0]] + (t[0] === "nood" ? " dock-nood" : "") + (S.tab === t[0] ? " active" : "") : (S.tab === t[0] ? "active small" : "small");
+      var b = btn(t[0] === "nood" ? L(NOOD.ui.tab) : T(t[1]), cls, function () { go(t[0]); });
       b.setAttribute("data-v", String(TABS.indexOf(t) % 4));
       if (DOCK_POS[t[0]] && dockOk) b.setAttribute("aria-current", S.tab === t[0] ? "page" : "false");
       where.appendChild(b);
@@ -695,6 +698,351 @@
     w.appendChild(el("h2", "", T("Zinnen")));
     STUCK.forEach(function (it) { var c = phraseCard(it, null); if (c) w.appendChild(c); });
     return w;
+  }
+
+  // ---------- Nood ----------
+  // Noodzinnen (met een extra zin die het veiliger maakt), een toonstand met grote letters,
+  // en de noodkaart met de nummers van het land. Een nummer bellen vraagt twee keer om bevestiging;
+  // daarna volgt een pagina met de volgorde van het gesprek (alleen via die weg te zien).
+  function noodDoel() { return (typeof DOELC !== "undefined" && DOELC) ? DOELC : "es"; }
+  function noodVrouw() { return store.get("eigenGeslacht", "m") === "f"; }
+  function noodTekst(z, f) { var d = noodDoel(); return (f && noodVrouw() && f[d]) ? f[d] : z[d]; }
+  function NU(k) { return L(NOOD.ui[k]); }
+  function noodVul(s, map) { return String(s).replace(/\{(\w+)\}/g, function (_, k) { return map[k] !== undefined ? map[k] : ""; }); }
+  function noodMode() { return S.noodMode === "toon" ? "toon" : "lijst"; }
+  // Alle zinnen achter elkaar voor de toonstand: de zin en daarna de extra zin
+  function noodDia() {
+    var out = [];
+    NOOD.zinnen.forEach(function (z) {
+      out.push({ cat: z.cat, o: noodTekst(z.z, z.f), u: L(z.z), extra: false });
+      out.push({ cat: z.cat, o: noodTekst(z.x, z.fx), u: L(z.x), extra: true });
+    });
+    return out;
+  }
+  function viewNood() {
+    var w = el("div", "nood");
+    if (S.noodBel) { w.appendChild(viewNoodBel()); return w; }
+    var seg = el("div", "gsp-seg");
+    seg.setAttribute("role", "tablist");
+    [["lijst", NU("zinnen")], ["toon", NU("toon")]].forEach(function (x) {
+      var on = noodMode() === x[0];
+      var b = btn(x[1], "gsp-tab" + (on ? " active" : ""), function () { S.noodMode = x[0]; render(); });
+      b.setAttribute("role", "tab");
+      b.setAttribute("aria-selected", on ? "true" : "false");
+      seg.appendChild(b);
+    });
+    w.appendChild(seg);
+    // Snel naar de eigen gegevens (de overdrachtskaart uit Info), zonder eerst naar Info te hoeven
+    w.appendChild(btn("🩺 " + NU("mijnGegevens"), "primary nood-mijn", function () { S.noodMijn = !S.noodMijn; render(); }));
+    if (S.noodMijn) w.appendChild(noodMijnKaart());
+    w.appendChild(el("div", "gsp-uitleg", noodMode() === "toon" ? NU("uitlegToon") : NU("uitlegLijst")));
+    w.appendChild(noodMode() === "toon" ? noodToon() : noodLijst());
+    w.appendChild(noodKaart());
+    if (S.noodVraag) w.appendChild(noodVraagVenster());
+    return w;
+  }
+  function noodRegel(o, u, cls) {
+    var line = el("div", "line-row" + (cls ? " " + cls : ""));
+    var tx = el("div", "txt");
+    tx.appendChild(el("div", "es", o));
+    tx.appendChild(el("div", "nl", u));
+    line.appendChild(tx);
+    line.appendChild(speakBtn(o));
+    return line;
+  }
+  function noodLijst() {
+    var w = el("div", "nood-lijst");
+    NOOD.cats.forEach(function (c) {
+      w.appendChild(el("h2", "", L(c.n)));
+      NOOD.zinnen.filter(function (z) { return z.cat === c.id; }).forEach(function (z) {
+        var card = el("div", "card nood-zin");
+        card.appendChild(noodRegel(noodTekst(z.z, z.f), L(z.z)));
+        var ex = el("div", "nood-extra");
+        ex.appendChild(el("div", "nood-extra-kop", "+ " + NU("zegErna")));
+        ex.appendChild(noodRegel(noodTekst(z.x, z.fx), L(z.x)));
+        card.appendChild(ex);
+        w.appendChild(card);
+      });
+    });
+    return w;
+  }
+  function noodToon() {
+    var dia = noodDia();
+    var i = Math.max(0, Math.min(dia.length - 1, S.noodIdx || 0));
+    S.noodIdx = i;
+    var w = el("div", "nood-toon");
+    var chips = el("div", "chips");
+    NOOD.cats.forEach(function (c) {
+      var eerste = -1;
+      dia.forEach(function (x, k) { if (eerste < 0 && x.cat === c.id) eerste = k; });
+      chips.appendChild(btn(L(c.n), dia[i].cat === c.id ? "primary small" : "small", function () { S.noodIdx = eerste; render(); }));
+    });
+    w.appendChild(chips);
+    var cur = dia[i];
+    var big = el("div", "card big nood-groot");
+    if (cur.extra) big.appendChild(el("div", "nood-extra-kop", "+ " + NU("zegErna")));
+    big.appendChild(el("div", "big-es nood-groot-tekst", cur.o));
+    big.appendChild(el("div", "nl", cur.u));
+    w.appendChild(big);
+    var row = el("div", "row");
+    row.appendChild(btn("← " + NU("vorige"), "", function () { S.noodIdx = (i - 1 + dia.length) % dia.length; render(); }));
+    row.appendChild(btn("🔊 " + NU("luister"), "primary", function () { speak(cur.o); }));
+    row.appendChild(btn(NU("volgende") + " →", "", function () { S.noodIdx = (i + 1) % dia.length; render(); }));
+    w.appendChild(row);
+    w.appendChild(el("div", "leafnum", (i + 1) + " / " + dia.length));
+    return w;
+  }
+  function noodKopieer(nr, b) {
+    var klaar = function () { var oud = b.textContent; b.textContent = NU("gekopieerd"); setTimeout(function () { b.textContent = oud; }, 1500); };
+    var terug = function () {
+      try {
+        var ta = document.createElement("textarea");
+        ta.value = nr; ta.setAttribute("readonly", ""); ta.style.position = "fixed"; ta.style.opacity = "0";
+        document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta); klaar();
+      } catch (e) {}
+    };
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(nr).then(klaar, terug);
+      else terug();
+    } catch (e) { terug(); }
+  }
+  function noodVraag(n, soort) { S.noodVraag = { nr: n.nr, naam: n.naam, soort: soort, stap: 1 }; render(); }
+  function noodNummer(n, soort) {
+    var r = el("div", "nood-rij");
+    var nb = btn(n.nr, "nood-nr" + (soort === "spoed" ? " spoed" : ""), function () { noodVraag(n, soort); });
+    nb.setAttribute("aria-label", n.nr + " " + n.naam);
+    r.appendChild(nb);
+    var tx = el("div", "nood-info");
+    tx.appendChild(el("div", "nood-naam", n.naam));
+    if (n.d) tx.appendChild(el("div", "nl", L(n.d)));
+    r.appendChild(tx);
+    var kb = btn(NU("kopieer"), "small", function () { noodKopieer(n.nr, kb); });
+    r.appendChild(kb);
+    return r;
+  }
+  function noodKaart() {
+    var LD = NOOD.land[noodDoel()];
+    var c = el("div", "card nood-kaart");
+    c.appendChild(el("div", "sec-title", L(LD.kop)));
+    c.appendChild(el("p", "note", NU("kaartUitleg")));
+    [["spoed", LD.spoed], ["algemeen", LD.algemeen], ["anoniem", LD.anoniem]].forEach(function (g) {
+      var soort = g[0], lijst = g[1] || [];
+      var sec = el("div", "nood-groep " + soort);
+      // De naam van de groep is zelf een knop naar het eerste nummer (bij de publieke release: direct bellen)
+      var kop = btn(NU(soort), "nood-groepknop " + soort, function () { if (lijst.length) noodVraag(lijst[0], soort); });
+      if (!lijst.length) kop.disabled = true;
+      sec.appendChild(kop);
+      lijst.forEach(function (n) { sec.appendChild(noodNummer(n, soort)); });
+      if (!lijst.length && LD[soort + "Noot"]) sec.appendChild(el("p", "note", L(LD[soort + "Noot"])));
+      c.appendChild(sec);
+    });
+    // Onderaan: de lijn voor nare gedachten (zoals 113 in Nederland)
+    var h = LD.hulp;
+    if (h) {
+      var hs = el("div", "nood-hulp");
+      var nrs = h.nr + (h.alt ? " " + NU("of") + " " + h.alt : "");
+      hs.appendChild(el("p", "", noodVul(NU("hulpRegel"), { naam: h.naam, nr: nrs })));
+      var hr = el("div", "chips");
+      [h.nr].concat(h.alt ? [h.alt] : []).forEach(function (nr) {
+        hr.appendChild(btn(nr, "nood-nr", function () { noodVraag({ nr: nr, naam: h.naam }, "hulp"); }));
+        var kb = btn(NU("kopieer"), "small", function () { noodKopieer(nr, kb); });
+        hr.appendChild(kb);
+      });
+      hs.appendChild(hr);
+      c.appendChild(hs);
+    }
+    return c;
+  }
+  // De overdrachtskaart op de pagina Nood; is er nog niets ingevuld, dan een knop naar het formulier bij Info
+  function noodMijnKaart() {
+    var c = noodOverdrachtKaart();
+    c.id = "noodMijn";
+    if (!NOOD.overdracht(noodG(), noodDoel(), lang, noodVrouw()).length) {
+      c.appendChild(btn(NU("naarFormulier"), "primary", function () {
+        S.noodMijn = false;
+        go("info");
+        setTimeout(function () { var f = document.getElementById("noodForm"); if (f) f.scrollIntoView({ block: "start" }); }, 450);
+      }));
+    }
+    c.appendChild(btn(NU("sluit"), "small", function () { S.noodMijn = false; render(); }));
+    return c;
+  }
+  // Dubbele bevestiging voordat er (straks) gebeld wordt
+  function noodVraagVenster() {
+    var v = S.noodVraag;
+    var ov = el("div", "nood-overlay");
+    ov.setAttribute("role", "dialog");
+    ov.setAttribute("aria-modal", "true");
+    var box = el("div", "card nood-vraag");
+    var tekst = v.stap === 1 ? noodVul(NU("vraag1"), { nr: v.nr, naam: v.naam }) : (v.soort === "spoed" ? NU("vraag2Spoed") : NU("vraag2"));
+    box.appendChild(el("div", "nood-vraag-nr", v.nr));
+    box.appendChild(el("p", "", tekst));
+    var row = el("div", "row");
+    row.appendChild(btn(v.stap === 1 ? NU("jaBellen") : NU("jaZeker"), "primary nood-ja", function () {
+      if (v.stap === 1) { v.stap = 2; render(); return; }
+      S.noodBel = { nr: v.nr, naam: v.naam, soort: v.soort };
+      S.noodVraag = null;
+      render();
+      window.scrollTo(0, 0);
+    }));
+    row.appendChild(btn(NU("annuleer"), "", function () { S.noodVraag = null; render(); }));
+    box.appendChild(row);
+    ov.appendChild(box);
+    ov.addEventListener("click", function (e) { if (e.target === ov) { S.noodVraag = null; render(); } });
+    return ov;
+  }
+  // De pagina na de bevestiging: het nummer en de volgorde van het gesprek (Engels groot, de taal van het land eronder)
+  function viewNoodBel() {
+    var b = S.noodBel, d = noodDoel();
+    var w = el("div", "nood-bel");
+    w.appendChild(btn("← " + NU("terug"), "small", function () { S.noodBel = null; render(); }));
+    var kop = el("div", "card nood-bel-kop");
+    kop.appendChild(el("div", "nood-bel-nr", b.nr));
+    kop.appendChild(el("div", "nood-naam", b.naam));
+    if (NOOD.echtBellen) {
+      var a = el("a", "btn primary nood-belnu", NU("belNu"));
+      a.href = "tel:" + b.nr.replace(/[^\d+]/g, "");
+      kop.appendChild(a);
+    } else kop.appendChild(el("p", "note", noodVul(NU("testBellen"), { nr: b.nr })));
+    w.appendChild(kop);
+    var spoed = b.soort === "spoed";
+    w.appendChild(el("h2", "", spoed ? NU("script") : NU("scriptAlgemeen")));
+    var ol = el("ol", "nood-script");
+    function stap(en, onder, spreek) {
+      var li = el("li", "");
+      li.appendChild(el("div", "nood-en", en));
+      if (onder) {
+        var r = el("div", "nood-onder-rij");
+        r.appendChild(el("div", "nood-doel", onder));
+        if (spreek) r.appendChild(speakBtn(spreek));
+        li.appendChild(r);
+      }
+      ol.appendChild(li);
+    }
+    if (spoed) {
+      (NOOD.script[d] || []).forEach(function (s, i) {
+        if (d === "en") stap(s[0], L(NOOD.scriptEnUi[i]), null);
+        else stap(s[0], s[1], s[1]);
+      });
+    } else {
+      NOOD.scriptAlgemeen.forEach(function (s) { stap(s.en, d === "en" ? L(s) : s[d], s[d]); });
+      if (b.soort === "anoniem" || b.soort === "hulp") stap(NOOD.scriptAnoniem.en, d === "en" ? L(NOOD.scriptAnoniem) : NOOD.scriptAnoniem[d], null);
+    }
+    var sc = el("div", "card nood-script-kaart");
+    sc.appendChild(ol);
+    w.appendChild(sc);
+    return w;
+  }
+
+  // ---------- Info: noodgegevens (formulier) en de overdrachtskaart ----------
+  // Alles blijft op dit toestel (store). De overdrachtskaart zet de gegevens om in zinnen in de taal van het land.
+  function noodG() { var g = store.get("noodGegevens", null); return g && typeof g === "object" ? g : {}; }
+  function noodBewaar(g) { store.set("noodGegevens", g); noodVernieuwKaart(); }
+  function noodVernieuwKaart() {
+    var oud = document.getElementById("noodOverdracht");
+    if (oud && oud.parentNode) oud.parentNode.replaceChild(noodOverdrachtKaart(), oud);
+  }
+  function noodFormKaart() {
+    var g = noodG();
+    var c = el("div", "card nood-form");
+    c.id = "noodForm";
+    c.appendChild(el("div", "sec-title", NU("formTitel")));
+    c.appendChild(el("p", "note", NU("formUitleg")));
+    function veld(label, node) { var f = el("label", "nood-veld"); f.appendChild(el("span", "nood-label", label)); f.appendChild(node); return f; }
+    function tekst(key, label, type, ph) {
+      var i = document.createElement("input");
+      i.type = type || "text"; i.value = g[key] || ""; if (ph) i.placeholder = ph;
+      i.autocomplete = "off";
+      i.addEventListener("input", function () { g[key] = i.value; noodBewaar(g); });
+      return veld(label, i);
+    }
+    function keuze(key, label, opties, opnieuw) {
+      var s = document.createElement("select");
+      opties.forEach(function (o) { var op = el("option", "", o[1]); op.value = o[0]; s.appendChild(op); });
+      s.value = g[key] || opties[0][0];
+      s.addEventListener("change", function () { g[key] = s.value; noodBewaar(g); if (opnieuw) noodVernieuwForm(); });
+      return veld(label, s);
+    }
+    function vinkjes(key, items) {
+      var box = el("div", "nood-vinkjes");
+      var gekozen = Array.isArray(g[key]) ? g[key] : [];
+      items.forEach(function (it) {
+        var lb = el("label", "nood-vink");
+        var cb = document.createElement("input");
+        cb.type = "checkbox"; cb.checked = gekozen.indexOf(it.id) >= 0;
+        cb.addEventListener("change", function () {
+          var l = (Array.isArray(g[key]) ? g[key] : []).filter(function (x) { return x !== it.id; });
+          if (cb.checked) l.push(it.id);
+          g[key] = l; noodBewaar(g);
+        });
+        lb.appendChild(cb);
+        lb.appendChild(document.createTextNode(" " + L(it.l)));
+        box.appendChild(lb);
+      });
+      return box;
+    }
+    function vink(key, label) {
+      var lb = el("label", "nood-vink");
+      var cb = document.createElement("input");
+      cb.type = "checkbox"; cb.checked = !!g[key];
+      cb.addEventListener("change", function () { g[key] = cb.checked; noodBewaar(g); });
+      lb.appendChild(cb); lb.appendChild(document.createTextNode(" " + label));
+      return lb;
+    }
+    var JNO = [["", NU("keuze")], ["nee", NU("nee")], ["ja", NU("ja")]];
+    c.appendChild(tekst("naam", NU("naam")));
+    c.appendChild(tekst("geboren", NU("geboren"), "date"));
+    c.appendChild(keuze("taal", NU("taal"), [["", NU("keuze")]].concat(NOOD.talen.map(function (x) { return [x.id, L(x.l)]; })).concat([["anders", NU("taalAnders")]]), true));
+    if (g.taal === "anders") c.appendChild(tekst("taalAnders", NU("taalAnders")));
+    c.appendChild(keuze("bloed", NU("bloed"), [["", NU("onbekend")]].concat(NOOD.bloed.map(function (x) { return [x, x.replace("-", "−")]; }))));
+    c.appendChild(keuze("allergie", NU("allergie"), [["", NU("onbekend")], ["nee", NU("nee")], ["ja", NU("ja")]], true));
+    if (g.allergie === "ja") {
+      c.appendChild(vinkjes("allergieen", NOOD.allergie));
+      c.appendChild(tekst("allergieAnders", NU("anders")));
+      c.appendChild(vink("adrenaline", NU("adrenaline")));
+    }
+    c.appendChild(keuze("medicijn", NU("medicijn"), JNO, true));
+    if (g.medicijn === "ja") c.appendChild(tekst("medicijnen", NU("medicijnNamen")));
+    c.appendChild(keuze("aandoening", NU("aandoening"), JNO, true));
+    if (g.aandoening === "ja") {
+      c.appendChild(vinkjes("aandoeningen", NOOD.aandoening));
+      c.appendChild(tekst("aandoeningAnders", NU("anders")));
+    }
+    c.appendChild(keuze("zwanger", NU("zwanger"), [["", NU("nvt")], ["nee", NU("nee")], ["ja", NU("ja")]], true));
+    if (g.zwanger === "ja") c.appendChild(tekst("weken", NU("weken"), "number"));
+    c.appendChild(el("h4", "sec-title nood-sub", NU("contact")));
+    c.appendChild(tekst("contactNaam", NU("contactNaam")));
+    c.appendChild(keuze("relatie", NU("relatie"), [["", NU("keuze")]].concat(NOOD.relatie.map(function (x) { return [x.id, L(x.l)]; }))));
+    c.appendChild(tekst("contactTel", NU("telefoon"), "tel"));
+    c.appendChild(el("h4", "sec-title nood-sub", NU("verzekering")));
+    c.appendChild(tekst("verzekeraar", NU("verzekeraar")));
+    c.appendChild(tekst("polis", NU("polis")));
+    c.appendChild(vink("ehic", NU("ehic")));
+    // Wissen: twee keer bevestigen
+    var wr = el("div", "row");
+    if (!S.noodWis) wr.appendChild(btn(NU("wis"), "small", function () { S.noodWis = true; noodVernieuwForm(); }));
+    else {
+      wr.appendChild(el("span", "note", NU("wisZeker")));
+      wr.appendChild(btn(NU("jaWis"), "small primary", function () { S.noodWis = false; store.set("noodGegevens", {}); noodVernieuwForm(); noodVernieuwKaart(); }));
+      wr.appendChild(btn(NU("annuleer"), "small", function () { S.noodWis = false; noodVernieuwForm(); }));
+    }
+    c.appendChild(wr);
+    return c;
+  }
+  function noodVernieuwForm() {
+    var oud = document.getElementById("noodForm");
+    if (oud && oud.parentNode) oud.parentNode.replaceChild(noodFormKaart(), oud);
+  }
+  function noodOverdrachtKaart() {
+    var c = el("div", "card nood-overdracht");
+    c.id = "noodOverdracht";
+    c.appendChild(el("div", "sec-title", NU("kaartTitel")));
+    var regels = NOOD.overdracht(noodG(), noodDoel(), lang, noodVrouw());
+    if (!regels.length) { c.appendChild(el("p", "note", NU("kaartLeeg"))); return c; }
+    c.appendChild(el("p", "note", NU("kaartUitleg2")));
+    c.appendChild(btn("🔊 " + NU("allesVoorlezen"), "primary", function () { speak(regels.map(function (r) { return r.o; }).join(" ")); }));
+    regels.forEach(function (r, i) { c.appendChild(noodRegel(r.o, r.u, i === 0 ? "nood-kop" : "")); });
+    return c;
   }
 
   // ---------- Zin bouwen (vervolgmenu) ----------
@@ -2138,7 +2486,7 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "3.10";
+  var APP_VERSION = "3.11";
   // Versies waarvoor gebruikers de app opnieuw op hun beginscherm moeten zetten (oude icoon weg, nieuwe erop).
   // Bij zo'n update verschijnt eenmalig een melding met uitleg.
   var REINSTALL_VERSIONS = ["1.8"];
@@ -2577,6 +2925,13 @@
       k: [m("Een grote zin met luisterknop.", "A large sentence with a listen button.", "Ein großer Satz mit Hörknopf.", "Une grande phrase avec bouton d'écoute."),
           m("'Andere zin' laat een nieuwe zin zien.", "'Another phrase' shows a new one.", "'Anderer Satz' zeigt einen neuen.", "« Autre phrase » en affiche une nouvelle."),
           m("Onderaan staat de volledige lijst.", "The full list is at the bottom.", "Unten steht die vollständige Liste.", "La liste complète est en bas.")] },
+    { n: m("Nood", "Emergency", "Notfall", "Urgence"),
+      w: m("Zinnen en nummers voor een noodgeval, met een toonstand en de volgorde van een gesprek met de meldkamer.", "Sentences and numbers for an emergency, with a show mode and the order of a call with the emergency services.", "Sätze und Nummern für einen Notfall, mit einem Zeigemodus und dem Ablauf eines Notrufs.", "Des phrases et des numéros pour une urgence, avec un mode affichage et le déroulement d'un appel aux secours."),
+      k: [m("De knop Nood staat altijd bovenaan, ook als de andere knoppen wegschuiven.", "The Emergency button is always at the top, even when the other buttons slide away.", "Der Knopf Notfall steht immer oben, auch wenn die anderen Knöpfe verschwinden.", "Le bouton Urgence est toujours en haut, même quand les autres boutons disparaissent."),
+          m("Zinnen: noodzinnen per situatie. Onder elke zin staat een extra zin die je erna kunt zeggen.", "Sentences: emergency sentences per situation. Under each sentence is an extra sentence you can say next.", "Sätze: Notfallsätze pro Situation. Unter jedem Satz steht ein weiterer Satz, den du danach sagen kannst.", "Phrases : des phrases d'urgence par situation. Sous chaque phrase, il y a une phrase en plus à dire ensuite."),
+          m("Toonstand: grote letters om je telefoon aan iemand te laten zien. Je wisselt bovenaan de pagina tussen Zinnen en Toonstand.", "Show mode: large letters to show your phone to someone. At the top of the page you switch between Sentences and Show mode.", "Zeigemodus: große Schrift, um dein Handy jemandem zu zeigen. Oben auf der Seite wechselst du zwischen Sätze und Zeigemodus.", "Mode affichage : de grandes lettres pour montrer ton téléphone à quelqu'un. En haut de la page, tu passes de Phrases à Mode affichage."),
+          m("Noodkaart: de nummers van het land, voor spoed, zonder spoed en om anoniem te melden. Met Kopieer kopieer je een nummer.", "Emergency card: the numbers of the country, for emergencies, for non-urgent matters and for anonymous reports. Copy copies a number.", "Notfallkarte: die Nummern des Landes, für Notfälle, für nicht dringende Fälle und für anonyme Meldungen. Mit Kopieren kopierst du eine Nummer.", "Carte d'urgence : les numéros du pays, pour les urgences, pour les cas non urgents et pour signaler anonymement. Copier copie un numéro."),
+          m("Tik op een nummer en bevestig twee keer. Je ziet dan hoe het gesprek gaat, in het Engels en in de taal van het land. Deze versie belt nog niet zelf.", "Tap a number and confirm twice. You then see how the call goes, in English and in the language of the country. This version does not make the call yet.", "Tippe auf eine Nummer und bestätige zweimal. Dann siehst du, wie das Gespräch abläuft, auf Englisch und in der Sprache des Landes. Diese Version ruft noch nicht selbst an.", "Touche un numéro et confirme deux fois. Tu vois alors comment se passe l'appel, en anglais et dans la langue du pays. Cette version n'appelle pas encore elle-même.")] },
     { n: m("Zin bouwen", "Build a sentence", "Satz bauen", "Construire une phrase"),
       w: m("Bouw zelf zinnen vanuit een startzin, met het juiste werkwoord bij de gekozen persoon.", "Build your own sentences from a starter sentence, with the right verb form for the person you choose.", "Baue eigene Sätze aus einem Startsatz, mit der richtigen Verbform für die gewählte Person.", "Construis tes propres phrases à partir d'une phrase de départ, avec la bonne forme du verbe pour la personne choisie."),
       k: [m("Kies een startzin en tik op 'Bouw verder →'.", "Choose a starter sentence and tap 'Continue →'.", "Wähle einen Startsatz und tippe auf 'Weiter →'.", "Choisis une phrase de départ et touche « Continuer → »."),
@@ -2785,6 +3140,10 @@
     });
     bk.appendChild(dots);
     w.appendChild(bk);
+
+    // Noodgegevens: het formulier en de overdrachtskaart (alleen op dit toestel bewaard)
+    w.appendChild(noodFormKaart());
+    w.appendChild(noodOverdrachtKaart());
 
     // Vaste kaarten onderaan: over de maker, bronnen en licenties, en de versie
     [4, 5].forEach(function (i) {
@@ -3673,7 +4032,7 @@
   }
 
   var VIEWS = {
-    zinnen: viewZinnen, onderwerpen: viewOnderwerpen, vastlopen: viewVastlopen,
+    zinnen: viewZinnen, onderwerpen: viewOnderwerpen, vastlopen: viewVastlopen, nood: viewNood,
     bouwen: viewBouwen, reageren: viewReageren, leren: viewLeren,
     regels: viewRegels, gesprek: viewGesprek, uitspraak: viewUitspraak, info: viewInfo, shop: viewShop
   };
