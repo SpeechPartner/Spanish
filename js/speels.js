@@ -62,7 +62,7 @@
     if (isStandalone()) return;
     // Op telefoons zorgt de melding (showHomeNotice) voor de uitleg; de kaart op de Info-pagina is dan overbodig
     if (isIOSDevice() || /Android/i.test(navigator.userAgent)) return;
-    var t = INSTALL_TXT[document.body.getAttribute("data-lang") || "nl"] || INSTALL_TXT.nl;
+    var t = INSTALL_TXT[(document.body.getAttribute("data-lang") || document.body.getAttribute("data-taal")) || "nl"] || INSTALL_TXT.nl;
     var card = document.createElement("div");
     card.className = "card install-card";
     var h = document.createElement("div"); h.className = "sec-title"; h.textContent = t.title; card.appendChild(h);
@@ -151,7 +151,7 @@
   function meldingTaal() {
     var ls = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || ""];
     for (var i = 0; i < ls.length; i++) { var c = String(ls[i] || "").slice(0, 2).toLowerCase(); if (HOME_TXT[c]) return c; }
-    var d = document.body.getAttribute("data-lang");
+    var d = (document.body.getAttribute("data-lang") || document.body.getAttribute("data-taal"));
     return HOME_TXT[d] ? d : "nl";
   }
   // Voor de melding bij een nieuwe versie (app.js): zelfde taal en dezelfde stap voor deze browser als de melding hieronder

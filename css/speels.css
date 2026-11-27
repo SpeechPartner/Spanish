@@ -538,3 +538,18 @@ body.speels.nav-away #dock .dock-t.dock-nood { z-index: 7; }
 .nood-mijn { display: block; width: 100%; margin: 10px 0 4px; font-size: 17px; }
 #noodMijn { border: 3px solid #1f5f8b; }
 #noodMijn > .btn { margin-top: 10px; }
+
+/* ---------- Nood-stand: kale basisvorm van de app ----------
+   Op de Nood-pagina zet app.js body.nood-modus (en haalt speels, thema en landskleuren weg).
+   Alleen wat in nood nodig is blijft staan: geen banner, vertaalbalk, menu of andere knoppen,
+   en geen effecten (schaduwen, verlopen, animaties). */
+body.nood-modus { background: #ffffff !important; background-image: none !important; color: #222222; padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
+body.nood-modus header.top, body.nood-modus #bgBand, body.nood-modus nav.bottomnav,
+body.nood-modus #dock, body.nood-modus #navHandle, body.nood-modus .thuis-note { display: none !important; }
+body.nood-modus *, body.nood-modus *::before, body.nood-modus *::after {
+  box-shadow: none !important; text-shadow: none !important; animation: none !important; transition: none !important;
+  filter: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+}
+body.nood-modus .card, body.nood-modus .btn { background-image: none !important; }
+body.nood-modus main { padding-top: calc(12px + env(safe-area-inset-top)); }
+body.nood-modus .nood-uit { display: block; width: 100%; margin: 0 0 12px; font-size: 16px; font-weight: 700; border: 2px solid #222222; background: #ffffff; color: #222222; border-radius: 12px; }

@@ -224,6 +224,7 @@ var NOOD = (function () {
     terug: t("Terug", "Back", "Zurück", "Retour", "Volver"),
     mijnGegevens: t("Mijn gegevens laten zien", "Show my details", "Meine Daten zeigen", "Montrer mes données", "Mostrar mis datos"),
     sluit: t("Sluiten", "Close", "Schließen", "Fermer", "Cerrar"),
+    naarInfo: t("Terug naar de app (Info)", "Back to the app (Info)", "Zurück zur App (Info)", "Retour à l'application (Info)", "Volver a la aplicación (Info)"),
     naarFormulier: t("Naar het formulier (Info)", "To the form (Info)", "Zum Formular (Info)", "Vers le formulaire (Info)", "Ir al formulario (Info)"),
     // Info: formulier en overdrachtskaart
     formTitel: t("Mijn noodgegevens", "My emergency details", "Meine Notfalldaten", "Mes données d'urgence", "Mis datos de emergencia"),

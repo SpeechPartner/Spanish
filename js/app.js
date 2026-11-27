@@ -358,6 +358,8 @@
     if (typeof prRelease === "function") prRelease();
     // De belpagina van Nood is alleen te zien direct na de dubbele bevestiging
     S.noodBel = null; S.noodVraag = null; S.noodWis = false;
+    // Onthoud waar je vandaan kwam: na Nood ga je via Info terug, en het ?-knopje brengt je daarna weer daarheen
+    if (tab === "nood" && S.tab !== "nood") S.noodVan = S.tab === "info" ? (S.backTab || "zinnen") : S.tab;
     var view = document.getElementById("view");
     // Info werkt als schakelaar: tik je er nog eens op, dan ga je terug naar de pagina waar je vandaan kwam
     if (tab === "info" && S.tab === "info") {
@@ -722,6 +724,8 @@
   function viewNood() {
     var w = el("div", "nood");
     if (S.noodBel) { w.appendChild(viewNoodBel()); return w; }
+    // De enige uitgang van de Nood-stand: terug naar Info, en vandaar de rest van de app
+    w.appendChild(btn("← " + NU("naarInfo"), "nood-uit", noodNaarInfo));
     var seg = el("div", "gsp-seg");
     seg.setAttribute("role", "tablist");
     [["lijst", NU("zinnen")], ["toon", NU("toon")]].forEach(function (x) {
@@ -740,6 +744,12 @@
     w.appendChild(noodKaart());
     if (S.noodVraag) w.appendChild(noodVraagVenster());
     return w;
+  }
+  function noodNaarInfo() {
+    var van = S.noodVan && S.noodVan !== "nood" ? S.noodVan : "zinnen";
+    S.noodMijn = false;
+    go("info");
+    S.backTab = van; S.backY = 0;
   }
   function noodRegel(o, u, cls) {
     var line = el("div", "line-row" + (cls ? " " + cls : ""));
@@ -859,8 +869,7 @@
     c.id = "noodMijn";
     if (!NOOD.overdracht(noodG(), noodDoel(), lang, noodVrouw()).length) {
       c.appendChild(btn(NU("naarFormulier"), "primary", function () {
-        S.noodMijn = false;
-        go("info");
+        noodNaarInfo();
         setTimeout(function () { var f = document.getElementById("noodForm"); if (f) f.scrollIntoView({ block: "start" }); }, 450);
       }));
     }
@@ -2486,7 +2495,7 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "3.11";
+  var APP_VERSION = "3.12";
   // Versies waarvoor gebruikers de app opnieuw op hun beginscherm moeten zetten (oude icoon weg, nieuwe erop).
   // Bij zo'n update verschijnt eenmalig een melding met uitleg.
   var REINSTALL_VERSIONS = ["1.8"];
@@ -2928,6 +2937,7 @@
     { n: m("Nood", "Emergency", "Notfall", "Urgence"),
       w: m("Zinnen en nummers voor een noodgeval, met een toonstand en de volgorde van een gesprek met de meldkamer.", "Sentences and numbers for an emergency, with a show mode and the order of a call with the emergency services.", "Sätze und Nummern für einen Notfall, mit einem Zeigemodus und dem Ablauf eines Notrufs.", "Des phrases et des numéros pour une urgence, avec un mode affichage et le déroulement d'un appel aux secours."),
       k: [m("De knop Nood staat altijd bovenaan, ook als de andere knoppen wegschuiven.", "The Emergency button is always at the top, even when the other buttons slide away.", "Der Knopf Notfall steht immer oben, auch wenn die anderen Knöpfe verschwinden.", "Le bouton Urgence est toujours en haut, même quand les autres boutons disparaissent."),
+          m("Op de pagina Nood zie je alleen wat je in nood nodig hebt: een rustig scherm zonder thema, banner en andere knoppen. Met 'Terug naar de app (Info)' bovenaan ga je naar Info, en vandaar gebruik je de app weer gewoon.", "On the Emergency page you only see what you need in an emergency: a calm screen without theme, banner or other buttons. 'Back to the app (Info)' at the top takes you to Info, and from there you use the app as usual.", "Auf der Seite Notfall siehst du nur, was du im Notfall brauchst: einen ruhigen Bildschirm ohne Thema, Banner und andere Knöpfe. Mit 'Zurück zur App (Info)' oben kommst du zu Info, und von dort benutzt du die App wieder wie gewohnt.", "Sur la page Urgence, tu ne vois que ce dont tu as besoin en cas d'urgence : un écran calme, sans thème, bannière ni autres boutons. « Retour à l'application (Info) » en haut t'emmène à Info, et de là tu utilises l'application comme d'habitude."),
           m("Zinnen: noodzinnen per situatie. Onder elke zin staat een extra zin die je erna kunt zeggen.", "Sentences: emergency sentences per situation. Under each sentence is an extra sentence you can say next.", "Sätze: Notfallsätze pro Situation. Unter jedem Satz steht ein weiterer Satz, den du danach sagen kannst.", "Phrases : des phrases d'urgence par situation. Sous chaque phrase, il y a une phrase en plus à dire ensuite."),
           m("Toonstand: grote letters om je telefoon aan iemand te laten zien. Je wisselt bovenaan de pagina tussen Zinnen en Toonstand.", "Show mode: large letters to show your phone to someone. At the top of the page you switch between Sentences and Show mode.", "Zeigemodus: große Schrift, um dein Handy jemandem zu zeigen. Oben auf der Seite wechselst du zwischen Sätze und Zeigemodus.", "Mode affichage : de grandes lettres pour montrer ton téléphone à quelqu'un. En haut de la page, tu passes de Phrases à Mode affichage."),
           m("Noodkaart: de nummers van het land, voor spoed, zonder spoed en om anoniem te melden. Met Kopieer kopieer je een nummer.", "Emergency card: the numbers of the country, for emergencies, for non-urgent matters and for anonymous reports. Copy copies a number.", "Notfallkarte: die Nummern des Landes, für Notfälle, für nicht dringende Fälle und für anonyme Meldungen. Mit Kopieren kopierst du eine Nummer.", "Carte d'urgence : les numéros du pays, pour les urgences, pour les cas non urgents et pour signaler anonymement. Copier copie un numéro."),
@@ -4083,7 +4093,13 @@
 
   function applyStatic() {
     document.documentElement.lang = lang;
-    document.body.setAttribute("data-lang", lang);
+    // Nood-stand: op de Nood-pagina valt de app terug op de kale basisvorm (geen thema, landskleuren,
+    // banner of andere knoppen), zodat niets kan afleiden. Terug via de knop bovenaan naar Info.
+    var noodStand = S.tab === "nood" && !S.build;
+    document.body.classList.toggle("nood-modus", noodStand);
+    document.body.classList.toggle("speels", !noodStand);
+    document.body.setAttribute("data-taal", lang);
+    if (noodStand) document.body.removeAttribute("data-lang"); else document.body.setAttribute("data-lang", lang);
     document.querySelectorAll("[data-i18n]").forEach(function (n) { n.textContent = T(n.getAttribute("data-i18n")); });
     document.querySelectorAll("[data-i18n-aria]").forEach(function (n) { n.setAttribute("aria-label", T(n.getAttribute("data-i18n-aria"))); });
     document.querySelectorAll("[data-ph]").forEach(function (n) { n.placeholder = T(n.getAttribute("data-ph")); });
@@ -4092,11 +4108,11 @@
     if (document.getElementById("genSel")) document.getElementById("genSel").value = partnerGenderSetting();
     if (document.getElementById("ownGenSel")) document.getElementById("ownGenSel").value = store.get("eigenGeslacht", "m") === "f" ? "f" : "m";
     var eff = effectiveTheme();
-    document.body.classList.toggle("cafe", eff === "cafe");
+    document.body.classList.toggle("cafe", eff === "cafe" && !noodStand);
     // Het café-thema heet in de banner "Business Café"
     var ttlEl = document.querySelector("header.top h1");
     if (ttlEl) { var ttlTxt = T("SpeechPartner.Spanish"); if (eff === "cafe") ttlEl.textContent = "Business Café"; else if (ttlTxt.indexOf("Speech") === 0) ttlEl.innerHTML = "Speech<br>" + ttlTxt.slice(6); else ttlEl.textContent = ttlTxt; }
-    ["ijs", "jungle", "ruimte", "donker"].forEach(function (t) { document.body.classList.toggle("th-" + t, eff === t); });
+    ["ijs", "jungle", "ruimte", "donker"].forEach(function (t) { document.body.classList.toggle("th-" + t, eff === t && !noodStand); });
     if (typeof ACHTERGROND !== "undefined") ACHTERGROND.set(eff === "standaard" ? "standaard-" + lang : eff);
     renderLogo();
   }
