@@ -372,12 +372,21 @@ var ZINO = (function () {
   var EN_TO = { casa: "home", trabajo: "to work", escuela: "to school", colegio: "to school", universidad: "to university", cama: "to bed" };
   var EN_BY = { tren: "by train", "autobús": "by bus", coche: "by car", "avión": "by plane", bici: "by bike", bicicleta: "by bike", metro: "by underground", taxi: "by taxi", barco: "by boat" };
   var MOTION = { ir: 1, venir: 1, volver: 1, regresar: 1, viajar: 1, llegar: 1, salir: 1, caminar: 1, correr: 1, conducir: 1, acostarse: 1, mudarse: 1 };
+  // Vast voorzetsel na een bijvoeglijk naamwoord of tener-uitdrukking (ZINC.AP / ZINC.APT)
+  function apUit(c, pp) {
+    if (!pp || !pp.np) return null;
+    if (c.pred && c.pred.t === "adj") return C.AP[String(c.pred.a).split("#")[0] + "|" + pp.prep] || null;
+    if (c.tn) return C.APT[c.tn + "|" + pp.prep] || null;
+    return null;
+  }
   function enObl(c) {
     var out = [], late = [];
     var obl = c.obl || [];
     for (var i = 0; i < obl.length; i++) {
       var pp = obl[i], np = pp.np, r = null;
       if (pp.prep === "idiom") { out.push(IDIOM[pp.key].en); continue; }
+      var apE = apUit(c, pp);
+      if (apE) { var wae = enNP(np, "obj"); if (!wae) return null; out.push(apE.en + " " + wae); continue; }
       if (C.GENP[pp.prep]) { var wgp = enNP(np, "obj"); if (!wgp) return null; late.push(C.GENP[pp.prep].en + " " + wgp); continue; }
       if (C.PV[c.v] && pp.prep === C.PV[c.v].es) { var wpv = enNP(np, "obj"); if (!wpv) return null; out.push((C.PV[c.v].en ? C.PV[c.v].en + " " : "") + wpv); continue; }
       var bare = np.k === "n" && np.det === "def" && !np.pl && !(np.adjs || []).length && !np.of;
@@ -525,11 +534,13 @@ var ZINO = (function () {
     return s;
   }
   function deObl(c) {
-    var out = [], manner = [];
+    var out = [], manner = [], apNa = [];
     var obl = c.obl || [];
     for (var i = 0; i < obl.length; i++) {
       var pp = obl[i], np = pp.np, r = null;
       if (pp.prep === "idiom") { out.push(MOTION[c.v] || c.v === "irse" ? IDIOM[pp.key].deDir : IDIOM[pp.key].de); continue; }
+      var apD = apUit(c, pp);
+      if (apD) { var rad = dePP(apD.de[0], np, apD.de[1]); if (!rad) return null; (c.pred ? apNa : out).push(rad); continue; }
       if (C.GENP[pp.prep]) { var rgp = dePP(C.GENP[pp.prep].de, np, "gen"); if (!rgp) return null; manner.push(rgp); continue; }
       if (C.PV[c.v] && C.PV[c.v].de && pp.prep === C.PV[c.v].es) { var rpv = dePP(C.PV[c.v].de[0], np, C.PV[c.v].de[1]); if (!rpv) return null; out.push(rpv); continue; }
       if (pp.prep === "en" && c.v === "pensar") { var rpn = dePP("an", np, "acc"); if (!rpn) return null; out.push(rpn); continue; }
@@ -563,7 +574,7 @@ var ZINO = (function () {
       if (!r) return null;
       out.push(r);
     }
-    return manner.concat(out);
+    var deRes = manner.concat(out); deRes.apNa = apNa; return deRes;
   }
   var DE_FAHREN = { inf: "fahren", pres: "fahre fährst fährt fahren fahrt fahren", pp: "gefahren", aux: "s" };
   function deUsesFahren(c) {
@@ -686,6 +697,7 @@ var ZINO = (function () {
       var k = p.a.split("#"), a;
       if (has(C.SER_ESTAR, k[0])) a = C.SER_ESTAR[k[0]][k[1] !== undefined ? +k[1] : (c.v === "estar" ? 1 : 0)][1];
       else a = has(ADJ, p.a) ? ADJ[p.a].de : null;
+      (c.obl || []).forEach(function (pp) { var e = apUit(c, pp); if (e && e.deAdj) a = e.deAdj; });
       return a ? { s: deg + a } : null;
     }
     if (p.t === "nat") { var n = C.NAT[p.key]; var g = p.g || (c.s.g); if (!g && c.s.p !== 2) return null; return { s: g === "f" ? n.def : n.dem }; }
@@ -719,7 +731,8 @@ var ZINO = (function () {
     // fragen: de persoon in de vierde naamval ("er fragt mich etwas")
     var ioNv = c.v === "preguntar" ? "acc" : "dat";
     if (c.io && c.io.np) { var ion = deNP(c.io.np, ioNv); if (!ion || !c.o) return null; part.ioObj = ion; } else if (c.io) { var iop = dePron(c.io, ioNv); if (!iop || (!c.o && c.v !== "decir")) return null; part.pron = part.pron ? part.pron + " " + iop : iop; }
-    if (c.lng) part.indefObj = C.LANG[c.lng][1];
+    // "Ich spreche kein Deutsch": een taal na een ontkenning krijgt "kein" (niet "nicht Deutsch")
+    if (c.lng) { if (negW === "nicht" && !c.o) { part.indefObj = "kein " + C.LANG[c.lng][1]; negW = null; } else part.indefObj = C.LANG[c.lng][1]; }
     if (gern) part.gern = gern;
     if (dv.tail) part.tail = dv.tail;
     // "leben" zonder plaats, "wohnen" met plaats
@@ -764,6 +777,8 @@ var ZINO = (function () {
     if (part.indefObj) M.push(part.indefObj);
     M = M.concat(obl, pAdv);
     if (part.pred) M.push(part.pred);
+    // "stolz auf meinen Sohn": de aanvulling bij het bijvoeglijk naamwoord komt erachter
+    if (obl && obl.apNa && obl.apNa.length) M = M.concat(obl.apNa);
     if (part.tail) M.push(part.tail);
     var midS = M.concat(end).join(" ");
     if (c.type === "yn") return finDe(cap(fin) + " " + subj + (midS ? " " + midS : "") + "?", c);
@@ -903,6 +918,8 @@ var ZINO = (function () {
     for (var i = 0; i < obl.length; i++) {
       var pp = obl[i], np = pp.np, r = null;
       if (pp.prep === "idiom") { out.push(IDIOM[pp.key].fr); continue; }
+      var apF = apUit(c, pp);
+      if (apF) { var waf = frNP(np.det === "none" && np.pl ? Object.assign({}, np, { det: "def" }) : np); if (!waf) return null; out.push(apF.fr === "de" ? frDe(waf) : (apF.fr === "à" ? frA(waf) : apF.fr + " " + waf)); continue; }
       if (C.GENP[pp.prep]) { var wgf = frNP(np); if (!wgf) return null; var gf = C.GENP[pp.prep].fr; late.push(/ de$/.test(gf) ? gf.slice(0, -3) + " " + frDe(wgf) : gf + " " + wgf); continue; }
       if (C.PV[c.v] && pp.prep === C.PV[c.v].es) { var wf = frNP(np); if (!wf) return null; var fp = C.PV[c.v].fr; out.push(fp === "à" ? frA(wf) : (fp === "de" ? frDe(wf) : (fp ? fp + " " + wf : wf))); continue; }
       if (pp.prep === "en" && np.k === "n" && np.det === "none" && has(FR_BY, np.n)) r = FR_BY[np.n];
@@ -1044,6 +1061,8 @@ var ZINO = (function () {
       if (c.o && c.o.k === "pron") return null;
       part.besoin = true;
     }
+    // quedar zonder wie: "on se retrouve" (nous nous retrouvons); met wie: "je le retrouve" / "je retrouve mon ami"
+    if (c.v === "quedar" && !c.o && !(c.obl || []).length) fv = Object.assign({}, fv, { refl: true });
     return frClause(c, subj, pp, fv, part, neg, pas, tAdv, vAdv, pAdv, obl);
   }
   var FR_WH = { que: "que", donde: "où", cuando: "quand", como: "comment", quien: "qui", porque: "pourquoi", adonde: "où", cuanto: "combien" };
@@ -1132,7 +1151,11 @@ var ZINO = (function () {
       }
       if (c.wh === "quien" && !s.np && !s.pron && s.p === 2) return finFr("qui " + (neg ? frElide("ne " + verbGroup) + " " + pas : verbGroup) + (afterS ? " " + afterS : ""), c);
       if (c.wh === "que" && part.tailObj) return null;
-      if (neg) return null;
+      // Ontkennende vraag in spreektaal: "Pourquoi tu ne viens pas ?"
+      if (neg) {
+        var negSt = frElide(subj + " ne " + verbGroup) + " " + pas + (afterS ? " " + afterS : "");
+        return finFr(ww === "que" ? frElide("qu'est-ce que " + negSt) : ww + " " + negSt, c);
+      }
       if (s.np) {
         if (pre.length || nonfin) return null;
         return finFr(ww + " " + verbGroup + " " + subj + (afterS ? " " + afterS : ""), c);
@@ -1421,7 +1444,15 @@ var ZINO = (function () {
       if (C.GENP[pp.prep]) { if (np.k === "pron") return null; var sgp = esNP(np); if (!sgp) return null; out.push(/ de$/.test(pp.prep) ? pp.prep.slice(0, -3) + " " + esContr("de", sgp) : pp.prep + " " + sgp); continue; }
       if (np.k === "n" && np.n === "casa" && np.det === "none") { r = (pp.prep === "a" ? "a casa" : "en casa"); out.push(r); continue; }
       if (pp.prep === "en" && np.k === "n" && np.det === "none") { out.push("en " + np.n); continue; }
-      if (np.k === "pron" && C.PV[c.v] && pp.prep === C.PV[c.v].es) { var TN = ["mí", "ti", null, "nosotros", "vosotros", "ellos"][np.p]; if (!TN) return null; out.push(pp.prep === "con" && np.p < 2 ? (np.p === 0 ? "conmigo" : "contigo") : pp.prep + " " + TN); continue; }
+      if (np.k === "pron" && C.PV[c.v] && pp.prep === C.PV[c.v].es) { var TN = np.formal ? "usted" : ["mí", "ti", np.g === "f" ? "ella" : np.g === "n" ? null : "él", "nosotros", "vosotros", np.g === "f" ? "ellas" : "ellos"][np.p]; if (!TN) return null; out.push(pp.prep === "con" && np.p < 2 ? (np.p === 0 ? "conmigo" : "contigo") : pp.prep + " " + TN); continue; }
+      // "miedo de los perros": algemeen meervoud na een vast voorzetsel krijgt in het Spaans een lidwoord
+      if (np.k === "n" && np.det === "none" && np.pl && apUit(c, pp)) { np = Object.assign({}, np, { det: "def" }); }
+      if (np.k === "pron" && apUit(c, pp)) {
+        // "orgulloso de ti", "enfadado conmigo", "preocupado por ella"
+        var TA = np.formal ? "usted" : ["mí", "ti", np.g === "f" ? "ella" : "él", "nosotros", "vosotros", np.g === "f" ? "ellas" : "ellos"][np.p];
+        if (pp.prep === "con" && (np.p === 0 || np.p === 1) && !np.formal) out.push(np.p === 0 ? "conmigo" : "contigo"); else out.push(pp.prep + " " + TA);
+        continue;
+      }
       if (np.k === "pron") { if (pp.prep !== "con" && pp.prep !== "para" && pp.prep !== "sin") return null; if (pp.prep === "con" && (np.p === 0 || np.p === 1) && !np.formal) { out.push(np.p === 0 ? "conmigo" : "contigo"); continue; } var tp = np.formal ? "usted" : (["mí", "ti", np.g === "f" ? "ella" : "él", "nosotros", "vosotros", np.g === "f" ? "ellas" : "ellos"][np.p]); out.push(pp.prep + " " + tp); continue; }
       var s = esNP(np); if (!s) return null;
       out.push(esContr(pp.prep === "cerca" ? "cerca de" : pp.prep, s).replace(/^cerca de el /, "cerca del "));
@@ -1558,5 +1589,19 @@ var ZINO = (function () {
   }
   function genEnW(c) { var o = genEn(c); if (o && c && c.v === "mirar" && c.o && !(c.o.k === "n" && /^(televisión|película|partido|programa|serie)$/.test(c.o.n))) o = o.replace(/\bwatches\b/, "looks at").replace(/\bwatching\b/, "looking at").replace(/\bwatched\b/, "looked at").replace(/\bwatch\b/, "look at"); if (o && c && c.v === "decir" && c.io) o = o.replace(/\bsays\b/, "tells").replace(/\bsay\b/, "tell").replace(/\bsaid\b/, "told").replace(/\bsaying\b/, "telling"); return o; }
   function genDeW(c) { if (c && c.v === "escuchar" && c.o && c.o.k === "n" && c.o.det === "none") c = Object.assign({}, c, { o: Object.assign({}, c.o, { det: "def" }) }); return genDe(c); }
-  return { en: genEnW, de: genDeW, fr: genFr, es: genEs, imp: imp, impOf: { es: esImpOf, esNeg: esNegOf, de: deImpOf, fr: frImpOf }, nounEntry: nounEntry, GEN: GEN };
+  // Losse naamwoordgroep in de doeltaal (bestellen: "Einen Kaffee", "Deux cafés")
+  function npUit(np, lang) {
+    try { return lang === "en" ? enNP(np, "obj") : lang === "de" ? deNP(np, "acc") : lang === "fr" ? frNP(np) : lang === "es" ? esNP(np) : null; } catch (e) { return null; }
+  }
+  // Frans "retrouver" neemt wie je ontmoet als lijdend voorwerp: "quedo con él" = "je le retrouve"
+  function genFrQ(c) {
+    if (c && c.v === "quedar" && !c.o && c.obl && c.obl.length === 1 && c.obl[0].prep === "con" && c.obl[0].np) {
+      c = Object.assign({}, c, { o: c.obl[0].np, obl: [] });
+    }
+    var out = genFr.apply(this, [c].concat([].slice.call(arguments, 1)));
+    // Taal als lijdend voorwerp krijgt een lidwoord, behalve na "parler": "j'apprends l'espagnol"
+    if (typeof out === "string") out = out.replace(/\b(apprends|apprend|apprenons|apprenez|apprennent|appris|apprendre|étudie|étudies|étudions|étudiez|étudient|étudié|étudier|aime|aimes|aimons|aimez|aiment|adore|adores|préfère|préfères|comprends|comprend|comprenons|comprenez|comprennent|compris|comprendre)( pas| plus| jamais)? (espagnol|anglais|français|allemand|néerlandais|italien|portugais|chinois|japonais|arabe|russe)\b/gi, "$1$2 l'$3");
+    return out;
+  }
+  return { npUit: npUit, en: genEnW, de: genDeW, fr: genFrQ, es: genEs, imp: imp, impOf: { es: esImpOf, esNeg: esNegOf, de: deImpOf, fr: frImpOf }, nounEntry: nounEntry, GEN: GEN };
 })();

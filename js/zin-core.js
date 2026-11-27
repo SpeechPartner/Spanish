@@ -131,6 +131,19 @@ var ZINC = (function () {
     if (/e$/.test(w)) return w.slice(0, -1);                                 // müde -> müd(e)
     return w;
   }
+  // Bijvoeglijk naamwoord + vast voorzetsel (zie ZIN_LEX.AP); sleutel "bijv|voorz" in het Spaans
+  function leesAP(lijst) {
+    var uit = {};
+    (lijst || []).forEach(function (r) {
+      var f = r.split("|"), d = f[3].split(":");
+      var en = f[2].split(","), fr = f[4].split(",");
+      uit[f[0] + "|" + f[1]] = { es: f[1], en: en[0], enIn: en, de: [d[0], d[1]], deAdj: d[2] || null, fr: fr[0], frIn: fr };
+    });
+    return uit;
+  }
+  var AP = leesAP(L.AP), APT = leesAP(L.APT);
+  // Extra invoervormen voor bijvoeglijke naamwoorden
+  [["de", "sauer", "enfadado"], ["de", "böse", "enfadado"], ["en", "mad", "enfadado"], ["de", "stolze", "orgulloso"]].forEach(function (x) { addA(x[0], x[1], x[2]); });
   var SER_ESTAR = L.ADJ_SER_ESTAR;
   Object.keys(SER_ESTAR).forEach(function (k) {
     [0, 1].forEach(function (i) {
@@ -415,7 +428,7 @@ var ZINC = (function () {
     L: L, fold: fold, low: low, cap: cap, has: has, split6: split6, normKey: normKey, enKey: enKey, stripAcc: stripAcc,
     NOUN: NOUN, NIDX: NIDX, PERSON: PERSON, PROF: PROF, enPlural: enPlural, frPlural: frPlural, dePlural: dePlural,
     esFem: esFem, esPlural: esPlural, esArt: esArt, esAdj: esAdj, STRESSED_A: STRESSED_A,
-    ADJ: ADJ, AIDX: AIDX, SER_ESTAR: SER_ESTAR, frAdjPl: frAdjPl, deAdjStem: deAdjStem,
+    ADJ: ADJ, AIDX: AIDX, AP: AP, APT: APT, SER_ESTAR: SER_ESTAR, frAdjPl: frAdjPl, deAdjStem: deAdjStem,
     NAT: NAT, NATIDX: NATIDX, LANG: LANG, LANGIDX: LANGIDX, PLACE: PLACE, PIDX: PIDX,
     NLIDX: NLIDX, ADV: ADV, ADVIDX: ADVIDX, TENER: TENER, TIDX: TIDX, WEATHER: WEATHER, WIDX: WIDX, FIXED: FIXED, FIDX: FIDX,
     VERB: VERB, esForm: esForm, esGer: esGer, esPP: esPP, HABER: HABER, REFL_ES: REFL_ES, esIsRefl: esIsRefl, esBase: esBase,

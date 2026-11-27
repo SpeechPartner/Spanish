@@ -10,6 +10,21 @@ var ZINI = (function () {
   function subjOf(p, g, formal, pron) { return { p: p, g: g || null, formal: !!formal, pron: !!pron, np: null }; }
   function npHead(np) { return np; }
   var INTJ = { si: { en: "Yes", de: "Ja", fr: "Oui", es: "Sí" }, no: { en: "No", de: "Nein", fr: "Non", es: "No" } };
+  // Vast voorzetsel na een bijvoeglijk naamwoord of "tener"-uitdrukking ("proud of", "stolz auf", "fier de", "Angst vor"):
+  // geeft de regel uit ZINC.AP / ZINC.APT als het voorzetsel in de invoertaal daarbij hoort
+  function apVoor(c, lang, w) {
+    var lijst = null, sleutel = null;
+    if (c.pred && c.pred.t === "adj") { sleutel = String(c.pred.a).split("#")[0]; lijst = C.AP; }
+    else if (c.tn || (c.o && c.o.k === "n" && c.o.det === "none")) { sleutel = c.tn || c.o.n; lijst = C.APT; }
+    if (!lijst || !sleutel) return null;
+    var hit = null;
+    Object.keys(lijst).forEach(function (k) {
+      if (hit || k.split("|")[0] !== sleutel) return;
+      var e = lijst[k], vormen = lang === "en" ? e.enIn : lang === "fr" ? e.frIn : lang === "de" ? [e.de[0]] : [];
+      if (vormen.indexOf(w) >= 0) hit = e;
+    });
+    return hit;
+  }
 
   // ================= SPAANS =================
   // Spaanse zelfstandige naamwoorden (ook meervoud, zonder accenten)
@@ -178,7 +193,13 @@ var ZINI = (function () {
     while (T[i] !== undefined) { var fa = esAdvAt(T, i); if (!fa || fa.k === "cerca" || fa.k === "lejos") break; if (fa.k === "nunca") { c.never = true; } else c.advs.push(fa.k); i = fa.end; }
     // gustar: "(a mí) (no) me gusta(n) ..."
     var expP = null;
-    if (T[i] === "a" && /^(mi|ti|el|ella|usted|nosotros|nosotras|vosotros|ellos|ellas|ustedes)$/.test(T[i + 1] || "")) { expP = ESPRON[T[i + 1] === "mi" ? "yo" : T[i + 1] === "ti" ? "tu" : T[i + 1]]; i += 2; }
+    var expNP = null;
+    if (T[i] === "a" && /^(mi|ti|el|ella|usted|nosotros|nosotras|vosotros|ellos|ellas|ustedes)$/.test(T[i + 1] || "") && !(T[i + 1] === "mi" && O[i + 1] === "mi")) { expP = ESPRON[T[i + 1] === "mi" ? "yo" : T[i + 1] === "ti" ? "tu" : T[i + 1]]; i += 2; }
+    // "A mi hermano le gusta el fútbol": wie iets leuk vindt als naamgroep
+    else if (T[i] === "a") {
+      var gnp = esNP(T, O, i + 1, {});
+      if (gnp && gnp.np.k === "n" && /^(le|les)$/.test(T[gnp.end] || "") && /^(gusta|gustan|encanta|encantan)$/.test(T[gnp.end + 1] || "")) { expNP = gnp.np; expP = [gnp.np.pl ? 5 : 2, null, false]; i = gnp.end; }
+    }
     if (T[i] === "no") { c.neg = true; i++; }
     else if (T[i] === "nunca") { c.never = true; i++; }
     if (/^(me|te|le|nos|os|les)$/.test(T[i] || "") && /^(gusta|gustan|gusto|gustaron|gustaba|gustaban|encanta|encantan|encanto|encantaba)$/.test(T[i + 1] || "")) {
@@ -187,6 +208,7 @@ var ZINI = (function () {
       if ((cl.p === 2 || cl.p === 5) && !expP) return null;                    // "le gusta": hij of zij onbekend
       c.sp = /^gust/.test(T[i + 1]) ? "gustar" : "encantar";
       c.s = subjOf(ep[0], ep[1], ep[2], !!expP);
+      if (expNP) { c.s.np = expNP; c.s.pron = false; }
       c.t = /(o|aron)$/.test(T[i + 1]) ? "past" : (/ba(n)?$/.test(T[i + 1]) ? "impf" : "pres");
       c.v = c.sp;
       i += 2;
@@ -470,13 +492,19 @@ var ZINI = (function () {
         c.obl.push({ prep: gpHit.key, np: gnp.np }); i = gnp.end; continue;
       }
       // voorzetsel
-      if (has(ESPREP, t) || t === "al" || t === "del" || (t === "cerca" && T[i + 1] === "de") || ((t === "por" || t === "contra") && C.PV[c.v] && C.PV[c.v].es === t)) {
+      if (has(ESPREP, t) || t === "al" || t === "del" || (t === "cerca" && T[i + 1] === "de") || ((t === "por" || t === "contra") && ((C.PV[c.v] && C.PV[c.v].es === t) || (c.pred && c.pred.t === "adj" && C.AP[String(c.pred.a).split("#")[0] + "|" + t])))) {
         var prep = t === "al" ? "a" : (t === "del" ? "de" : (t === "cerca" ? "cerca" : ((t === "por" || t === "contra") ? t : ESPREP[t])));
         var start = (t === "al" || t === "del") ? null : i + 1;
         if (t === "cerca") start = i + 2;
         var npx;
         var TON = { "mi": 0, "ti": 1, "nosotros": 3, "vosotros": 4 };
         if (C.PV[c.v] && C.PV[c.v].es === prep && start !== null && has(TON, T[start]) && (T[start] !== "mi" || /^mí$/i.test(O[start] || ""))) { c.obl.push({ prep: prep, np: { k: "pron", p: TON[T[start]], g: "m" } }); i = start + 1; continue; }
+        // voornaamwoord na een voorzetsel: "con él", "para ti", "de ella", "sin nosotros" (bij "a" alleen via de regel hierboven)
+        var TONA = { "mi": [0], "ti": [1], "el": [2, "m"], "ella": [2, "f"], "usted": [2, null, true], "nosotros": [3], "nosotras": [3, "f"], "vosotros": [4], "vosotras": [4, "f"], "ustedes": [4], "ellos": [5], "ellas": [5, "f"] };
+        if (prep !== "a" && start !== null && has(TONA, T[start]) && (T[start] !== "mi" || /^mí$/i.test(O[start] || "")) && (T[start] !== "el" || /^él$/i.test(O[start] || ""))) {
+          var ta = TONA[T[start]], tnp = { k: "pron", p: ta[0], g: ta[1] || "m" }; if (ta[2]) tnp.formal = true;
+          c.obl.push({ prep: prep, np: tnp }); i = start + 1; continue;
+        }
         if (start === null) { var tt = ["el"].concat(T.slice(i + 1)), oo = ["el"].concat(O.slice(i + 1)); npx = esNP(tt, oo, 0); if (npx) npx.end = i + npx.end; }
         else if (T[start] === "casa") { npx = { np: { k: "n", n: "casa", det: "none" }, end: start + 1 }; }
         else npx = esNP(T, O, start, { bare: prep === "en" || prep === "de" || prep === "con" || prep === "sin" || prep === "para" });
@@ -698,7 +726,7 @@ var ZINI = (function () {
     }
     // vraag met hulpwerkwoord vooraan (ja/nee of na een vraagwoord)
     var aux = null;
-    if (c.type !== "stmt" && /^(do|does|did|am|is|are|was|were|can|could|must|will|have|has|would)$/.test(T[i] || "")) { aux = T[i]; i++; }
+    if (c.type !== "stmt" && /^(do|does|did|am|is|are|was|were|can|could|must|will|have|has|would)$/.test(T[i] || "")) { aux = T[i]; i++; if (T[i] === "not" && T[i + 1] !== "it" && (has(ENPRON, T[i + 1]) || T[i + 1] === "the" || has(ENPOSS, T[i + 1]))) { c.neg = true; i++; } }
     // onderwerp
     var subj = null;
     if (has(ENPRON, T[i])) { var sp = ENPRON[T[i]]; subj = subjOf(sp[0], sp[1], false, true); i++; }
@@ -920,6 +948,13 @@ var ZINI = (function () {
       var egHit = null;
       Object.keys(C.GENP).forEach(function (k) { var kt = C.GENP[k].en.split(" "); if (!egHit && kt.every(function (w, q) { return T[i + q] === w; })) egHit = { key: k, len: kt.length }; });
       if (egHit) { var egn = enNP(T, O, i + egHit.len, { bare: true }); if (!egn) return null; c.obl.push({ prep: egHit.key, np: egn.np }); i = egn.end; continue; }
+      var apE = apVoor(c, "en", t);
+      if (apE && T[i + 1] !== undefined) {
+        var npa = T[i + 1] === "her" && T[i + 2] !== undefined ? enNP(T, O, i + 1, { bare: true }) : null;   // "her sister" (bezittelijk)
+        if (!npa && has(ENOBJ, T[i + 1])) { c.obl.push({ prep: apE.es, np: { k: "pron", p: ENOBJ[T[i + 1]][0], g: ENOBJ[T[i + 1]][1] || "m" } }); i += 2; continue; }
+        if (!npa) npa = enNP(T, O, i + 1, { bare: true }); if (!npa) return null;
+        c.obl.push({ prep: apE.es, np: npa.np }); i = npa.end; continue;
+      }
       if (has(PREPS, t)) {
         var prep = PREPS[t];
         if (t === "about" && c.v === "pensar") prep = "en";
@@ -927,6 +962,8 @@ var ZINI = (function () {
         if (t === "to" && DITRANS[c.v] && !has(ENOBJ, T[i + 1] || "") && (out.o || c.o) && !c.io) { var ion2 = enNP(T, O, i + 1, { bare: true }); if (ion2 && ion2.np.k === "n") { c.io = { np: ion2.np }; i = ion2.end; continue; } }
         if (t === "to" && DITRANS[c.v] && has(ENOBJ, T[i + 1] || "") && (out.o || c.o) && !c.io) { var ipo2 = ENOBJ[T[i + 1]]; c.io = { p: ipo2[0], g: ipo2[1] || null }; i += 2; continue; }
         if (prep === "a" && !MOTION[c.v]) return null;
+        // voornaamwoord na een voorzetsel: "with him", "for her", "without me"
+        if (has(ENOBJ, T[i + 1] || "") && /^(con|para|sin)$/.test(prep) && !/^(ser|estar)$/.test(c.v || "") && !(T[i + 1] === "her" && T[i + 2] !== undefined && !/^(and|or|but|to|in|at|on|with|for|today|tomorrow|now|later|tonight)$/.test(T[i + 2]))) { c.obl.push({ prep: prep, np: { k: "pron", p: ENOBJ[T[i + 1]][0], g: ENOBJ[T[i + 1]][1] || "m" } }); i += 2; continue; }
         if (has(ENOBJ, T[i + 1] || "") && prep !== "a") return null;
         var npx = enNP(T, O, i + 1, { bare: true });
         if (!npx) return null;
@@ -1261,11 +1298,23 @@ var ZINI = (function () {
     var t = T[i];
     var gpk = null; Object.keys(C.GENP).forEach(function (k) { if (C.GENP[k].de === t) gpk = k; });
     if (gpk) { var gdn = deNP(T, O, i + 1, { bare: true, gen: true }); if (!gdn) return false; c.obl.push({ prep: gpk, np: gdn.np }); return { end: gdn.end }; }
+    var apD = apVoor(c, "de", { vorm: "vor", vom: "von" }[t] || t);
+    if (apD && T[i + 1] !== undefined) {
+      var DPR = { mich: [0], mir: [0], dich: [1], dir: [1], ihn: [2, "m"], ihm: [2, "m"], sie: [2, "f"], ihr: [2, "f"], uns: [3], euch: [4], ihnen: [5] };
+      if (has(DPR, T[i + 1])) { c.obl.push({ prep: apD.es, np: { k: "pron", p: DPR[T[i + 1]][0], g: DPR[T[i + 1]][1] || "m" } }); return { end: i + 2 }; }
+      var dtt = T, doo = O, dcon = /^(vorm|vom)$/.test(t);
+      if (dcon) { dtt = T.slice(0, i + 1).concat(["dem"], T.slice(i + 1)); doo = O.slice(0, i + 1).concat(["dem"], O.slice(i + 1)); }
+      var npd = deNP(dtt, doo, i + 1, { bare: true }); if (!npd) return false;
+      c.obl.push({ prep: apD.es, np: npd.np }); return { end: dcon ? npd.end - 1 : npd.end };
+    }
     if (!has(DE_PREPS, t)) return null;
     var prep = DE_PREPS[t];
     var start = i + 1;
     var DEPR = { mich: 0, mir: 0, dich: 1, dir: 1, uns: 3, euch: 4 };
     if (C.PV[c.v] && C.PV[c.v].de && t === C.PV[c.v].de[0] && has(DEPR, T[i + 1] || "")) { c.obl.push({ prep: C.PV[c.v].es, np: { k: "pron", p: DEPR[T[i + 1]], g: "m" } }); return { end: i + 2 }; }
+    // voornaamwoord na een voorzetsel: "mit ihm", "für dich", "ohne mich"
+    var DEPR2 = { mir: [0], mich: [0], dir: [1], dich: [1], ihm: [2, "m"], ihn: [2, "m"], ihr: [2, "f"], uns: [3], euch: [4], ihnen: [5] };
+    if (/^(mit|für|ohne)$/.test(t) && has(DEPR2, T[i + 1] || "") && !/^(ser|estar)$/.test(c.v || "")) { c.obl.push({ prep: prep, np: { k: "pron", p: DEPR2[T[i + 1]][0], g: DEPR2[T[i + 1]][1] || "m" } }); return { end: i + 2 }; }
     var tt = T, oo = O;
     var contracted = /^(im|ins|zum|zur|vom|am|ans|beim)$/.test(t);
     if (contracted) { var art = { im: "dem", ins: "das", zum: "dem", zur: "der", vom: "dem", am: "dem", ans: "das", beim: "dem" }[t]; tt = T.slice(0, i + 1).concat([art], T.slice(i + 1)); oo = O.slice(0, i + 1).concat([art], O.slice(i + 1)); }
@@ -1303,7 +1352,7 @@ var ZINI = (function () {
       if (c.type === "wh" && /^(donde|como|cuando)$/.test(c.wh)) { c.v = c.wh === "cuando" ? "ser" : "estar"; return c; }
       return null;
     }
-    if (/^(sehr|ziemlich|zu)$/.test(CT[0]) && CT.length === 2 && deAdj(CT[1])) { deg = { sehr: "muy", ziemlich: "bastante", zu: "demasiado" }[CT[0]]; CT = CT.slice(1); CO = CO.slice(1); }
+    if (/^(sehr|ziemlich|zu|so)$/.test(CT[0]) && CT.length >= 2 && deAdj(CT[1]) && (CT.length === 2 || CT[0] !== "zu")) { deg = { sehr: "muy", ziemlich: "bastante", zu: "demasiado", so: "muy" }[CT[0]]; CT = CT.slice(1); CO = CO.slice(1); }
     // leeftijd
     if (CT.length === 3 && (has(DENUM, CT[0]) || /^\d+$/.test(CT[0])) && CT[1] === "jahre" && CT[2] === "alt") { if (c.type !== "stmt") return null; c.sp = "edad"; c.v = "tener"; c.age = has(DENUM, CT[0]) ? DENUM[CT[0]] : +CT[0]; return c; }
     if (CT.length === 1) {
@@ -1314,6 +1363,20 @@ var ZINI = (function () {
         c.pred = { t: "adj", a: a, deg: deg }; return c;
       }
       if (has(C.NATIDX.de, CT[0]) && !deg) { var n = C.NATIDX.de[CT[0]]; c.v = "ser"; c.pred = { t: "nat", key: n.k, g: n.g }; if (!c.s.np && !c.s.g) c.s.g = n.g; return c; }
+    }
+    // bijvoeglijk naamwoord met vast voorzetsel: "stolz auf dich", "auf meinen Sohn stolz", "mit dem Geschenk zufrieden"
+    if (CT.length >= 3) {
+      var aPos = deAdj(CT[0]) ? 0 : (deAdj(CT[CT.length - 1]) ? CT.length - 1 : -1);
+      if (aPos >= 0) {
+        var aDe = deAdj(CT[aPos]), aKey = String(aDe).split("#")[0];
+        var cAp = Object.assign({}, c, { obl: [], advs: c.advs.slice(), pred: { t: "adj", a: aDe, deg: deg } });
+        var rT = aPos === 0 ? CT.slice(1) : CT.slice(0, -1), rO = aPos === 0 ? CO.slice(1) : CO.slice(0, -1);
+        var rp = dePrep(rT, rO, 0, cAp);
+        if (rp && rp.end === rT.length && cAp.obl.length === 1 && C.AP[aKey + "|" + cAp.obl[0].prep]) {
+          if (/#/.test(aDe)) c.v = aDe.slice(-1) === "1" ? "estar" : "ser"; else c.v = ADJ[aDe].estar ? "estar" : "ser";
+          c.pred = cAp.pred; c.obl = cAp.obl; return c;
+        }
+      }
     }
     if (deg) return null;
     // plaats
@@ -1668,8 +1731,18 @@ var ZINI = (function () {
         if (t === "des" && !allowObj) { tt = T.slice(0, i + 1).concat(["les"], T.slice(i + 1)); }
         if (t === "des" && allowObj) { /* lidwoord meervoud: als voorwerp behandelen */ }
         else {
+          var apF = apVoor(c, "fr", { du: "de", des: "de", "d'": "de", au: "à", aux: "à" }[t] || t);
+          if (apF && T[i + 1] !== undefined) {
+            var FPR = { moi: [0], toi: [1], lui: [2, "m"], elle: [2, "f"], nous: [3], vous: [4], eux: [5], elles: [5, "f"] };
+            if (has(FPR, T[i + 1])) { c.obl.push({ prep: apF.es, np: { k: "pron", p: FPR[T[i + 1]][0], g: FPR[T[i + 1]][1] || "m" } }); i += 2; continue; }
+            var npf = frNP(tt, st, { bare: true }); if (!npf) return null;
+            c.obl.push({ prep: apF.es, np: npf.np }); i = (t === "au" || t === "aux" || t === "du" || t === "des") ? npf.end - 1 : npf.end; continue;
+          }
           var FRPR = { moi: 0, toi: 1, nous: 3, vous: 4 };
           if (C.PV[c.v] && C.PV[c.v].fr === t && has(FRPR, T[i + 1] || "")) { c.obl.push({ prep: C.PV[c.v].es, np: { k: "pron", p: FRPR[T[i + 1]], g: "m" } }); i += 2; continue; }
+          // voornaamwoord na een voorzetsel: "avec lui", "pour toi", "sans moi"
+          var FRPR2 = { moi: [0], toi: [1], lui: [2, "m"], elle: [2, "f"], nous: [3], vous: [4], eux: [5], elles: [5, "f"] };
+          if (/^(avec|pour|sans)$/.test(t) && has(FRPR2, T[i + 1] || "") && !/^(ser|estar)$/.test(c.v || "")) { c.obl.push({ prep: PREPS[t], np: { k: "pron", p: FRPR2[T[i + 1]][0], g: FRPR2[T[i + 1]][1] || "m" } }); i += 2; continue; }
           var np = frNP(tt, st, { bare: true });
           if (!np) return null;
           var end = (t === "au" || t === "aux" || t === "du" || t === "des") ? np.end - 1 : np.end;
@@ -1866,7 +1939,25 @@ var ZINI = (function () {
     if (c && c.o && c.o.k === "pron" && c.o.p === 2 && c.o.g === "m" && !c.o.amb && LO_DING.test(c.v || "") && /[a-záéíóú]lo\s*[.!?]*\s*$|[a-záéíóú]lo[\s,]/i.test(String(t || ""))) c.o.g = "n";
     return c;
   }
-  return { es: parseEsLo, en: parseEn, de: parseDe, fr: parseFrRichting, enImp: parseEnImp, impIn: impIn };
+  // Losse naamwoordgroep ("Dos cafés, por favor", "Two coffees, please", "Einen Kaffee, bitte"): geeft { np, please } of null
+  function npFragment(text, lang) {
+    var raw = String(text || "").trim().replace(/[¿¡?!.]+/g, " ").replace(/\s+/g, " ").trim(), please = false;
+    var PL = { es: /,?\s*por favor$/i, en: /,?\s*please$/i, de: /,?\s*bitte$/i, fr: /,?\s*s['’]il (te|vous) pla[iî]t$/i };
+    if (PL[lang] && PL[lang].test(raw)) { please = true; raw = raw.replace(PL[lang], "").trim(); }
+    raw = raw.replace(/,/g, " ").replace(/\s+/g, " ").trim();
+    if (!raw) return null;
+    var r = null, n = 0;
+    try {
+      if (lang === "es") { var Oe = raw.split(" "), Te = Oe.map(fold); r = esNP(Te, Oe, 0, {}); n = Te.length; }
+      else if (lang === "en") { var Oen = raw.split(" "), Ten = Oen.map(function (w) { return low(w).replace(/[’]/g, "'"); }); r = enNP(Ten, Oen, 0, { bare: true }); n = Ten.length; }
+      else if (lang === "de") { var Od = raw.split(" "); r = deNP(Od.map(low), Od, 0, { bare: true }); n = Od.length; }
+      else if (lang === "fr") { var Tf = frTokens(raw); r = frNP(Tf, 0, { bare: true }); n = Tf.length; if (r && r.end > n) r.end = n; }
+    } catch (e) { r = null; }
+    if (!r || r.end !== n || !r.np || r.np.k !== "n") return null;
+    if (!please && r.np.det === "none" && !r.np.num) return null;
+    return { np: r.np, please: please };
+  }
+  return { es: parseEsLo, en: parseEn, de: parseDe, fr: parseFrRichting, enImp: parseEnImp, impIn: impIn, npFragment: npFragment };
 })();
 
 // Publieke ingang voor de app
@@ -1887,6 +1978,111 @@ var ZIN = (function () {
     }
     return { t: "Ik " + body.charAt(0).toLowerCase() + body.slice(1), please: please };
   }
+  // Spaans zet bij onovergankelijke werkwoorden het onderwerp vaak achteraan: "Mañana llega mi hermano",
+  // "Va a brillar el sol". De naamgroep na het werkwoord is dan het onderwerp, geen lijdend voorwerp.
+  var ONOVERG_ES = /^(llegar|brillar|nacer|morir|venir|ocurrir|pasar|aparecer|desaparecer|crecer|sonar|empezar|comenzar|terminar|acabar|caer|salir|volver)$/;
+  (function () {
+    var esOrig = ZINI.es;
+    ZINI.es = function () {
+      var c = esOrig.apply(this, arguments);
+      // "¿Puedo sentarme aquí?": het "me" hoort bij het wederkerende werkwoord, niet als lijdend voorwerp erbij
+      if (c && c.v && /se$/.test(c.v) && c.mod && c.o && c.o.k === "pron" && c.s && c.o.p === c.s.p) delete c.o;
+      if (c && c.v && ONOVERG_ES.test(c.v) && c.o && c.o.k === "n" && !c.io && c.s && !c.s.np && !c.s.pron && c.s.p === (c.o.pl ? 5 : 2)) {
+        c.s = { p: c.o.pl ? 5 : 2, g: null, formal: false, pron: false, np: c.o };
+        c.o = null;
+      }
+      // "¿Por qué come mi hermano?": in een vraag staat het onderwerp na het werkwoord. Een persoon zonder
+      // persoonlijke "a" is dan het onderwerp ("Waarom eet mijn broer?"), niet het lijdend voorwerp.
+      if (c && c.type === "wh" && c.v && c.o && c.o.k === "n" && ZINC.PERSON[c.o.n] && !c.io && c.s && !c.s.np && !c.s.pron
+          && c.s.p === (c.o.pl ? 5 : 2) && !/\s(a|al)\s/i.test(String(arguments[0] || ""))) {
+        c.s = { p: c.o.pl ? 5 : 2, g: ZINC.esFem(c.o.n) ? "f" : "m", formal: false, pron: false, np: c.o };
+        c.o = null;
+      }
+      return c;
+    };
+  })();
+  // "X is late" / "El tren es tarde": "tarde" zonder lidwoord als naamwoordelijk deel betekent "laat", niet "middag".
+  // Met een onderwerp wordt het "llegar tarde" (The train is late = El tren llega tarde = Der Zug kommt spät an).
+  // "I'm working tomorrow": Engelse duurvorm met een tijd in de toekomst is in het Spaans gewoon de tegenwoordige tijd
+  var TOEKOMST_ADV = /^(mañana|pasadomanana|pasado mañana|estanoche|esta noche|lasemanaqueviene|la semana que viene|la semana próxima|el mes que viene|el año que viene|mañana por la mañana)$/;
+  function duurToekomst(c) {
+    if (c && c.t === "prog" && c.advs && c.advs.some(function (a) { return TOEKOMST_ADV.test(a); })) c.t = "pres";
+    return c;
+  }
+  function laatFix(c) {
+    if (c && /^(ser|estar)$/.test(c.v) && c.pred && c.pred.t === "np" && c.pred.np && c.pred.np.n === "tarde" && c.pred.np.det === "none" && !c.pred.np.adjs.length
+      && c.s && (c.s.np || c.s.pron || c.s.p !== 2)) {
+      c.v = "llegar"; delete c.pred; c.advs = (c.advs || []).concat(["tarde"]);
+    }
+    return c;
+  }
+  // Engels "know" met een persoon of plaats is "kennen" (conocer), niet "weten" (saber): "I don't know him"
+  // Engels "meet someone" (afspreken) = "quedar con alguien"
+  function quedarCon(c) {
+    // Een ding als "wie" (Je retrouve mes clés = ik vind mijn sleutels terug) is geen afspraak: dan liever geen vertaling
+    if (c && c.v === "quedar" && c.o && c.o.k === "n" && !ZINC.PERSON[c.o.n]) return null;
+    if (c && c.v === "quedar" && c.o && (c.o.k === "pron" || c.o.k === "name" || (c.o.k === "n" && ZINC.PERSON[c.o.n]))) {
+      c.obl = (c.obl || []).concat([{ prep: "con", np: c.o }]); delete c.o;
+    }
+    return c;
+  }
+  function kennenFix(c) {
+    if (c && c.v === "saber" && c.o && ((c.o.k === "pron" && c.o.g !== "n") || (c.o.k === "n" && (ZINC.PERSON[c.o.n] || c.o.proper)))) c.v = "conocer";
+    return c;
+  }
+  // "Er kommt zu spät" / "Il est en retard" = llega tarde: herschrijf naar de vorm die de parser kent
+  var FR_ARR = { suis: "arrive", es: "arrives", est: "arrive", sommes: "arrivons", "êtes": "arrivez", sont: "arrivent" };
+  var DE_KOMM = { bin: "komme", bist: "kommst", ist: "kommt", sind: "kommen", seid: "kommt", komme: "komme", kommst: "kommst", kommt: "kommt", kommen: "kommen" };
+  // Tijd vooraan ("Demain, je travaille." / "Tomorrow, I work.") en bijwoord tussen hulpwerkwoord en voltooid deelwoord
+  // ("J'ai beaucoup travaillé"): zet ze op de plek die de parser kent. De betekenis verandert niet.
+  var TIJD_VOOR = {
+    fr: /^\s*(demain|hier|aujourd'hui|en ce moment|ce soir|ce matin|cet après-midi|maintenant|après-demain|avant-hier|la semaine (?:dernière|prochaine)|l'année (?:dernière|prochaine)|le mois (?:dernier|prochain)|le week-end|ce week-end)\s*,?\s+(.+?)(\s*[.!?]?\s*)$/i,
+    en: /^\s*(tomorrow|yesterday|today|tonight|now|this (?:morning|afternoon|evening|week|weekend|year)|last (?:week|month|year|night)|next (?:week|month|year))\s*,?\s+(.+?)(\s*[.!?]?\s*)$/i
+  };
+  function tijdAchter(lg, t) {
+    var re = TIJD_VOOR[lg]; if (!re) return t;
+    var m = re.exec(t); if (!m) return t;
+    var rest = m[2]; if (/^(est-ce|qu|que|quand|où|pourquoi|comment|what|when|where|why|how|who)\b/i.test(rest)) return t;
+    return rest.charAt(0).toUpperCase() + rest.slice(1) + " " + m[1].toLowerCase() + m[3];
+  }
+  function laatTekst(lg, t) {
+    if (typeof t !== "string") return t;
+    if (lg === "fr") t = t.replace(/\ben ce moment\b/gi, "maintenant");
+    if (lg === "en") t = t.replace(/\bat the moment\b/gi, "now");
+    t = tijdAchter(lg, t);
+    if (lg === "fr") t = t.replace(/\b(ai|as|a|avons|avez|ont|suis|es|est|sommes|êtes|sont)\s+(beaucoup|bien|mal|trop|peu)\s+(\S+(?:é|i|u|is|it|ert|int)e?s?)(?=[\s.!?,]|$)/i, "$1 $3 $2");
+    if (lg === "fr") t = t.replace(/\b(arrive|arrives|arrivons|arrivez|arrivent)((?:-(?:tu|il|elle|vous|nous|ils|elles))?) en retard\b/gi, "$1$2 tard");
+    if (lg === "fr" && !/^\s*(c'|ce |ça )/i.test(t))
+      return t.replace(/\b(suis|es|est|sommes|êtes|sont)(-(?:tu|il|elle|vous|nous|ils|elles))?\s+en retard(\s*[.!?]?\s*)$/i, function (m0, v, inv, end) { return FR_ARR[v.toLowerCase()] + (inv || "") + " tard" + end; });
+    if (lg === "de") t = t.replace(/\bkein(?:e|en)?\s+(Deutsch|Englisch|Spanisch|Französisch|Niederländisch|Holländisch|Italienisch|Portugiesisch)\b/g, "nicht $1");
+    if (lg === "de") {
+      // "sich Sorgen machen um" = "sich sorgen um" (preocuparse por)
+      var SORG = { mache: "sorge", machst: "sorgst", macht: "sorgt", machen: "sorgen" }, MICH = { mir: "mich", dir: "dich", sich: "sich", uns: "uns", euch: "euch" };
+      t = t.replace(/\b(mache|machst|macht|machen)\s+((?:du|er|sie|wir|ihr|ich)\s+)?(mir|dir|sich|uns|euch)\s+(?:große\s+)?Sorgen\b/i, function (m0, v, s2, r) {
+        var nv = SORG[v.toLowerCase()]; if (v.charAt(0) !== v.charAt(0).toLowerCase()) nv = nv.charAt(0).toUpperCase() + nv.slice(1);
+        return nv + " " + (s2 || "") + MICH[r.toLowerCase()]; });
+    }
+    if (lg === "de" && !/^\s*(es|das)\s+(ist|war)\b|^\s*ist\s+(es|das)\b/i.test(t))
+      return t.replace(/\b(bin|bist|ist|sind|seid|komme|kommst|kommt|kommen)\b(\s+(?:du|er|sie|wir|ihr|ich)\s+|\s+)zu spät(?:\s+an)?(\s*[.!?]?\s*)$/i, function (m0, v, mid, end) {
+        var nv = DE_KOMM[v.toLowerCase()]; if (v.charAt(0) !== v.charAt(0).toLowerCase()) nv = nv.charAt(0).toUpperCase() + nv.slice(1);
+        return nv + mid + "spät an" + end; });
+    return t;
+  }
+  ["es", "en", "de", "fr"].forEach(function (lg) {
+    var orig = ZINI[lg];
+    ZINI[lg] = function () { if (lg !== "es") arguments[0] = laatTekst(lg, arguments[0]); var c = laatFix(orig.apply(this, arguments)); return lg === "en" ? duurToekomst(quedarCon(kennenFix(c))) : (lg === "fr" || lg === "de") ? quedarCon(c) : c; };
+  });
+  // Weerwerkwoorden hebben geen persoon als onderwerp: "llueve" = it rains / es regnet / il pleut (niet "he", "er")
+  // Engels: voltooid tegenwoordige tijd met een afgesloten tijdstip ("ayer", "la semana pasada") wordt verleden tijd
+  // ("I have seen him yesterday" is geen Engels: "I saw him yesterday")
+  function enVerleden(c, naar) {
+    if (c && (naar === "en" || naar === "es") && c.t === "perf" && (c.advs || []).some(function (a) { return /^(ayer|anoche|anteayer|la semana pasada|el año pasado|el mes pasado)$/.test(a); })) c.t = "past";
+    return c;
+  }
+  function weerOnderwerp(c) {
+    if (c && /^(llover|nevar)$/.test(c.v) && c.s && !c.s.np && c.s.p === 2) c.s = { p: 2, g: "n", formal: false, pron: false, np: null };
+    return c;
+  }
   function fromEs(text, lang) {
     if (lang !== "en" && lang !== "de" && lang !== "fr") return null;
     var c;
@@ -1894,6 +2090,7 @@ var ZIN = (function () {
     if (special) { try { var tn = translateNothing(text, "es", lang, "m"); if (tn) return tn; } catch (e0) { /* terugval hieronder */ } }
     try { c = ZINI.es(text); } catch (e) { c = null; }
     if (!c) return null;
+    weerOnderwerp(c); enVerleden(c, lang);
     if (c.fixed) return c.fixed[lang] || null;
     try { var ro = ZINO[lang](c) || null; if (ro && lang === "fr") ro = ro.replace(/\b(fais|fait|faisons|faites|font) la course\b/, "$1 les courses"); return ro; } catch (e) { return null; }
   }
@@ -1911,6 +2108,8 @@ var ZIN = (function () {
       es = ZINC.cap(es).replace(/ por favor$/, ", por favor");
       return q ? "¿" + es + "?" : es + ".";
     }
+    if (/^(llover|nevar)$/.test(c.v) && c.s && !c.s.np && c.s.p === 2) c.s = { p: 2, g: "n", formal: false, pron: false, np: null };
+    enVerleden(c, "es");
     try { return ZINO.es(c, gen === "f" ? "f" : "m") || null; } catch (e) { return null; }
   }
   // Vaste zin in de gevraagde taal
@@ -2039,6 +2238,12 @@ var ZIN = (function () {
     if (fromNl && c.o && c.o.k === "pron" && c.o.p === 2 && (c.o.amb || !c.o.g || c.o.g === "m")) {
       if (/\bhem\b/i.test(text0)) c.o = Object.assign({}, c.o, { g: "m", amb: false });
       else if (/\bhet\b/i.test(text0) && !/\bhet\s+(is|was|zijn|waren)\b/i.test(text0)) c.o = Object.assign({}, c.o, { g: "n", amb: false });
+    }
+    weerOnderwerp(c); enVerleden(c, to);
+    // Frans werkwoord zonder voorzetsel (quedar con él = je le retrouve): het voornaamwoord wordt lijdend voorwerp
+    if (to === "fr" && c.v && ZINC.PV[c.v] && ZINC.PV[c.v].fr === "" && !c.o && (c.obl || []).length) {
+      var pvI = c.obl.findIndex(function (x) { return x.prep === ZINC.PV[c.v].es && x.np && x.np.k === "pron"; });
+      if (pvI >= 0) { c.o = Object.assign({}, c.obl[pvI].np, { amb: false }); c.obl = c.obl.slice(0, pvI).concat(c.obl.slice(pvI + 1)); }
     }
     if (c.io && c.io.p === 2 && !c.io.g && !c.io.np) c.io = { p: 2, g: nlHaar ? "f" : "m" };   // "lui"/"le": geslacht onbekend, standaard "hem"
     // beroep als gezegde: geen lidwoord in het Duits, Frans en Spaans, en de vrouwelijke vorm bij een vrouw
@@ -2677,15 +2882,107 @@ var ZIN = (function () {
     if (typeof r !== "string") return r;
     if (to === "en") r = r.replace(/\b(have|has) work a lot\b/g, "$1 a lot of work").replace(/\b(do|does) the dinner\b/g, function (m0, v) { return (v === "does" ? "makes" : "make") + " dinner"; })
       .replace(/\b(don't|doesn't) do the dinner\b/g, "$1 make dinner").replace(/\b(do|does) a break\b/g, function (m0, v) { return (v === "does" ? "takes" : "take") + " a break"; })
-      .replace(/\b(don't|doesn't) do a break\b/g, "$1 take a break").replace(/\b(do|does|don't|doesn't) sport\b/g, "$1 sports");
+      .replace(/\b(don't|doesn't) do a break\b/g, "$1 take a break").replace(/\b(do|does|don't|doesn't) sport\b/g, "$1 sports")
+      // Toezegging voor morgen: "I'll call you tomorrow" (niet "I call you tomorrow")
+      .replace(/^(I|We) (call|text|write|see|visit|help|send|tell|bring|phone|ring) (.+ )?(tomorrow|tonight)\b/, function (m0, s, v, mid, t) { return s + "'ll " + v + " " + (mid || "") + t; })
+      // "llegar tarde" = "be late": "I'm late", "My brother is late", "Are you late?"
+      .replace(/^(Why |When )?(Do|Does) (you|he|she|it|we|they|I|my \w+|your \w+|the \w+) arrive late\?$/i, function (m0, w, a, s) { var be = /^I$/.test(s) ? "am" : /^(you|we|they)$/i.test(s) ? "are" : "is"; return (w || "") + (w ? be : be.charAt(0).toUpperCase() + be.slice(1)) + " " + s + " late?"; })
+      .replace(/^(I) arrive late\b/, "I'm late").replace(/^(You|We|They) arrive late\b/, "$1're late").replace(/^(He|She|It) arrives late\b/, "$1's late")
+      .replace(/^(I|You|We|They) don't arrive late\b/, function (m0, s) { return s + (s === "I" ? "'m" : "'re") + " not late"; }).replace(/^(He|She|It) doesn't arrive late\b/, "$1 isn't late")
+      .replace(/^((?:My|Your|His|Her|Our|Their|The) [a-z]+) arrives late\b/, "$1 is late").replace(/^((?:My|Your|His|Her|Our|Their|The) [a-z]+s) arrive late\b/, "$1 are late")
+      // ontkennende vraag: "Why do not you come?" -> "Why don't you come?"
+      .replace(/\b(do|does|did|is|are|was|were|have|has|could|would|should) not (I|you|he|she|it|we|they|my|your|his|her|our|their|the)\b/g, "$1n't $2").replace(/^(Do|Does|Did|Can|Could|Will|Would|Are|Is|Was|Were|Have|Has|Should) (you|he|she|we|they|I) not\b/, function (m0, a, p) { return (a === "Will" ? "Won't" : a === "Can" ? "Can't" : a + "n't") + " " + p; })
+      .replace(/\bcan not (I|you|he|she|it|we|they)\b/g, "can't $1").replace(/\bwill not (I|you|he|she|it|we|they)\b/g, "won't $1");
+    // Spaans: "Trabajé mucho la semana pasada" (hoeveelheid direct na het werkwoord)
+    if (to === "es") r = r.replace(/\b(la semana pasada|el año pasado|el mes pasado|la semana que viene|el año que viene|ayer|hoy|mañana|esta semana|todo el día) (mucho|poco|bastante)(?=[.!?]|$)/gi, "$2 $1");
+    // "llegar tarde" = te laat zijn: "kommt zu spät", "arrive en retard"
+    if (to === "de") r = r.replace(/\b(komme|kommst|kommt|kommen)((?: (?:ich|du|er|sie|es|wir|ihr|Sie))?) spät an\b/gi, "$1$2 zu spät").replace(/\b(komme|kommst|kommt|kommen)((?: (?:ich|du|er|sie|es|wir|ihr|Sie))?) spät nicht an\b/gi, "$1$2 nicht zu spät");
+    if (to === "fr") r = r.replace(/\b(arrive|arrives|arrivons|arrivez|arrivent|arrivé|arrivée|arrivés|arrivées|arriver)((?:-(?:tu|il|elle|vous|nous|ils|elles))?)( pas)? tard\b/gi, "$1$2$3 en retard");
     if (to === "fr") r = r.replace(/\bbeaucoup du\b/g, "beaucoup de").replace(/\bpas la course\b/g, "pas les courses").replace(/(^|\s)à la ville\b/g, "$1en ville")
       .replace(/\bque (elle|il|ils|elles|on)\b/g, "qu'$1");
     if (to === "nl" && typeof ES_NL !== "undefined" && ES_NL.nazorg) r = ES_NL.nazorg(r);
     return r;
   }
-  function translateZonen(text, from, to, gen) { return nazorg(translateZonenBasis(text, from, to, gen), to); }
+  // Weer met "vandaag": vertaal de weerzin zonder de tijd en zet de tijd er in de doeltaal weer bij
+  // ("Hoy hace mucho frío" -> "Hace mucho frío" -> "It is very cold" -> "It is very cold today")
+  var WEER_VANDAAG = {
+    es: [/^\s*hoy,?\s+(hace\s.+?)\s*([.!]?)\s*$/i, /^\s*(hace\s.+?)\s+hoy\s*([.!]?)\s*$/i],
+    en: [/^\s*today,?\s+(it(?:'s| is)\s.+?)\s*([.!]?)\s*$/i, /^\s*(it(?:'s| is)\s.+?)\s+today\s*([.!]?)\s*$/i],
+    de: [/^\s*heute\s+ist\s+es\s+(.+?)\s*([.!]?)\s*$/i, /^\s*es\s+ist\s+heute\s+(.+?)\s*([.!]?)\s*$/i],
+    fr: [/^\s*aujourd'hui,?\s+(il fait\s.+?)\s*([.!]?)\s*$/i, /^\s*(il fait\s.+?)\s+aujourd'hui\s*([.!]?)\s*$/i],
+    nl: [/^\s*vandaag\s+is\s+het\s+(.+?)\s*([.!]?)\s*$/i, /^\s*het\s+is\s+vandaag\s+(.+?)\s*([.!]?)\s*$/i]
+  };
+  var WEER_WOORD = /\b(frío|calor|sol|viento|cold|hot|warm|sunny|windy|chilly|kalt|heiß|warm|sonnig|windig|froid|chaud|beau|soleil|vent|koud|warm|heet|zonnig|winderig|fris)\b/i;
+  function weerVandaag(text, from, to, gen) {
+    var res = WEER_VANDAAG[from]; if (!res || !WEER_WOORD.test(String(text || ""))) return null;
+    // Naar het Nederlands: via de Spaanse weerzin ("Hoy hace mucho frío" -> "Vandaag is het erg koud")
+    if (to === "nl") {
+      var esW = from === "es" ? String(text) : weerVandaag(text, from, "es", gen);
+      if (!esW || typeof ES_NL === "undefined" || typeof REVS === "undefined" || !REVS.nl) return null;
+      try { var nlW = ES_NL.translate(esW, REVS.nl, function (w) { return (typeof GRAM !== "undefined") ? GRAM.gen(w, "nl") : null; }); return /^Vandaag /.test(nlW || "") ? nlW : null; } catch (e) { return null; }
+    }
+    for (var i = 0; i < res.length; i++) {
+      var m = res[i].exec(String(text)); if (!m) continue;
+      var kern = from === "de" ? "Es ist " + m[1] : from === "nl" ? "Het is " + m[1] : m[1].charAt(0).toUpperCase() + m[1].slice(1);
+      var r = translateZonen(kern + ".", from, to, gen);
+      if (typeof r !== "string" || /\b(hoy|today|heute|aujourd'hui|vandaag)\b/i.test(r)) return null;
+      var body = r.replace(/\s*[.!]\s*$/, "");
+      if (to === "es") { if (!/^hace\b/i.test(body)) return null; return "Hoy " + body.charAt(0).toLowerCase() + body.slice(1) + "."; }
+      if (to === "de") { var dm = /^(Es ist|Das Wetter ist) (.+)$/.exec(body); return dm ? dm[1] + " heute " + dm[2] + "." : null; }
+      if (to === "en") return /^(It(?:'s| is)|The weather is) /.test(body) ? body + " today." : null;
+      if (to === "fr") return /^Il fait /.test(body) ? body + " aujourd'hui." : null;
+      return null;
+    }
+    return null;
+  }
+  function translateZonen(text, from, to, gen) {
+    var wv = weerVandaag(text, from, to, gen); if (wv) return wv;
+    // Nederlands "bang voor honden": Spaans en Frans willen een lidwoord (de los perros, des chiens), Engels en Duits niet
+    var zetAlg = from === "nl" && typeof NL_ES !== "undefined" && NL_ES.zetAlgLidwoord;
+    if (zetAlg) NL_ES.zetAlgLidwoord(to === "es" || to === "fr");
+    try { return broersFix(text, nazorg(translateZonenBasis(text, from, to, gen), to)); } finally { if (zetAlg) NL_ES.zetAlgLidwoord(true); }
+  }
+  // Spaans "hermanos" is broers of broers en zussen. Zegt de bron alleen "broers", dan ook alleen broers.
+  var BROERS = /\b(broers|brothers|Brüder|frères)\b/i, ZUSSEN = /\b(zus|zussen|zusters|sisters?|Schwestern?|Geschwister|sœurs?|siblings)\b/i;
+  function broersFix(src, out) {
+    if (typeof out !== "string" || !BROERS.test(String(src || "")) || ZUSSEN.test(String(src || ""))) return out;
+    return out.replace(/\bsiblings\b/g, "brothers").replace(/\bSiblings\b/g, "Brothers").replace(/\bGeschwister\b/g, "Brüder")
+      .replace(/\bfrères et sœurs\b/g, "frères").replace(/\bbroers en zussen\b/g, "broers").replace(/\bBroers en zussen\b/g, "Broers");
+  }
+  // "Hoe laat …?" in elke taal: lukt de zin niet rechtstreeks, vertaal dan de "wanneer"-vraag en zet het vraagwoord terug
+  // ("¿A qué hora abre el museo?" -> "¿Cuándo abre el museo?" -> "When does the museum open?" -> "What time does the museum open?")
+  var HOE_LAAT = { es: /^(\s*¿?\s*)a qu[ée] hora\s+(.+)$/i, en: /^(\s*)what time\s+(.+)$/i, de: /^(\s*)um wie ?viel uhr\s+(.+)$/i, fr: /^(\s*)(?:à|a) quelle heure\s+(.+)$/i };
+  var WANNEER = { es: "¿Cuándo ", en: "When ", de: "Wann ", fr: "Quand " };
+  var HOE_LAAT_UIT = { en: [/^When /, "What time "], de: [/^Wann /, "Um wie viel Uhr "], fr: [/^Quand /, "À quelle heure "], es: [/^¿Cuándo /, "¿A qué hora "], nl: [/^Wanneer /, "Hoe laat "] };
+  function hoeLaatVia(text, from, to, gen) {
+    var m = HOE_LAAT[from] && HOE_LAAT[from].exec(String(text || ""));
+    if (!m || /^(is it|es|ist es|est-il)\b/i.test(m[2])) return null;
+    var ow = translateNothing(WANNEER[from] + m[2], from, to, gen), rep = HOE_LAAT_UIT[to];
+    return ow && rep && rep[0].test(ow) ? ow.replace(rep[0], rep[1]) : null;
+  }
+  function npFragmentVertaal(text, from, to) {
+    var f = ZINI.npFragment(text, from);
+    if (!f || !ZINO.npUit) return null;
+    var u = ZINO.npUit(f.np, to);
+    if (!u) return null;
+    var PL = { es: "por favor", en: "please", de: "bitte", fr: "s'il te plaît" };
+    // Duits bij bestellen: "zwei Kaffee, zwei Bier" (geen meervoud na een getal)
+    if (to === "de" && f.np.num) u = u.replace(/\b(Kaffee)s\b/, "$1").replace(/\bBiere\b/, "Bier").replace(/\bTees\b/, "Tee");
+    return ZINC.cap(u) + (f.please ? ", " + PL[to] : "") + ".";
+  }
   function translateZonenBasis(text, from, to, gen) {
     var r = translateNothing(text, from, to, gen);
+    if (!r && from !== "nl") r = hoeLaatVia(text, from, to, gen);
+    if (!r && from !== "nl" && to !== "nl") r = npFragmentVertaal(text, from, to);
+    if (!r && to === "nl" && from !== "nl" && typeof ES_NL !== "undefined" && typeof REVS !== "undefined" && REVS.nl) {
+      var esN = from === "es" ? String(text) : npFragmentVertaal(text, from, "es");
+      if (esN) { try { r = ES_NL.translate(esN, REVS.nl, function (w) { return (typeof GRAM !== "undefined") ? GRAM.gen(w, "nl") : null; }) || null; } catch (e) { r = null; } }
+    }
+    if (!r && from === "nl" && to !== "nl" && typeof NL_ES !== "undefined") {
+      var esF = null; try { esF = NL_ES.translate(text, DICTS.nl, gen); } catch (e) { esF = null; }
+      if (esF) r = to === "es" ? (ZINI.npFragment(esF, "es") ? esF : null) : npFragmentVertaal(esF, "es", to);
+    }
+    else if (r && from === "en" && to === "es" && /qu[ée] tiempo/i.test(r)) r = hoeLaatVia(text, from, to, gen);
     if (r && to === "nl" && (from === "en" || from === "de" || from === "fr") && /\b(sons|söhne|fils)\b/i.test(String(text || "")))
       r = r.replace(/\bkinderen\b/g, "zonen").replace(/\bKinderen\b/g, "Zonen");
     // "caminar a casa": te voet naar huis, niet "nach Hause spazieren" / "marcher à la maison"
@@ -2717,9 +3014,14 @@ var ZIN = (function () {
     try {
       var ve = voertuigNaarEs(text, lang, gen);
       if (ve !== undefined) return ve;
-      var b = toEs(text, lang, gen);
-      if (b) return b;
+      var wv = weerVandaag(text, lang, "es", gen); if (wv) return wv;
+      var b = nazorg(toEs(text, lang, gen), "es");
+      if (b && !(lang === "en" && /qu[ée] tiempo/i.test(b))) return b;
       if (IETS_EIND[lang].test(String(text || ""))) return translateZonen(text, lang, "es", gen) || null;
+      // zelfde terugvallen als in de andere apps: "hoe laat …?" via "wanneer", en losse naamwoordgroepen bij bestellen
+      var hv = hoeLaatVia(text, lang, "es", gen); if (hv) return hv;
+      var nf = npFragmentVertaal(text, lang, "es"); if (nf) return nf;
+      if (b) return b;
     } catch (e) { return null; }
     return null;
   }

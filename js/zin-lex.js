@@ -249,6 +249,11 @@ var ZIN_LEX = (function () {
   // vlaggen: e = toestand (estar), b = Frans vóór het zelfstandig naamwoord
   var ADJS = [
     "cansado|tired|müde|fatigué|fatiguée|e",
+    "orgulloso|proud|stolz|fier|fière|e",
+    "celoso|jealous|eifersüchtig|jaloux|jalouse|e",
+    "enamorado|in love|verliebt|amoureux|amoureuse|e",
+    "satisfecho|satisfied|zufrieden|satisfait|satisfaite|e",
+    "roto|broken|kaputt|cassé|cassée|e",
     "enfermo|ill|krank|malade|malade|e",
     "contento|happy|froh|content|contente|e",
     "triste|sad|traurig|triste|triste|e",
@@ -303,6 +308,22 @@ var ZIN_LEX = (function () {
     "delgado|thin|dünn|mince|mince|",
     "fuerte|strong|stark|fort|forte|",
   ];
+  // Bijvoeglijk naamwoord + vast voorzetsel ("trots op", "stolz auf", "fier de", "proud of").
+  // es_bijv|es_voorz|en|de (voorzetsel:naamval[:ander bijv. nw.])|fr ; extra invoervormen na een komma
+  var AP = [
+    "orgulloso|de|of|auf:acc|de",
+    "enfadado|con|with,at|auf:acc|contre,avec",
+    "enojado|con|with,at|auf:acc|contre,avec",
+    "contento|con|with|mit:dat:zufrieden|de",
+    "satisfecho|con|with|mit:dat|de",
+    "preocupado|por|about|um:acc|pour",
+    "casado|con|to|mit:dat|avec",
+    "enamorado|de|with|in:acc|de",
+    "celoso|de|of|auf:acc|de",
+    "cansado|de|of|von:dat|de"
+  ];
+  // "tener" + zelfstandig naamwoord + voorzetsel ("tener miedo de" = Angst haben vor, avoir peur de, be afraid of)
+  var APT = ["miedo|de|of|vor:dat|de"];
   // Bijvoeglijke naamwoorden waarvan de betekenis wisselt met ser/estar
   // es: [ser-betekenis en|de|fr_m|fr_f, estar-betekenis en|de|fr_m|fr_f]
   var ADJ_SER_ESTAR = {
@@ -362,7 +383,7 @@ var ZIN_LEX = (function () {
     "estar de pie": { en: { b: "stand", past: "stood", ing: "standing" }, de: { inf: "stehen", pp: "gestanden", aux: "haben" }, fr: { inf: "être debout", pp: "été debout", aux: "e" } },
     "estar tumbado": { en: { b: "lie", past: "lay", ing: "lying" }, de: { inf: "liegen", pp: "gelegen", aux: "haben" }, fr: { inf: "être allongé", pp: "été allongé", aux: "e" } },
     "estar sentado": { en: { b: "sit", past: "sat", ing: "sitting" }, de: { inf: "sitzen", pp: "gesessen", aux: "haben" }, fr: { inf: "être assis", pp: "été assis", aux: "e" } },
-    llover: { en: { b: "rain", past: "rained", ing: "raining" }, de: { inf: "regnen", pp: "geregnet", aux: "haben" }, fr: { inf: "pleuvoir", pp: "plu", aux: "a" } },
+    llover: { es: { pres: "lluevo llueves llueve llovemos llovéis llueven" }, en: { b: "rain", past: "rained", ing: "raining" }, de: { inf: "regnen", pp: "geregnet", aux: "haben" }, fr: { inf: "pleuvoir", pp: "plu", aux: "a" } },
     nevar: { en: { b: "snow", past: "snowed", ing: "snowing" }, de: { inf: "schneien", pp: "geschneit", aux: "haben" }, fr: { inf: "neiger", pp: "neigé", aux: "a" } },
     soplar: { en: { b: "blow", past: "blew", ing: "blowing" }, de: { inf: "wehen", pp: "geweht", aux: "haben" }, fr: { inf: "souffler", pp: "soufflé", aux: "a" } },
     brillar: { en: { b: "shine", past: "shone", ing: "shining" }, de: { inf: "scheinen", pp: "geschienen", aux: "haben" }, fr: { inf: "briller", pp: "brillé", aux: "a" } },
@@ -696,6 +717,11 @@ var ZIN_LEX = (function () {
     "esta mañana|this morning|heute Morgen|ce matin|t", "esta tarde|this afternoon|heute Nachmittag|cet après-midi|t",
     "este fin de semana|this weekend|dieses Wochenende|ce week-end|t", "el fin de semana|at the weekend|am Wochenende|le week-end|t",
     "la semana que viene|next week|nächste Woche|la semaine prochaine|t", "el año que viene|next year|nächstes Jahr|l'année prochaine|t",
+    "la semana pasada|last week|letzte Woche|la semaine dernière|t", "el año pasado|last year|letztes Jahr|l'année dernière|t",
+    "el mes pasado|last month|letzten Monat|le mois dernier|t", "el mes que viene|next month|nächsten Monat|le mois prochain|t",
+    "todo el día|all day|den ganzen Tag|toute la journée|t", "esta semana|this week|diese Woche|cette semaine|t", "este año|this year|dieses Jahr|cette année|t",
+    "mañana por la mañana|tomorrow morning|morgen früh|demain matin|t", "pasado mañana|the day after tomorrow|übermorgen|après-demain|t",
+    "anteayer|the day before yesterday|vorgestern|avant-hier|t",
     "todos los días|every day|jeden Tag|tous les jours|t", "anoche|last night|gestern Abend|hier soir|t",
     "temprano|early|früh|tôt|t", "tarde|late|spät|tard|t",
     "siempre|always|immer|toujours|f", "a menudo|often|oft|souvent|f", "a veces|sometimes|manchmal|parfois|f",
@@ -719,8 +745,8 @@ var ZIN_LEX = (function () {
   var WEATHER = [
     "hace frío|It is cold.|Es ist kalt.|Il fait froid.", "hace calor|It is hot.|Es ist heiß.|Il fait chaud.",
     "hacía frío|It was cold.|Es war kalt.|Il faisait froid.", "hacía calor|It was hot.|Es war heiß.|Il faisait chaud.",
-    "hace sol|It is sunny.|Die Sonne scheint.|Il fait beau.", "hace viento|It is windy.|Es ist windig.|Il y a du vent.",
-    "hace buen tiempo|The weather is nice.|Das Wetter ist schön.|Il fait beau.", "hace mal tiempo|The weather is bad.|Das Wetter ist schlecht.|Il fait mauvais.",
+    "hace buen tiempo|The weather is nice.|Das Wetter ist schön.|Il fait beau.", "hace sol|It is sunny.|Die Sonne scheint.|Il fait beau.", "hace viento|It is windy.|Es ist windig.|Il y a du vent.",
+    "hace mal tiempo|The weather is bad.|Das Wetter ist schlecht.|Il fait mauvais.",
     "va a llover|It is going to rain.|Es wird regnen.|Il va pleuvoir.", "va a nevar|It is going to snow.|Es wird schneien.|Il va neiger.",
     "va a soplar|It is going to be windy.|Es wird windig.|Il va y avoir du vent.", "va a pasar|It is going to happen.|Es wird passieren.|Ça va arriver.",
     "pasa|It happens.|Es passiert.|Ça arrive.", "llueve|It is raining.|Es regnet.|Il pleut.", "está lloviendo|It is raining.|Es regnet.|Il pleut.",
@@ -882,6 +908,6 @@ var ZIN_LEX = (function () {
     add("qué te parece", "Wat vind je ervan?", "What do you think of it?", "Was hältst du davon?", "Qu'en penses-tu ?", { nl: ["Wat vind je daarvan?", "Wat vind je ervan"], en: ["What do you think about it?", "What do you think of that?", "What do you think?"], de: ["Was denkst du darüber?", "Was meinst du dazu?"], fr: ["Qu'est-ce que tu en penses ?", "Que penses-tu de ça ?", "Qu'en dis-tu ?"] });
   })();
 
-  return { FIXED_ALT: FIXED_ALT, FIXED_NL: FIXED_NL, NOUNS: NOUNS, PERSON: PERSON, PROFESSION: PROFESSION, ADJS: ADJS, ADJ_SER_ESTAR: ADJ_SER_ESTAR, NATS: NATS, LANGS: LANGS,
+  return { FIXED_ALT: FIXED_ALT, FIXED_NL: FIXED_NL, NOUNS: NOUNS, PERSON: PERSON, PROFESSION: PROFESSION, ADJS: ADJS, AP: AP, APT: APT, ADJ_SER_ESTAR: ADJ_SER_ESTAR, NATS: NATS, LANGS: LANGS,
     PLACES: PLACES, VERBS: VERBS, ADVS: ADVS, TENER: TENER, WEATHER: WEATHER, FIXED: FIXED };
 })();

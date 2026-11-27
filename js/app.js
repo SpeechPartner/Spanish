@@ -130,6 +130,7 @@
   }
   function speakBuiltIn(text) {
     if (!("speechSynthesis" in window)) return;
+    if (window.PiperTTS) PiperTTS.stop();   // nooit twee stemmen tegelijk
     try {
       speechSynthesis.cancel();
       var u = new SpeechSynthesisUtterance(text);
@@ -1375,6 +1376,9 @@
   function translateOne(text) {
     var r = translateOneSit(text);
     if (r && r.whole) return r;
+    // Betekenisbank alleen voor hele zinnen, niet voor delen van een samengestelde zin
+    var bk = bankVertaal(text, lang, sitDoel());
+    if (bk) return bk;
     var from = lang, to = "es";
     if (ZIN_FIRST(from, to)) { var d0 = viaDelen(text, from, to, translateOneSit); if (d0) return d0; }
     if (r && r.text) return r;
@@ -1402,6 +1406,13 @@
       if (t) { r2.text = t; r2.whole = false; return r2; }
     }
     return r;
+  }
+  // Betekenisbank (betekenis.js): alledaagse zinnen met al hun gangbare vormen, in alle richtingen
+  function bankVertaal(text, van, naar) {
+    if (typeof BETEKENIS === "undefined") return null;
+    var b = null;
+    try { b = BETEKENIS.vertaal(text, van, naar, store.get("eigenGeslacht", "m") === "f" ? "f" : "m"); } catch (e) { b = null; }
+    return b ? { text: b, bank: true, grammar: true, parts: [], missing: [] } : null;
   }
   function translateOneBase(text) {
     return metNamen(function (t) {
@@ -1440,7 +1451,7 @@
     if (sv) return sv;
     var parts = raw.replace(/([.!?…]+)\s+/g, "$1\u0001").split("\u0001").map(function (x) { return x.trim(); }).filter(function (x) { return clean(x); });
     if (parts.length < 2) return translateOne(text);
-    var res = parts.map(function (p) { var r = translateOne(p); return r ? { src: p, text: r.text || null, parts: r.parts || [], missing: r.missing || [] } : { src: p, text: null, parts: [], missing: [] }; });
+    var res = parts.map(function (p) { var r = translateOne(p); return r ? { src: p, text: r.text || null, vast: !!(r.whole || r.bank || r.learned), parts: r.parts || [], missing: r.missing || [] } : { src: p, text: null, parts: [], missing: [] }; });
     var ok = res.every(function (r) { return r.text; });
     return { text: ok ? res.map(function (r) { return r.text; }).join(" ") : null, grammar: ok, sentences: res, parts: [], missing: ok ? [] : [].concat.apply([], res.map(function (r) { return r.missing; })) };
   }
@@ -1530,6 +1541,29 @@
     });
   }
 
+  // Veiligheidscheck: de vertaling teruggevertaald naar de taal van de gebruiker moet op de eigen zin lijken.
+  // Geeft een getal van 0 (lijkt er niet op) tot 1 (gelijk); null als er niets te controleren valt.
+  function zekerheid(bron, uit) {
+    if (!uit || typeof BETEKENIS === "undefined") return null;
+    var terug = null;
+    try { var rt = esToLang(uit); terug = rt && rt.text; } catch (e) { terug = null; }
+    if (!terug) return { score: 0, terug: null };
+    var a = BETEKENIS.woorden(bron, lang), b = BETEKENIS.woorden(terug, lang);
+    if (!a.length || !b.length) return { score: 0, terug: terug };
+    var tel = {}, gelijk = 0;
+    a.forEach(function (w) { tel[w] = (tel[w] || 0) + 1; });
+    b.forEach(function (w) { if (tel[w]) { tel[w]--; gelijk++; } });
+    return { score: Math.round(200 * gelijk / (a.length + b.length)) / 100, terug: terug };
+  }
+  // Gemeten op 952 beoordeelde vertalingen (tests/controleset.json): onder 0,5 is een vertaling vaak fout,
+  // maar 1 op de 10 goede vertalingen scoort ook zo laag. Daarom tonen we de vertaling wel, met een waarschuwing.
+  var ZEKER_GRENS = 0.5;
+  function zekerNoot(box, bron, uit) {
+    var z = zekerheid(bron, uit);
+    if (!z) return null;
+    if (z.score < ZEKER_GRENS) box.appendChild(el("div", "note onzeker", z.terug ? T("Let op: deze vertaling is misschien niet goed. Terugvertaald staat er: {t}").replace("{t}", "“" + z.terug + "”") : T("Let op: deze vertaling is misschien niet goed.")));
+    return z.score;
+  }
   function showTranslation() {
     if (S.tab === "gesprek") { startChatFromTop(); return; }
     var box = document.getElementById("transOut");
@@ -1548,7 +1582,7 @@
     var invoerT = document.getElementById("vtxt").value;
     if (r.sentences) {
       r.sentences.forEach(function (x) {
-        if (x.text) { box.appendChild(el("div", "es", x.text)); valseHint(box, x.src); return; }
+        if (x.text) { box.appendChild(el("div", "es", x.text)); if (!x.vast) zekerNoot(box, x.src, x.text); valseHint(box, x.src); return; }
         box.appendChild(el("div", "nl", "“" + x.src + "”: " + T("Deze zin kan ik nog niet grammaticaal vertalen. Woord voor woord:")));
         if (x.parts.length) box.appendChild(el("div", "nl", x.parts.join(" · ")));
         if (x.missing.length) box.appendChild(el("div", "bad", T("Niet in de lijst:") + " " + x.missing.join(", ")));
@@ -1558,7 +1592,9 @@
       return;
     }
     if (r.text) {
+      delete box.dataset.zeker;
       box.appendChild(el("div", "es", r.text));
+      if (!r.whole && !r.bank && !r.learned) { var zs = zekerNoot(box, invoerT, r.text); if (zs !== null) box.dataset.zeker = String(zs); }
       if (r.whole) box.appendChild(el("div", "nl", T("Dit is een vaste zin uit de gids.")));
       valseHint(box, invoerT);
       var row = el("div", "row");
@@ -1639,6 +1675,8 @@
   function esToLang(text) {
     var r = esToLangSit(text);
     if (r && r.text && (r.learned || (r.whole && !r.about))) return r;
+    var bk = bankVertaal(text, sitDoel(), lang);
+    if (bk) return bk;
     var from = "es", to = lang;
     if (ZIN_FIRST(from, to)) { var d0 = viaDelen(text, from, to, esToLangSit); if (d0) return d0; }
     if (r && r.text && !r.about) return r;
@@ -2100,7 +2138,7 @@
   var WH_MODELS = { tiny: "onnx-community/whisper-tiny", base: "onnx-community/whisper-base" };
 
   // Diagnose: elke stap van de spraakroute wordt genoteerd, zodat een fout precies aan te wijzen is.
-  var APP_VERSION = "3.9";
+  var APP_VERSION = "3.10";
   // Versies waarvoor gebruikers de app opnieuw op hun beginscherm moeten zetten (oude icoon weg, nieuwe erop).
   // Bij zo'n update verschijnt eenmalig een melding met uitleg.
   var REINSTALL_VERSIONS = ["1.8"];
@@ -2775,6 +2813,7 @@
   // Voorlezen in je eigen taal (ingebouwde stem van het toestel)
   function speakEigen(text) {
     if (!text || !("speechSynthesis" in window)) return;
+    if (window.PiperTTS) PiperTTS.stop();   // nooit twee stemmen tegelijk
     try {
       speechSynthesis.cancel();
       var u = new SpeechSynthesisUtterance(text);
@@ -3854,8 +3893,22 @@
     if (window.PiperTTS && PiperTTS.setAllowed) PiperTTS.setAllowed(!!store.get("piperOk", false));
     if (pOk) {
       pOk.checked = !!store.get("piperOk", false);
-      pOk.onchange = function () { store.set("piperOk", pOk.checked); if (window.PiperTTS && PiperTTS.setAllowed) PiperTTS.setAllowed(pOk.checked); };
+      pOk.onchange = function () { store.set("piperOk", pOk.checked); if (window.PiperTTS && PiperTTS.setAllowed) PiperTTS.setAllowed(pOk.checked); if (pOk.checked) piperDownload(); else piperStatus(""); };
     }
+    // Download van de natuurlijke stem zichtbaar maken: voortgang in procenten, daarna klaar of mislukt
+    function piperStatus(t) { var st = document.getElementById("piperStatus"); if (!st) return; st.textContent = t; st.hidden = !t; }
+    function piperDownload() {
+      if (!window.PiperTTS || !PiperTTS.prepare) return;
+      if (PiperTTS.isReady("es")) { piperStatus(T("De natuurlijke stem is klaar.")); return; }
+      piperStatus(T("Natuurlijke stem downloaden…") + " 0%");
+      PiperTTS.prepare("es", function (f) {
+        piperStatus(T("Natuurlijke stem downloaden…") + " " + Math.round(f * 100) + "%");
+      }, function (ok) {
+        piperStatus(ok ? T("De natuurlijke stem is klaar.") : T("Downloaden is mislukt. Controleer je internet en zet het vinkje opnieuw aan."));
+        if (!ok && pOk) { pOk.checked = false; store.set("piperOk", false); PiperTTS.setAllowed(false); }
+      });
+    }
+    if (store.get("piperOk", false)) piperDownload();
     // Eigen gegevens exporteren (JSON-bestand) of allemaal wissen. Alleen de gegevens van deze app:
     // de vijf apps delen één website, maar elk heeft een eigen voorvoegsel in de opslag.
     var MYPFX = typeof PFX !== "undefined" ? PFX : "gg_";
